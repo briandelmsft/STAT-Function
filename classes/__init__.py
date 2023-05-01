@@ -52,7 +52,7 @@ class BaseModule:
     def add_ip_entity(self, address, geo_data, rawentity):
         self.IPs.append({'Address': address, 'GeoData': geo_data, 'RawEntity': rawentity })
 
-    def get_ip_entities(self):
+    def get_ip_list(self):
         ip_list = []
         for ip in self.IPs:
             ip_list.append(ip['Address'])
