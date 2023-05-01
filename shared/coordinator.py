@@ -1,7 +1,5 @@
 from modules import base
-from classes import Response
-from classes import Error
-import json
+from classes import Response, Error
 
 def initiate_module(module_name, req_body):
     '''Call the appropriate STAT Module.'''
