@@ -11,6 +11,7 @@ def execute_base_module (req_body):
     entities = req_body['object']['properties']['relatedEntities']
     enrich_ips(entities)
     enrich_accounts(entities)
+    enrich_hosts(entities)
 
     return base_object
 
@@ -28,3 +29,10 @@ def enrich_ips (entities):
 def enrich_accounts(entities):
     account_entities = list(filter(lambda x: x['kind'].lower() == 'account', entities))
     base_object.AccountsCount = len(account_entities)
+
+def enrich_hosts(entities):
+    host_entities = list(filter(lambda x: x['kind'].lower() == 'host', entities))
+    base_object.HostsCount = len(host_entities)
+
+    for host in host_entities:
+        base_object.add_host_entity(fqdn=host['properties']['hostName'] + '.' + host['properties']['dnsDomain'], hostname=host['properties']['hostName'], dnsdomain=host['properties']['dnsDomain'], rawentity=host['properties'])
