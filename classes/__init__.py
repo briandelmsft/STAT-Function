@@ -49,11 +49,40 @@ class BaseModule:
         self.WorkspaceARMId = self.SentinelRGARMId + "/providers/Microsoft.OperationalInsights/workspaces/" + req_body['workspaceInfo']['WorkspaceName']
         self.WorkspaceId = req_body['workspaceId']
 
+    def load_from_input(self, basebody):
+        self.Accounts = basebody['Accounts']
+        self.AccountsCount = basebody['AccountsCount']
+        self.Domains = basebody['Domains']
+        self.DomainsCount = basebody['DomainsCount']
+        self.EntitiesCount = basebody['EntitiesCount']
+        self.FileHashes = basebody['FileHashes']
+        self.FileHashesCount = basebody['FileHashesCount']
+        self.Files = basebody['Files']
+        self.FilesCount = basebody['FilesCount']
+        self.Hosts = basebody['Hosts']
+        self.HostsCount = basebody['HostsCount']
+        self.IPs = basebody['IPs']
+        self.IPsCount = basebody['IPsCount']
+        self.IncidentARMId = basebody['IncidentARMId']
+        self.ModuleVersions = basebody['ModuleVersions']
+        self.OtherEntities = basebody['OtherEntities']
+        self.OtherEntitiesCount = basebody['OtherEntitiesCount']
+        self.SentinelRGARMId = basebody['SentinelRGARMId']
+        self.TenantDisplayName = basebody['TenantDisplayName']
+        self.TenantId = basebody['TenantId']
+        self.URLs = basebody['URLs']
+        self.URLsCount = basebody['URLsCount']
+        self.WorkspaceARMId = basebody['WorkspaceARMId']
+        self.WorkspaceId = basebody['WorkspaceId']
+
     def add_ip_entity(self, address, geo_data, rawentity):
         self.IPs.append({'Address': address, 'GeoData': geo_data, 'RawEntity': rawentity })
 
     def add_host_entity(self, fqdn, hostname, dnsdomain, rawentity):
         self.Hosts.append({'DnsDomain': dnsdomain, 'FQDN': fqdn, 'Hostname': hostname, 'RawEntity': rawentity })
+
+    def add_account_entity(self, data):
+        self.Accounts.append(data)
 
     def get_ip_list(self):
         ip_list = []
@@ -61,3 +90,18 @@ class BaseModule:
             ip_list.append(ip['Address'])
 
         return ip_list
+    
+    def get_account_id_list(self):
+        account_list = []
+        for account in self.Accounts:
+            account_list.append(account['id'])
+        
+        return account_list
+
+    def get_account_upn_list(self):
+        account_list = []
+        for account in self.Accounts:
+            account_list.append(account['userPrincipalName'])
+        
+        return account_list
+    
