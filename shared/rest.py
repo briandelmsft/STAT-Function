@@ -57,6 +57,11 @@ def rest_call_get(api, path):
     url = get_endpoint(api) + path
     return requests.get(url=url, headers={"Authorization": "Bearer " + token.token})
 
+def rest_call_post(api, path, body):
+    token = token_cache(api)
+    url = get_endpoint(api) + path
+    return requests.post(url=url, json=body, headers={"Authorization": "Bearer " + token.token})
+
 def execute_la_query(workspaceid, query, lookbackindays):
     token = token_cache('la')
     url = get_endpoint('la') + '/v1/workspaces/' + workspaceid + '/query'
