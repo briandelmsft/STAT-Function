@@ -6,9 +6,9 @@ def execute_base_module (req_body):
     global base_object
     
     base_object = BaseModule()
-    base_object.load_incident_trigger(req_body)
+    base_object.load_incident_trigger(req_body['Body'])
     
-    entities = req_body['object']['properties']['relatedEntities']
+    entities = req_body['Body']['object']['properties']['relatedEntities']
     enrich_ips(entities)
     enrich_accounts(entities)
     enrich_hosts(entities)
