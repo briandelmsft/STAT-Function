@@ -62,7 +62,7 @@ def execute_la_query(workspaceid, query, lookbackindays):
     url = get_endpoint('la') + '/v1/workspaces/' + workspaceid + '/query'
     duration = 'P' + str(lookbackindays) + 'D'
     body = {'query': query, 'timespan': duration}
-    response = requests.post(url=url, json=body, headers={"Authorization": "Bearer " + token.token, "Content-type": "application/json"})
+    response = requests.post(url=url, json=body, headers={"Authorization": "Bearer " + token.token})
     data = json.loads(response.content)
  
     columns = data['tables'][0]['columns']
