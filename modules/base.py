@@ -1,4 +1,4 @@
-from classes import BaseModule
+from classes import BaseModule, Response
 from shared import rest
 import json
 
@@ -24,7 +24,7 @@ def execute_base_module (req_body):
     base_object.TenantDisplayName = org_info['value'][0]['displayName']
     base_object.TenantId = org_info['value'][0]['id']
 
-    return base_object
+    return Response(base_object)
 
 def enrich_ips (entities):
     ip_entities = list(filter(lambda x: x['kind'].lower() == 'ip', entities))
@@ -101,13 +101,13 @@ def append_account_details(account, user_info, raw_entity):
     assigned_roles = get_account_roles(user_info['id'])
     security_info = get_security_info(user_info['userPrincipalName'])
     
-    if assigned_roles:
-        account_privileged = True
-    else:
-        account_privileged = False
+    # if assigned_roles:
+    #     account_privileged = True
+    # else:
+    #     account_privileged = False
 
     user_info['AssignedRoles'] = assigned_roles
-    user_info['isAADPrivileged'] = account_privileged
+    user_info['isAADPrivileged'] = bool(assigned_roles)
     user_info['isMfaRegistered'] = security_info['isMfaRegistered']
     user_info['isSSPREnabled'] = security_info['isEnabled']
     user_info['isSSPRRegistered'] = security_info['isRegistered']

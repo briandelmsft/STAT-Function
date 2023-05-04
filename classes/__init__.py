@@ -1,3 +1,7 @@
+import base64
+import urllib.parse
+import json
+
 class Response:
     '''A response object'''
     
@@ -91,6 +95,55 @@ class BaseModule:
 
         return ip_list
     
+    def get_ip_kql_table(self):
+
+        ip_data = []
+
+        for ip in self.IPs:
+            ip_data.append({'Address': ip.get('Address'), 'Latitude': ip.get('GeoData').get('latitude'), 'Longitude': ip.get('GeoData').get('longitude'), \
+                            'Country': ip.get('GeoData').get('country'), 'State': ip.get('GeoData').get('state')})
+
+        encoded = urllib.parse.quote(json.dumps(ip_data))
+
+        kql = f'''let ipEntities = print t = todynamic(url_decode('{encoded}'))
+| mv-expand t
+| project IPAddress=t.Address, Latitude=t.Latitude, Longitude=t.Longitude, Country=t.Country, State=t.State;
+'''
+        return kql
+    
+    def get_account_kql_table(self):
+
+        account_data = []
+
+        for account in self.Accounts:
+
+            account_data.append({'userPrincipalName': account.get('userPrincipalName'), 'SamAccountName': account.get('onPremisesSamAccountName'), \
+                                 'SID': account.get('onPremisesSecurityIdentifier'), 'id': account.get('id'), 'ManagerUPN': account.get('manager', {}).get('userPrincipalName')})
+
+        encoded = urllib.parse.quote(json.dumps(account_data))
+
+        kql = f'''let accountEntities = print t = todynamic(url_decode('{encoded}'))
+| mv-expand t
+| project UserPrincipalName=t.userPrincipalName, SamAccountName=t.SamAccountName, ObjectSID=t.SID, AADUserId=t.id, ManagerUPN=t.ManagerUPN;
+'''
+        return kql
+    
+    def get_host_kql_table(self):
+
+        host_data = []
+
+        for host in self.Hosts:
+
+            host_data.append({'FQDN': host.get('FQDN'), 'Hostname': host.get('Hostname')})
+
+        encoded = urllib.parse.quote(json.dumps(host_data))
+
+        kql = f'''let hostEntities = print t = todynamic(url_decode('{encoded}'))
+| mv-expand t
+| project FQDN=t.FQDN, Hostname=t.Hostname;
+'''
+        return kql
+        
     def get_account_id_list(self):
         account_list = []
         for account in self.Accounts:
@@ -105,3 +158,11 @@ class BaseModule:
         
         return account_list
     
+class KQLModule:
+    '''A KQL module object'''
+    
+    def __init__(self):
+        self.DetailedResults = []
+        self.ModuleName = 'KQLModule'
+        self.ResultsCount = 0
+        self.ResultsFound = False
