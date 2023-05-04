@@ -1,5 +1,5 @@
 from classes import BaseModule, Response
-from shared import rest
+from shared import rest, data
 import json
 
 def execute_base_module (req_body):
@@ -9,7 +9,7 @@ def execute_base_module (req_body):
     base_object.load_incident_trigger(req_body['Body'])
     
     entities = req_body['Body']['object']['properties']['relatedEntities']
-    enrich_ips(entities)
+    enrich_ips(entities, req_body.get('EnrichIPsWithGeoData', True))
     enrich_accounts(entities)
     enrich_hosts(entities)
     enrich_domains(entities)
@@ -24,16 +24,32 @@ def execute_base_module (req_body):
     base_object.TenantDisplayName = org_info['value'][0]['displayName']
     base_object.TenantId = org_info['value'][0]['id']
 
+    account_comment = ''
+    ip_comment = ''
+
+    if req_body.get('AddAccountComment', True) and base_object.AccountsCount > 0:
+        account_comment = 'Account Info:<br>' + get_account_comment()
+
+    if req_body.get('AddIPComment', True) and base_object.IPsCount > 0:
+        ip_comment = 'IP Info:<br>' + get_ip_comment()
+
+    if (req_body.get('AddAccountComment', True) and base_object.AccountsCount > 0) or (req_body.get('AddIPComment', True) and base_object.IPsCount > 0):
+        comment = account_comment + '<br><p>' + ip_comment
+        rest.add_incident_comment(base_object.IncidentARMId, comment)
+
     return Response(base_object)
 
-def enrich_ips (entities):
+def enrich_ips (entities, get_geo):
     ip_entities = list(filter(lambda x: x['kind'].lower() == 'ip', entities))
     base_object.IPsCount = len(ip_entities)
 
     for ip in ip_entities:
-        path = base_object.SentinelRGARMId + "/providers/Microsoft.SecurityInsights/enrichment/ip/geodata/?api-version=2023-04-01-preview&ipAddress=" + ip['properties']['address']
-        response = rest.rest_call_get(api='arm', path=path)
-        base_object.add_ip_entity(address=ip['properties']['address'], geo_data=json.loads(response.content), rawentity=ip['properties'])
+        if get_geo:
+            path = base_object.SentinelRGARMId + "/providers/Microsoft.SecurityInsights/enrichment/ip/geodata/?api-version=2023-04-01-preview&ipAddress=" + ip['properties']['address']
+            response = rest.rest_call_get(api='arm', path=path)
+            base_object.add_ip_entity(address=ip['properties']['address'], geo_data=json.loads(response.content), rawentity=ip['properties'])
+        else:
+            base_object.add_ip_entity(address=ip['properties']['address'], geo_data={}, rawentity=ip['properties'])
 
 def enrich_accounts(entities):
     account_entities = list(filter(lambda x: x['kind'].lower() == 'account', entities))
@@ -100,11 +116,6 @@ def append_account_details(account, user_info, raw_entity):
 
     assigned_roles = get_account_roles(user_info['id'])
     security_info = get_security_info(user_info['userPrincipalName'])
-    
-    # if assigned_roles:
-    #     account_privileged = True
-    # else:
-    #     account_privileged = False
 
     user_info['AssignedRoles'] = assigned_roles
     user_info['isAADPrivileged'] = bool(assigned_roles)
@@ -135,3 +146,25 @@ def enrich_hosts(entities):
 
     for host in host_entities:
         base_object.add_host_entity(fqdn=host['properties']['hostName'] + '.' + host['properties']['dnsDomain'], hostname=host['properties']['hostName'], dnsdomain=host['properties']['dnsDomain'], rawentity=host['properties'])
+
+def get_account_comment():
+    
+    account_list = []
+    for account in base_object.Accounts:
+        account_list.append({'UserPrincipalName': account.get('userPrincipalName'), 'City': account.get('city'), 'Country': account.get('country'), \
+                             'Department': account.get('department'), 'JobTitle': account.get('jobTitle'), 'Office': account.get('officeLocation'), \
+                             'AADRoles': account.get('AssignedRoles'), 'ManagerUPN': account.get('manager', {}).get('userPrincipalName'), \
+                             'MfaRegistered': account.get('isMfaRegistered'), 'SSPREnabled': account.get('isSSPREnabled'), \
+                             'SSPRRegistered': account.get('isSSPRRegistered')})
+        
+    return data.list_to_html_table(account_list, 20, 20)
+
+def get_ip_comment():
+    
+    ip_list = []
+    for ip in base_object.IPs:
+        geo = ip.get('GeoData')
+        ip_list.append({'IP': geo.get('ipAddr'), 'City': geo.get('city'), 'State': geo.get('state'), 'Country': geo.get('country'), \
+                        'Organization': geo.get('organization'), 'OrganizationType': geo.get('organizationType'), 'ASN': geo.get('asn') })
+        
+    return data.list_to_html_table(ip_list)

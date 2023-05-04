@@ -3,6 +3,7 @@ import requests
 import datetime as dt
 import json
 import os
+import uuid
 
 armtoken = None
 msgraphtoken = None
@@ -90,4 +91,16 @@ def get_endpoint(api):
         return 'https://' + graph_endpoint
     elif api == 'la':
         return 'https://' + la_endpoint
+    
+def add_incident_comment(armid, comment):
+    token = token_cache('arm')
+    endpoint = get_endpoint('arm')
+    url = endpoint + armid + '/comments/' + str(uuid.uuid4()) + '?api-version=2023-02-01'
+    return requests.put(url=url, json={'properties': {'message': comment[:30000]}}, headers={"Authorization": "Bearer " + token.token})
+
+def add_incident_task(armid, title, description, status='New'):
+    token = token_cache('arm')
+    endpoint = get_endpoint('arm')
+    url = endpoint + armid + '/tasks/' + str(uuid.uuid4()) + '?api-version=2023-04-01-preview'
+    return requests.put(url=url, json={'properties': {'title': title, 'description': description[:3000], 'status': status}}, headers={"Authorization": "Bearer " + token.token})
     
