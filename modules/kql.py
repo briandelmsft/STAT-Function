@@ -7,7 +7,7 @@ def execute_kql_module (req_body):
     #Inputs AddIncidentComments, AddIncidentTask, Entities, IncidentTaskInstructions, KQLQuery, LookbackInDays, QueryDescription, RunQueryAgainst
 
     base_object = BaseModule()
-    base_object.load_from_input(req_body['Entities'])
+    base_object.load_from_input(req_body['BaseModuleBody'])
 
     kql_object = KQLModule()
 
