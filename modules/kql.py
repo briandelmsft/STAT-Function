@@ -1,6 +1,5 @@
 from classes import BaseModule, Response, KQLModule
 from shared import rest, data
-import json
 
 def execute_kql_module (req_body):
 
@@ -18,7 +17,10 @@ def execute_kql_module (req_body):
 
     query = arm_id + ip_entities + account_entities + host_entities + req_body['KQLQuery']
 
-    results = rest.execute_la_query(base_object.WorkspaceId, query, req_body['LookbackInDays'])
+    if req_body.get('RunQueryAgainst') == 'M365':
+        results = rest.execute_m365d_query(query)
+    else:
+        results = rest.execute_la_query(base_object.WorkspaceId, query, req_body['LookbackInDays'])
 
     kql_object.DetailedResults = results
     kql_object.ResultsCount = len(results)

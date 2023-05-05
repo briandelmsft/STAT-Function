@@ -32,6 +32,12 @@ def token_cache(api):
     elif api == 'la':
         token_expiration_check(api, latoken)
         return latoken
+    elif api == 'm365':
+        token_expiration_check(api, m365token)
+        return m365token
+    elif api == 'mde':
+        token_expiration_check(api, mdetoken)
+        return mdetoken
 
 def token_expiration_check(api, token):
     
@@ -94,6 +100,20 @@ def execute_la_query(workspaceid, query, lookbackindays):
         query_results.append(dict(zip(columnlist,row)))
 
     return query_results
+
+def execute_m365d_query(query):
+    token = token_cache('m365')
+    url = get_endpoint('m365') + '/api/advancedhunting/run'
+    body = {'Query': query}
+    response = requests.post(url=url, json=body, headers={"Authorization": "Bearer " + token.token})
+    return json.loads(response.content)['Results']
+
+def execute_mde_query(query):
+    token = token_cache('mde')
+    url = get_endpoint('mde') + '/api/advancedqueries/run'
+    body = {'Query': query}
+    response = requests.post(url=url, json=body, headers={"Authorization": "Bearer " + token.token})
+    return json.loads(response.content)
 
 def get_endpoint(api):
     if api == 'arm':
