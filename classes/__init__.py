@@ -107,7 +107,7 @@ class BaseModule:
 
         kql = f'''let ipEntities = print t = todynamic(url_decode('{encoded}'))
 | mv-expand t
-| project IPAddress=t.Address, Latitude=t.Latitude, Longitude=t.Longitude, Country=t.Country, State=t.State;
+| project IPAddress=tostring(t.Address), Latitude=toreal(t.Latitude), Longitude=toreal(t.Longitude), Country=tostring(t.Country), State=tostring(t.State);
 '''
         return kql
     
@@ -124,7 +124,7 @@ class BaseModule:
 
         kql = f'''let accountEntities = print t = todynamic(url_decode('{encoded}'))
 | mv-expand t
-| project UserPrincipalName=t.userPrincipalName, SamAccountName=t.SamAccountName, ObjectSID=t.SID, AADUserId=t.id, ManagerUPN=t.ManagerUPN;
+| project UserPrincipalName=tostring(t.userPrincipalName), SamAccountName=tostring(t.SamAccountName), ObjectSID=tostring(t.SID), AADUserId=tostring(t.id), ManagerUPN=tostring(t.ManagerUPN);
 '''
         return kql
     
@@ -140,7 +140,7 @@ class BaseModule:
 
         kql = f'''let hostEntities = print t = todynamic(url_decode('{encoded}'))
 | mv-expand t
-| project FQDN=t.FQDN, Hostname=t.Hostname;
+| project FQDN=tostring(t.FQDN), Hostname=tostring(t.Hostname);
 '''
         return kql
         
@@ -166,3 +166,14 @@ class KQLModule:
         self.ModuleName = 'KQLModule'
         self.ResultsCount = 0
         self.ResultsFound = False
+
+class WatchlistModule:
+    '''A Watchlist module object'''
+    
+    def __init__(self):
+        self.DetailedResults = []
+        self.EntitiesAnalyzedCount = 0
+        self.EntitiesOnWatchlist = False
+        self.EntitiesOnWatchlistCount = 0
+        self.WatchlistName = ""
+        self.ModuleName = 'WatchlistModule'

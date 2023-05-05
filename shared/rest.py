@@ -137,5 +137,9 @@ def add_incident_task(incident_armid, title, description, status='New'):
     token = token_cache('arm')
     endpoint = get_endpoint('arm')
     url = endpoint + incident_armid + '/tasks/' + str(uuid.uuid4()) + '?api-version=2023-04-01-preview'
-    return requests.put(url=url, json={'properties': {'title': title, 'description': description[:3000], 'status': status}}, headers={"Authorization": "Bearer " + token.token})
+
+    if description is None or description == '':
+        return requests.put(url=url, json={'properties': {'title': title, 'status': status}}, headers={"Authorization": "Bearer " + token.token})
+    else:
+        return requests.put(url=url, json={'properties': {'title': title, 'description': description[:3000], 'status': status}}, headers={"Authorization": "Bearer " + token.token})
     
