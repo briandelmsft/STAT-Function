@@ -13,7 +13,10 @@ To debug in VS Code create a local.settings.json file in the root of the project
     "AZURE_CLIENT_SECRET": "<SECRET>",
     "AZURE_AUTHORITY_HOST": "login.microsoftonline.com",
     "ARM_ENDPOINT": "management.azure.com",
-    "GRAPH_ENDPOINT": "graph.microsoft.com"
+    "GRAPH_ENDPOINT": "graph.microsoft.com",
+    "LOGANALYTICS_ENDPOINT": "api.loganalytics.io",
+    "M365_ENDPOINT": "api.security.microsoft.com",
+    "MDE_ENDPOINT": "api.securitycenter.microsoft.com"
   }
 }
 ```
