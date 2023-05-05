@@ -8,14 +8,20 @@ import uuid
 armtoken = None
 msgraphtoken = None
 latoken = None
+m365token = None
+mdetoken = None
 graph_endpoint = os.getenv('GRAPH_ENDPOINT')
 arm_endpoint = os.getenv('ARM_ENDPOINT')
 la_endpoint = os.getenv('LOGANALYTICS_ENDPOINT')
+m365_endpoint = os.getenv('M365_ENDPOINT')
+mde_endpoint = os.getenv('MDE_ENDPOINT')
 
 def token_cache(api):
     global armtoken
     global msgraphtoken
     global latoken
+    global m365token
+    global mdetoken
 
     if api == 'arm':
         token_expiration_check(api, armtoken)
@@ -42,6 +48,8 @@ def acquire_token(api):
     global armtoken
     global msgraphtoken
     global latoken
+    global m365token
+    global mdetoken
     
     cred = DefaultAzureCredential()
 
@@ -51,7 +59,10 @@ def acquire_token(api):
         msgraphtoken = cred.get_token("https://" + graph_endpoint + "/.default")
     elif api == 'la':
         latoken = cred.get_token("https://" + la_endpoint + "/.default")
-
+    elif api == 'm365':
+        m365token = cred.get_token("https://" + m365_endpoint + "/.default")
+    elif api == 'mde':
+        mdetoken = cred.get_token("https://" + mde_endpoint + "/.default")
 
 def rest_call_get(api, path):
     token = token_cache(api)
@@ -91,16 +102,20 @@ def get_endpoint(api):
         return 'https://' + graph_endpoint
     elif api == 'la':
         return 'https://' + la_endpoint
+    elif api == 'm365':
+        return 'https://' + m365_endpoint
+    elif api == 'mde':
+        return 'https://' + mde_endpoint
     
-def add_incident_comment(armid, comment):
+def add_incident_comment(incident_armid, comment):
     token = token_cache('arm')
     endpoint = get_endpoint('arm')
-    url = endpoint + armid + '/comments/' + str(uuid.uuid4()) + '?api-version=2023-02-01'
+    url = endpoint + incident_armid + '/comments/' + str(uuid.uuid4()) + '?api-version=2023-02-01'
     return requests.put(url=url, json={'properties': {'message': comment[:30000]}}, headers={"Authorization": "Bearer " + token.token})
 
-def add_incident_task(armid, title, description, status='New'):
+def add_incident_task(incident_armid, title, description, status='New'):
     token = token_cache('arm')
     endpoint = get_endpoint('arm')
-    url = endpoint + armid + '/tasks/' + str(uuid.uuid4()) + '?api-version=2023-04-01-preview'
+    url = endpoint + incident_armid + '/tasks/' + str(uuid.uuid4()) + '?api-version=2023-04-01-preview'
     return requests.put(url=url, json={'properties': {'title': title, 'description': description[:3000], 'status': status}}, headers={"Authorization": "Bearer " + token.token})
     
