@@ -52,7 +52,20 @@ def execute_watchlist_module (req_body):
         results = rest.execute_la_query(base_object.WorkspaceId, query, 7)
         
     elif watchlist_datatype == 'FQDN':
-        None
+        host_entities = base_object.get_host_kql_table()
+        query = host_entities + f'''let watchListItems = materialize (_GetWatchlist('{watchlist_object.WatchlistName}')
+| project SearchKey = tolower({watchlist_key}), _DTItemId
+| extend Hostname=tolower(tostring(split(SearchKey, '.')[0])));
+hostEntities
+| extend FQDNKey = tolower(FQDN), HostKey = tolower(Hostname)
+| join kind=leftouter (watchListItems) on $left.FQDNKey == $right.SearchKey
+| join kind=leftouter (watchListItems) on $left.HostKey == $right.Hostname
+| extend OnWatchlist = iff(isempty(_DTItemId) and isempty(_DTItemId1), false, true)
+| project OnWatchlist, FQDN'''
+        results = rest.execute_la_query(base_object.WorkspaceId, query, 7)
+
+    else:
+        raise STATError(f'Invalid WatchlistKeyDataType: {watchlist_datatype}')
 
     watchlist_entities = list(filter(lambda x: x['OnWatchlist'], results))
     watchlist_object.EntitiesOnWatchlist = bool(watchlist_entities)

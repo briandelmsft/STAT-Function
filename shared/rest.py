@@ -4,6 +4,7 @@ import datetime as dt
 import json
 import os
 import uuid
+from classes import STATError
 
 armtoken = None
 msgraphtoken = None
@@ -87,6 +88,9 @@ def execute_la_query(workspaceid:str, query:str, lookbackindays:int):
     body = {'query': query, 'timespan': duration}
     response = requests.post(url=url, json=body, headers={"Authorization": "Bearer " + token.token})
     data = json.loads(response.content)
+
+    if response.status_code >= 300:
+        raise STATError('KQL Query failed to execute', data)
  
     columns = data['tables'][0]['columns']
     rows = data['tables'][0]['rows']
