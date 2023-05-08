@@ -1,4 +1,4 @@
-from classes import BaseModule, Error
+from classes import BaseModule, Error, STATError
 from shared import rest, data
 import json
 
@@ -10,6 +10,14 @@ def execute_test_module (req_body):
     #test3 = base_object.get_account_upn_list()
     ip_entities = base_object.get_ip_kql_table()
     account_entities = base_object.get_account_kql_table()
+
+    if req_body['AddIncidentComments']:
+        try:
+            test = 5 / 0
+        except:
+            raise STATError('Cannot divide by zero', {'error': 'division by zero error'}, 400)
+    else:
+        test = 5 / 0
 
     data.list_to_html_table(base_object.IPs)
 

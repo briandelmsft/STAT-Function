@@ -16,6 +16,13 @@ class Error:
     def __init__(self, error):
         self.error = error
 
+class STATError(Exception):
+    '''A handled STAT exception'''
+
+    def __init__(self, error:str, source_error:object, status_code:int=400):
+        self.error = error
+        self.source_error = source_error
+        self.status_code = status_code
 
 class BaseModule:
     '''A base module object'''
