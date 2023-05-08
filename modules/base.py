@@ -69,7 +69,7 @@ def enrich_domains(entities):
     base_object.DomainsCount = len(domain_entities)
     
     for domain in domain_entities:
-        base_object.Domains.append({'RawEntity': domain['properties']})
+        base_object.Domains.append({'Domain': domain['properties']['domainName'], 'RawEntity': domain['properties']})
 
 def enrich_files(entities):
     file_entities = list(filter(lambda x: x['kind'].lower() == 'file', entities))
@@ -83,14 +83,14 @@ def enrich_filehashes(entities):
     base_object.FileHashesCount = len(filehash_entities)
 
     for hash in filehash_entities:
-        base_object.FileHashes.append({'RawEntity': hash['properties']})
+        base_object.FileHashes.append({'FileHash': hash['properties']['hashValue'], 'Algorithm': hash['properties']['algorithm'], 'RawEntity': hash['properties']})
 
 def enrich_urls(entities):
     url_entities = list(filter(lambda x: x['kind'].lower() == 'url', entities))
     base_object.URLsCount = len(url_entities)
 
     for url in url_entities:
-        base_object.URLs.append({'RawEntity': url['properties']})
+        base_object.URLs.append({'Url': url['properties']['url'], 'RawEntity': url['properties']})
 
 def append_other_entities(entities):
     other_entities = list(filter(lambda x: x['kind'].lower() not in ('ip','account','dnsresolution','file','filehash','url'), entities))

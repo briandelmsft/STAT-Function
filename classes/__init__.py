@@ -102,6 +102,27 @@ class BaseModule:
 
         return ip_list
     
+    def get_domain_list(self):
+        domain_list = []
+        for domain in self.Domains:
+            domain_list.append(domain['Domain'])
+        
+        return domain_list
+    
+    def get_url_list(self):
+        url_list = []
+        for url in self.URLs:
+            url_list.append(url['Url'])
+        
+        return url_list
+    
+    def get_filehash_list(self):
+        hash_list = []
+        for hash in self.FileHashes:
+            hash_list.append(hash['FileHash'])
+        
+        return hash_list
+    
     def get_ip_kql_table(self):
 
         ip_data = []
@@ -123,7 +144,6 @@ class BaseModule:
         account_data = []
 
         for account in self.Accounts:
-
             account_data.append({'userPrincipalName': account.get('userPrincipalName'), 'SamAccountName': account.get('onPremisesSamAccountName'), \
                                  'SID': account.get('onPremisesSecurityIdentifier'), 'id': account.get('id'), 'ManagerUPN': account.get('manager', {}).get('userPrincipalName')})
 
@@ -140,7 +160,6 @@ class BaseModule:
         host_data = []
 
         for host in self.Hosts:
-
             host_data.append({'FQDN': host.get('FQDN'), 'Hostname': host.get('Hostname')})
 
         encoded = urllib.parse.quote(json.dumps(host_data))
@@ -148,6 +167,49 @@ class BaseModule:
         kql = f'''let hostEntities = print t = todynamic(url_decode('{encoded}'))
 | mv-expand t
 | project FQDN=tostring(t.FQDN), Hostname=tostring(t.Hostname);
+'''
+        return kql
+    
+    def get_url_kql_table(self):
+        url_data = []
+
+        for url in self.URLs:
+            url_data.append({'Url': url.get('Url')})
+
+        encoded = urllib.parse.quote(json.dumps(url_data))
+
+        kql = f'''let urlEntities = print t = todynamic(url_decode('{encoded}'))
+| mv-expand t
+| project Url=tostring(t.Url);
+'''
+        return kql
+
+    def get_filehash_kql_table(self):
+        hash_data = []
+
+        for hash in self.FileHashes:
+            hash_data.append({'FileHash': hash.get('FileHash'), 'Algorithm': hash.get('Algorithm')})
+
+        encoded = urllib.parse.quote(json.dumps(hash_data))
+
+        kql = f'''let hashEntities = print t = todynamic(url_decode('{encoded}'))
+| mv-expand t
+| project FileHash=tostring(t.FileHash), Algorithm=tostring(t.Algorithm);
+'''
+        return kql
+
+    def get_domain_kql_table(self):
+        
+        domain_data = []
+
+        for domain in self.Domains:
+            domain_data.append({'Domain': domain.get('Domain')})
+
+        encoded = urllib.parse.quote(json.dumps(domain_data))
+
+        kql = f'''let domainEntities = print t = todynamic(url_decode('{encoded}'))
+| mv-expand t
+| project Domain=tostring(t.Domain);
 '''
         return kql
         

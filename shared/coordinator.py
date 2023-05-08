@@ -1,4 +1,4 @@
-from modules import base, kql, watchlist, test
+from modules import base, kql, watchlist, ti, test
 from classes import Response, Error
 
 def initiate_module(module_name, req_body):
@@ -15,7 +15,7 @@ def initiate_module(module_name, req_body):
     elif module_name == 'relatedalerts':
         return_data = Response(body=Error({'Error': 'Module has not yet been migrated to STAT v2'}), statuscode=400)
     elif module_name == 'threatintel':
-        return_data = Response(body=Error({'Error': 'Module has not yet been migrated to STAT v2'}), statuscode=400)
+        return_data = ti.execute_ti_module(req_body)
     elif module_name == 'mcas':
         return_data = Response(body=Error({'Error': 'Module has not yet been migrated to STAT v2'}), statuscode=400)
     elif module_name == 'mde':
