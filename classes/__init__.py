@@ -184,3 +184,42 @@ class WatchlistModule:
         self.EntitiesOnWatchlistCount = 0
         self.WatchlistName = ""
         self.ModuleName = 'WatchlistModule'
+
+class TIModule:
+    '''A Threat Intelligence module object'''
+
+    def __init__(self):
+        self.AnyTIFound = False
+        self.DetailedResults = []
+        self.DomainEntitiesCount = 0
+        self.DomainEntitiesWithTI = 0
+        self.DomainTIFound = False
+        self.FileHashEntitiesCount = 0
+        self.FileHashEntitiesWithTI = 0
+        self.FileHashTIFound = False
+        self.IPEntitiesCount = 0
+        self.IPEntitiesWithTI = 0
+        self.IPTIFound = False
+        self.ModuleName = 'TIModule'
+        self.TotalTIMatchCount = 0
+        self.URLEntitiesCount = 0
+        self.URLEntitiesWithTI = 0
+        self.URLTIFound = False
+
+class RelatedAlertsModule:
+    '''A Related Alerts module object'''
+
+    def __init__(self):
+        self.AllTactics =  []
+        self.AllTacticsCount = 0
+        self.DetailedResults = []
+        self.HighestSeverityAlert = ''
+        self.ModuleName = 'RelatedAlerts'
+        self.RelatedAccountAlertsCount = 0
+        self.RelatedAccountAlertsFound = False
+        self.RelatedAlertsCount = 0
+        self.RelatedAlertsFound = False
+        self.RelatedHostAlertsCount = 0
+        self.RelatedHostAlertsFound = False
+        self.RelatedIPAlertsCount = 0
+        self.RelatedIPAlertsFound = False
