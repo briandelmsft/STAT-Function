@@ -30,6 +30,7 @@ class BaseModule:
     def __init__(self):
         self.Accounts = []
         self.AccountsCount = 0
+        self.Alerts = []
         self.Domains = []
         self.DomainsCount = 0
         self.EntitiesCount = 0
@@ -45,6 +46,7 @@ class BaseModule:
         self.ModuleVersions = {}
         self.OtherEntities = []
         self.OtherEntitiesCount = 0
+        self.RelatedAnalyticRuleIds = []
         self.SentinelRGARMId = ""
         self.TenantDisplayName = ""
         self.TenantId = ""
@@ -59,10 +61,13 @@ class BaseModule:
         self.SentinelRGARMId = "/subscriptions/" + req_body['workspaceInfo']['SubscriptionId'] + "/resourceGroups/" + req_body['workspaceInfo']['ResourceGroupName']
         self.WorkspaceARMId = self.SentinelRGARMId + "/providers/Microsoft.OperationalInsights/workspaces/" + req_body['workspaceInfo']['WorkspaceName']
         self.WorkspaceId = req_body['workspaceId']
+        self.RelatedAnalyticRuleIds = req_body['object']['properties'].get('relatedAnalyticRuleIds', [])
+        self.Alerts = req_body['object']['properties'].get('alerts', [])
 
     def load_from_input(self, basebody):
         self.Accounts = basebody['Accounts']
         self.AccountsCount = basebody['AccountsCount']
+        self.Alerts = basebody.get('Alerts', [])
         self.Domains = basebody['Domains']
         self.DomainsCount = basebody['DomainsCount']
         self.EntitiesCount = basebody['EntitiesCount']
@@ -78,6 +83,7 @@ class BaseModule:
         self.ModuleVersions = basebody['ModuleVersions']
         self.OtherEntities = basebody['OtherEntities']
         self.OtherEntitiesCount = basebody['OtherEntitiesCount']
+        self.RelatedAnalyticRuleIds = basebody.get('RelatedAnalyticRuleIds', [])
         self.SentinelRGARMId = basebody['SentinelRGARMId']
         self.TenantDisplayName = basebody['TenantDisplayName']
         self.TenantId = basebody['TenantId']
@@ -227,6 +233,20 @@ class BaseModule:
         
         return account_list
     
+    def get_alert_ids(self):
+        alert_list = []
+        for alert in self.Alerts:
+            alert_list.append(alert['name'])
+        
+        return alert_list
+    
+    def get_alert_tactics(self):
+        tactics_list = []
+        for alert in self.Alerts:
+            tactics_list = tactics_list + alert['properties']['tactics']
+
+        return tactics_list
+
 class KQLModule:
     '''A KQL module object'''
     
@@ -275,6 +295,7 @@ class RelatedAlertsModule:
         self.AllTactics =  []
         self.AllTacticsCount = 0
         self.DetailedResults = []
+        self.FusionIncident = False
         self.HighestSeverityAlert = ''
         self.ModuleName = 'RelatedAlerts'
         self.RelatedAccountAlertsCount = 0
