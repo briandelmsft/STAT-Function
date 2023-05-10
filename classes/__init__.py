@@ -233,6 +233,13 @@ class BaseModule:
         
         return account_list
     
+    def get_account_sam_list(self):
+        account_list = []
+        for account in self.Accounts:
+            account_list.append(account['onPremisesSamAccountName'])
+
+        return account_list
+    
     def get_alert_ids(self):
         alert_list = []
         for alert in self.Alerts:
@@ -306,3 +313,21 @@ class RelatedAlertsModule:
         self.RelatedHostAlertsFound = False
         self.RelatedIPAlertsCount = 0
         self.RelatedIPAlertsFound = False
+
+class UEBAModule:
+    '''A UEBA module object'''
+    
+    def __init__(self):
+        self.AllEntityEventCount = 0
+        self.AllEntityInvestigationPriorityAverage = float(0)
+        self.AllEntityInvestigationPriorityMax = 0
+        self.AllEntityInvestigationPrioritySum = 0
+        self.AnomaliesFound = False
+        self.AnomalyCount = 0
+        self.AnomalyTactics = []
+        self.AnomalyTacticsCount = 0
+        self.DetailedResults = []
+        self.InvestigationPrioritiesFound = False
+        self.ModuleName = 'UEBAModule'
+        self.ThreatIntelFound = False
+        self.ThreatIntelMatchCount = 0
