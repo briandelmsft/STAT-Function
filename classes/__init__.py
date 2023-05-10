@@ -331,3 +331,10 @@ class UEBAModule:
         self.ModuleName = 'UEBAModule'
         self.ThreatIntelFound = False
         self.ThreatIntelMatchCount = 0
+
+class ScoringModule:
+    '''A Scoring Module object'''
+    
+    def __init__(self):
+        self.DetailedResults = []
+        self.TotalScore = 0

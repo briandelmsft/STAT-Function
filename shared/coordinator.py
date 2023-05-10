@@ -1,4 +1,4 @@
-from modules import base, kql, watchlist, ti, relatedalerts, ueba, test
+from modules import base, kql, watchlist, ti, relatedalerts, scoring, ueba, test
 from classes import Response, Error
 
 def initiate_module(module_name, req_body):
@@ -9,7 +9,7 @@ def initiate_module(module_name, req_body):
     elif module_name == 'kql':
         return_data = kql.execute_kql_module(req_body)
     elif module_name == 'scoring':
-        return_data = Response(body=Error({'Error': 'Module has not yet been migrated to STAT v2'}), statuscode=400)
+        return_data = scoring.execute_scoring_module(req_body)
     elif module_name == 'watchlist':
         return_data = watchlist.execute_watchlist_module(req_body)
     elif module_name == 'relatedalerts':
