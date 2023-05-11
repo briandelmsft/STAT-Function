@@ -76,7 +76,7 @@ def score_module(score:object, module:str, module_body:dict, per_item:bool, mult
     elif module == 'UEBAModule':
         score_ueba(score, module_body, per_item, multiplier, label, mitre_list)
     elif module == 'Custom':
-        raise STATError(f'Module name: {module} is not presently supported by the scoring module in STAT v2.')
+        score_custom(score, module_body, multiplier)
     else:
         raise STATError(f'Incorrectly formatted data or data from an unsupported module was passed to the Scoring Module, module name: {module}')
 
@@ -174,3 +174,10 @@ def score_ueba(score, module_body, per_item, multiplier, label, mitre_list):
         mitre_join = ', '
         score.DetailedResults.append({'Score': ueba_mitre_score, 'ScoreSource': f'{label} - {ueba.AnomalyTacticsCount} Anomaly MITRE Tactics ({mitre_join.join(ueba.AnomalyTactics)})'})
         score.add(ueba_mitre_score)
+
+def score_custom(score, module_body, multiplier):
+
+    for score_item in module_body['ScoringData']:
+        item_score = score_item['Score'] * multiplier
+        score.DetailedResults.append({'Score': item_score, 'ScoreSource': score_item['ScoreLabel']})
+        score.add(item_score)
