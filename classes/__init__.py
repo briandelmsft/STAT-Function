@@ -263,6 +263,11 @@ class KQLModule:
         self.ResultsCount = 0
         self.ResultsFound = False
 
+    def load_from_input(self, body):
+        self.DetailedResults = body['DetailedResults']
+        self.ResultsCount = body['ResultsCount']
+        self.ResultsFound = body['ResultsFound']
+
 class WatchlistModule:
     '''A Watchlist module object'''
     
@@ -273,6 +278,13 @@ class WatchlistModule:
         self.EntitiesOnWatchlistCount = 0
         self.WatchlistName = ""
         self.ModuleName = 'WatchlistModule'
+
+    def load_from_input(self, body):
+        self.DetailedResults = body['DetailedResults']
+        self.EntitiesAnalyzedCount = body['EntitiesAnalyzedCount']
+        self.EntitiesOnWatchlist = body['EntitiesOnWatchlist']
+        self.EntitiesOnWatchlistCount = body['EntitiesOnWatchlistCount']
+        self.WatchlistName = body['WatchlistName']
 
 class TIModule:
     '''A Threat Intelligence module object'''
@@ -295,6 +307,23 @@ class TIModule:
         self.URLEntitiesWithTI = 0
         self.URLTIFound = False
 
+    def load_from_input(self, body):
+        self.AnyTIFound = body['AnyTIFound']
+        self.DetailedResults = body['DetailedResults']
+        self.DomainEntitiesCount = body['DomainEntitiesCount']
+        self.DomainEntitiesWithTI = body['DomainEntitiesWithTI']
+        self.DomainTIFound = body['DomainTIFound']
+        self.FileHashEntitiesCount = body['FileHashEntitiesCount']
+        self.FileHashEntitiesWithTI = body['FileHashEntitiesWithTI']
+        self.FileHashTIFound = body['FileHashTIFound']
+        self.IPEntitiesCount = body['IPEntitiesCount']
+        self.IPEntitiesWithTI = body['IPEntitiesWithTI']
+        self.IPTIFound = body['IPTIFound']
+        self.TotalTIMatchCount = body['TotalTIMatchCount']
+        self.URLEntitiesCount = body['URLEntitiesCount']
+        self.URLEntitiesWithTI = body['URLEntitiesWithTI']
+        self.URLTIFound = body['URLTIFound']       
+
 class RelatedAlertsModule:
     '''A Related Alerts module object'''
 
@@ -314,6 +343,21 @@ class RelatedAlertsModule:
         self.RelatedIPAlertsCount = 0
         self.RelatedIPAlertsFound = False
 
+    def load_from_input(self, body):
+        self.AllTactics =  body['AllTactics']
+        self.AllTacticsCount = body['AllTacticsCount']
+        self.DetailedResults = body['DetailedResults']
+        self.FusionIncident = body['FusionIncident']
+        self.HighestSeverityAlert = body['HighestSeverityAlert']
+        self.RelatedAccountAlertsCount = body['RelatedAccountAlertsCount']
+        self.RelatedAccountAlertsFound = body['RelatedAccountAlertsFound']
+        self.RelatedAlertsCount = body['RelatedAlertsCount']
+        self.RelatedAlertsFound = body['RelatedAlertsFound']
+        self.RelatedHostAlertsCount = body['RelatedHostAlertsCount']
+        self.RelatedHostAlertsFound = body['RelatedHostAlertsFound']
+        self.RelatedIPAlertsCount = body['RelatedIPAlertsCount']
+        self.RelatedIPAlertsFound = body['RelatedIPAlertsFound']
+
 class UEBAModule:
     '''A UEBA module object'''
     
@@ -332,9 +376,26 @@ class UEBAModule:
         self.ThreatIntelFound = False
         self.ThreatIntelMatchCount = 0
 
+    def load_from_input(self, body):
+        self.AllEntityEventCount = body['AllEntityEventCount']
+        self.AllEntityInvestigationPriorityAverage = body['AllEntityInvestigationPriorityAverage']
+        self.AllEntityInvestigationPriorityMax = body['AllEntityInvestigationPriorityMax']
+        self.AllEntityInvestigationPrioritySum = body['AllEntityInvestigationPrioritySum']
+        self.AnomaliesFound = body['AnomaliesFound']
+        self.AnomalyCount = body['AnomalyCount']
+        self.AnomalyTactics = body['AnomalyTactics']
+        self.AnomalyTacticsCount = body['AnomalyTacticsCount']
+        self.DetailedResults = body['DetailedResults']
+        self.InvestigationPrioritiesFound = body['InvestigationPrioritiesFound']
+        self.ThreatIntelFound = body['ThreatIntelFound']
+        self.ThreatIntelMatchCount = body['ThreatIntelMatchCount']       
+
 class ScoringModule:
     '''A Scoring Module object'''
     
     def __init__(self):
         self.DetailedResults = []
         self.TotalScore = 0
+
+    def add(self, score):
+        self.TotalScore = self.TotalScore + score

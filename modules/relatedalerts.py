@@ -66,7 +66,7 @@ SecurityAlert
     for alert in results:
         tactics = alert.get('Tactics').split(',')
         for tactic in tactics:
-            tactics_list.append(tactic.strip())
+            tactics_list.append(tactic.strip().replace(' ', ''))
 
     tactics_list = list(set(tactics_list))
 
