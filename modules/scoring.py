@@ -65,7 +65,7 @@ def score_module(score:object, module:str, module_body:dict, per_item:bool, mult
         raise STATError(f'Module name: {module} is not presently supported by the scoring module in STAT v2.')
     elif module == 'KQLModule':
         score_kql(score, module_body, per_item, multiplier, label)
-    elif module == 'MCASModule':
+    elif module == 'MDCAModule' or module == 'MCASModule':
         raise STATError(f'Module name: {module} is not presently supported by the scoring module in STAT v2.')
     elif module == 'MDEModule':
         raise STATError(f'Module name: {module} is not presently supported by the scoring module in STAT v2.')

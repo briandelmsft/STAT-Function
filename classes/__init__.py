@@ -399,3 +399,64 @@ class ScoringModule:
 
     def add(self, score):
         self.TotalScore = self.TotalScore + score
+
+class AADModule:
+    '''An AAD Module object'''
+
+    def __init__(self):
+        self.AnalyzedEntities = 0
+        self.FailedMFATotalCount = 0
+        self.HighestRiskLevel = ''
+        self.MFAFraudTotalCount = 0
+        self.ModuleName = 'AADRisksModule'
+        self.DetailedResults = []
+
+    def load_from_input(self, body):
+        self.AnalyzedEntities = body['AnalyzedEntities']
+        self.FailedMFATotalCount = body['FailedMFATotalCount']
+        self.HighestRiskLevel = body['HighestRiskLevel']
+        self.MFAFraudTotalCount = body['MFAFraudTotalCount']
+        self.DetailedResults = body['DetailedResults']
+
+class FileModule:
+    '''A File Module object'''
+    
+    def __init__(self):
+        self.AnalyzedEntities = 0
+        self.EntitiesAttachmentCount = 0
+        self.HashesInvalidSignatureCount = 0
+        self.HashesLinkedToThreatCount = 0
+        self.HashesNotMicrosoftSignedCount = 0
+        self.HashesThreatList = []
+        self.MaximumGlobalPrevalence = 0
+        self.MinimumGlobalPrevalence = 0
+        self.ModuleName = 'FileModule'
+        self.DetailedResults = []
+
+    def load_from_input(self, body):
+        self.AnalyzedEntities = body['AnalyzedEntities']
+        self.EntitiesAttachmentCount = body['EntitiesAttachmentCount']
+        self.HashesInvalidSignatureCount = body['HashesInvalidSignatureCount']
+        self.HashesLinkedToThreatCount = body['HashesLinkedToThreatCount']
+        self.HashesNotMicrosoftSignedCount = body['HashesNotMicrosoftSignedCount']
+        self.HashesThreatList = body['HashesThreatList']
+        self.MaximumGlobalPrevalence = body['MaximumGlobalPrevalence']
+        self.MinimumGlobalPrevalence = body['MinimumGlobalPrevalence']
+        self.DetailedResults = body['DetailedResults']
+
+class MDCAModule:
+    '''A Microsoft Defender for Cloud Apps Module object'''
+    
+    def __init__(self):
+        self.AboveThreholdCount = 0
+        self.AnalyzedEntities = 0
+        self.DetailedResults = []
+        self.MaximumScore = 0
+        self.ModuleName = 'MDCAModule'
+
+    def load_from_input(self, body):
+        self.AboveThreholdCount = body['AboveThreholdCount']
+        self.AnalyzedEntities = body['AnalyzedEntities']
+        self.DetailedResults = body['DetailedResults']
+        self.MaximumScore = body['MaximumScore']
+        
