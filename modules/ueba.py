@@ -32,7 +32,7 @@ let userAnomalies = Anomalies
 | summarize AnomalyTactics=make_set(Tactics), AnomalyCount=dcount(Id, 4)
 | extend UserPrincipalName="Total";
 userDetails
-| summarize InvestigationPrioritySum=sum(InvestigationPrioritySum), InvestigationPriorityAverage=avg(InvestigationPriorityAverage), InvestigationPriorityMax=max(InvestigationPriorityMax), ThreatIntelMatches=sum(ThreatIntelMatches), EventCount=sum(EventCount)
+| summarize InvestigationPrioritySum=sum(InvestigationPrioritySum), InvestigationPriorityAverage=avg(InvestigationPriorityAverage), InvestigationPriorityMax=coalesce(max(InvestigationPriorityMax),int(0)), ThreatIntelMatches=sum(ThreatIntelMatches), EventCount=sum(EventCount)
 | extend UserPrincipalName="Total"
 | join kind=leftouter userAnomalies on UserPrincipalName
 | extend AnomalyTacticsCount = toint(array_length(AnomalyTactics))

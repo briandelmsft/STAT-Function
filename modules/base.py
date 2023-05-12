@@ -106,8 +106,12 @@ def append_other_entities(entities):
         base_object.OtherEntities.append({'RawEntity': entity})
 
 def get_account_by_upn_or_id(account, attributes, properties):
-    user_info = json.loads(rest.rest_call_get(api='msgraph', path='/v1.0/users/' + account + '?$select=' + attributes).content)
-    append_account_details(account, user_info, properties)
+    try:
+        user_info = json.loads(rest.rest_call_get(api='msgraph', path='/v1.0/users/' + account + '?$select=' + attributes).content)
+    except STATError as e:
+        base_object.add_account_entity({'RawEntity': properties})
+    else:
+        append_account_details(account, user_info, properties)
 
 def get_account_by_dn(account, attributes):
     None

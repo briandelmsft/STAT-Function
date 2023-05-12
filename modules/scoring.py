@@ -158,7 +158,7 @@ def score_ueba(score, module_body, per_item, multiplier, label, mitre_list):
 
     module_score = 0
          
-    if per_item:
+    if per_item and ueba.DetailedResults:
         module_score = data.sum_column_by_key(ueba.DetailedResults, 'InvestigationPriorityMax') * multiplier
     else:
         module_score = ueba.AllEntityInvestigationPriorityMax * multiplier

@@ -74,12 +74,22 @@ def acquire_token(api):
 def rest_call_get(api, path):
     token = token_cache(api)
     url = get_endpoint(api) + path
-    return requests.get(url=url, headers={"Authorization": "Bearer " + token.token})
+    response = requests.get(url=url, headers={"Authorization": "Bearer " + token.token})
+
+    if response.status_code >= 300:
+        raise STATError(f'The API call to {api} with path {path} failed with status {response.status_code}', source_error={'status_code': {response.status_code}, 'reason': {response.reason}})
+    
+    return response
 
 def rest_call_post(api, path, body):
     token = token_cache(api)
     url = get_endpoint(api) + path
-    return requests.post(url=url, json=body, headers={"Authorization": "Bearer " + token.token})
+    response = requests.post(url=url, json=body, headers={"Authorization": "Bearer " + token.token})
+
+    if response.status_code >= 300:
+        raise STATError(f'The API call to {api} with path {path} failed with status {response.status_code}', source_error={'status_code': {response.status_code}, 'reason': {response.reason}})
+    
+    return response
 
 def execute_la_query(workspaceid:str, query:str, lookbackindays:int):
     token = token_cache('la')
