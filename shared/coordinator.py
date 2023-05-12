@@ -1,4 +1,4 @@
-from modules import base, kql, watchlist, ti, relatedalerts, scoring, ueba, test
+from modules import base, kql, watchlist, ti, relatedalerts, scoring, ueba, playbook, oof, test
 from classes import Response, Error
 
 def initiate_module(module_name, req_body):
@@ -27,9 +27,9 @@ def initiate_module(module_name, req_body):
     elif module_name == 'ueba':
         return_data = ueba.execute_ueba_module(req_body)
     elif module_name == 'oofmodule':
-        return_data = Response(body=Error({'Error': 'Module has not yet been migrated to STAT v2'}), statuscode=400)
+        return_data = oof.execute_oof_module(req_body)
     elif module_name == 'runplaybook':
-        return_data = Response(body=Error({'Error': 'Module has not yet been migrated to STAT v2'}), statuscode=400)
+        return_data = playbook.execute_playbook_module(req_body)
     elif module_name == 'test':
         return_data = Response(body=test.execute_test_module(req_body))
     else:

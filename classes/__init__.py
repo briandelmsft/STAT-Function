@@ -459,4 +459,22 @@ class MDCAModule:
         self.AnalyzedEntities = body['AnalyzedEntities']
         self.DetailedResults = body['DetailedResults']
         self.MaximumScore = body['MaximumScore']
+
+class RunPlaybook:
+    '''A RunPlaybook module object'''
+
+    def __init__(self):
+        self.LogicAppArmId = ''
+        self.TenantId = ''
+        self.PlaybookName = ''
+        self.IncidentArmId = ''
         
+class OOFModule:
+    '''An Out of Office module object'''
+    def __init__(self):
+        self.AllUsersInOffice = True
+        self.AllUsersOutOfOffice = False
+        self.DetailedResults = []
+        self.UsersInOffice = 0
+        self.UsersOutOfOffice = 0
+        self.UsersUnknown = 0
