@@ -52,12 +52,12 @@ def enrich_ips (entities, get_geo):
     for ip in ip_entities:
         if get_geo:
             path = base_object.SentinelRGARMId + "/providers/Microsoft.SecurityInsights/enrichment/ip/geodata/?api-version=2023-04-01-preview&ipAddress=" + ip['properties']['address']
-            #try:
-            response = rest.rest_call_get(api='arm', path=path)
-            #except STATError:
-            #    base_object.add_ip_entity(address=ip['properties']['address'], geo_data={}, rawentity=ip['properties'])
-            #else:
-            base_object.add_ip_entity(address=ip['properties']['address'], geo_data=json.loads(response.content), rawentity=ip['properties'])
+            try:
+                response = rest.rest_call_get(api='arm', path=path)
+            except STATError:
+                base_object.add_ip_entity(address=ip['properties']['address'], geo_data={}, rawentity=ip['properties'])
+            else:
+                base_object.add_ip_entity(address=ip['properties']['address'], geo_data=json.loads(response.content), rawentity=ip['properties'])
         else:
             base_object.add_ip_entity(address=ip['properties']['address'], geo_data={}, rawentity=ip['properties'])
 
