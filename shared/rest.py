@@ -77,7 +77,7 @@ def rest_call_get(api, path):
     response = requests.get(url=url, headers={"Authorization": "Bearer " + token.token})
 
     if response.status_code >= 300:
-        raise STATError(f'The API call to {api} with path {path} failed with status {response.status_code}', source_error={'status_code': {response.status_code}, 'reason': {response.reason}})
+        raise STATError(f'The API call to {api} with path {path} failed with status {response.status_code}', source_error={'status_code': int(response.status_code), 'reason': str(response.reason)})
     
     return response
 
@@ -87,7 +87,7 @@ def rest_call_post(api, path, body):
     response = requests.post(url=url, json=body, headers={"Authorization": "Bearer " + token.token})
 
     if response.status_code >= 300:
-        raise STATError(f'The API call to {api} with path {path} failed with status {response.status_code}', source_error={'status_code': {response.status_code}, 'reason': {response.reason}})
+        raise STATError(f'The API call to {api} with path {path} failed with status {response.status_code}', source_error={'status_code': int(response.status_code), 'reason': str(response.reason)})
     
     return response
 
