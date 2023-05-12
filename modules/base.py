@@ -73,6 +73,20 @@ def enrich_accounts(entities):
             get_account_by_upn_or_id(properties['aadUserId'], attributes, properties)
         elif properties.get('upnSuffix'):
             get_account_by_upn_or_id(properties['accountName'] + '@' + properties['upnSuffix'], attributes, properties)
+        elif properties.get('sid'):
+            get_account_by_sid(properties['sid'], attributes, properties)
+        elif properties.get('ntDomain') and properties.get('accountName'):
+            get_account_by_samaccountname(properties['accountName'], attributes, properties)
+        else:
+            if properties.get('friendlyName').__contains__('@'):
+                get_account_by_upn_or_id(properties['friendlyName'], attributes, properties)
+            elif properties.get('friendlyName').__contains__('S-1-'):
+                get_account_by_sid(properties['friendlyName'], attributes, properties)
+            elif properties.get('friendlyName').__contains__('CN='):
+                get_account_by_dn(properties['friendlyName'], attributes, properties)
+            else:
+                get_account_by_samaccountname(properties['friendlyName'], attributes, properties)
+
 
 def enrich_domains(entities):
     domain_entities = list(filter(lambda x: x['kind'].lower() == 'dnsresolution', entities))
@@ -112,30 +126,81 @@ def append_other_entities(entities):
 def get_account_by_upn_or_id(account, attributes, properties):
     try:
         user_info = json.loads(rest.rest_call_get(api='msgraph', path='/v1.0/users/' + account + '?$select=' + attributes).content)
-    except STATError as e:
-        base_object.add_account_entity({'RawEntity': properties})
+    except STATError:
+        if account.__contains__('@'):
+            get_account_by_mail(account, attributes, properties)
+        else:
+            base_object.add_account_entity({'RawEntity': properties})
     else:
         append_account_details(account, user_info, properties)
 
-def get_account_by_dn(account, attributes):
-    None
+def get_account_by_mail(account, attributes, properties):
+    try:
+        user_info = json.loads(rest.rest_call_get(api='msgraph', path=f'''/v1.0/users?$filter=(mail%20eq%20'{account}')&$select={attributes}''').content)
+    except STATError:
+        base_object.add_account_entity({'RawEntity': properties})
+    else:
+        if user_info['value']:
+            append_account_details(account, user_info['value'][0], properties)
+        else:
+            base_object.add_account_entity({'RawEntity': properties})
 
-def get_account_by_sid(account, attributes):
-    None
+def get_account_by_dn(account, attributes, properties):
 
-def get_account_by_samaccountname(account, attributes):
-    None
+    query = f'''IdentityInfo
+| where OnPremisesDistinguishedName =~ '{account}'
+| summarize arg_max(TimeGenerated, *) by OnPremisesDistinguishedName
+| project AccountUPN'''
+
+    results = rest.execute_la_query(base_object.WorkspaceId, query, 14)
+    if results:
+        get_account_by_upn_or_id(results[0]['AccountUPN'], attributes, properties)
+    else:
+        base_object.add_account_entity({'RawEntity': properties})
+
+def get_account_by_sid(account, attributes, properties):
+    try:
+        user_info = json.loads(rest.rest_call_get(api='msgraph', path=f'''/v1.0/users?$filter=(onPremisesSecurityIdentifier%20eq%20'{account}')&$select={attributes}''').content)
+    except STATError:
+        base_object.add_account_entity({'RawEntity': properties})
+    else:
+        if user_info['value']:
+            append_account_details(account, user_info['value'][0], properties)
+        else:
+            base_object.add_account_entity({'RawEntity': properties})
+
+def get_account_by_samaccountname(account, attributes, properties):
+    query = f'''IdentityInfo
+| where AccountName =~ '{account}'
+| summarize arg_max(TimeGenerated, *) by AccountName
+| project AccountUPN'''
+
+    results = rest.execute_la_query(base_object.WorkspaceId, query, 14)
+    if results:
+        get_account_by_upn_or_id(results[0]['AccountUPN'], attributes, properties)
+    else:
+        base_object.add_account_entity({'RawEntity': properties})
 
 def append_account_details(account, user_info, raw_entity):
 
-    assigned_roles = get_account_roles(user_info['id'])
-    security_info = get_security_info(user_info['userPrincipalName'])
+    assigned_roles = ['Unavailable']
+    security_info = {}
+    
+    try: 
+        assigned_roles = get_account_roles(user_info['id'])
+    except:
+        pass
+    
+    try:
+        security_info = get_security_info(user_info['userPrincipalName'])
+    except:
+        pass
 
     user_info['AssignedRoles'] = assigned_roles
-    user_info['isAADPrivileged'] = bool(assigned_roles)
-    user_info['isMfaRegistered'] = security_info['isMfaRegistered']
-    user_info['isSSPREnabled'] = security_info['isEnabled']
-    user_info['isSSPRRegistered'] = security_info['isRegistered']
+    user_info['isAADPrivileged'] = bool(list(filter(lambda x: x != 'Unknown', assigned_roles)))
+    user_info['isMfaRegistered'] = security_info.get('isMfaRegistered', 'Unknown')
+    user_info['isSSPREnabled'] = security_info.get('isEnabled', 'Unknown')
+    user_info['isSSPRRegistered'] = security_info.get('isRegistered', 'Unknown')
     user_info['RawEntity'] = raw_entity
     
     base_object.add_account_entity(user_info)
