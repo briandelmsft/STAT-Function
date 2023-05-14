@@ -56,7 +56,7 @@ def execute_oof_module (req_body):
         
         html_table = data.list_to_html_table(oof.DetailedResults)
 
-        comment = f'''A total of {oof.AllUsersOutOfOffice} users have out of office messages set.<br>{html_table}'''
+        comment = f'''A total of {oof.UsersOutOfOffice} users have out of office messages set.<br>{html_table}'''
         comment_result = rest.add_incident_comment(base_object.IncidentARMId, comment)
 
     if req_body.get('AddIncidentTask', False) and oof.UsersOutOfOffice > 0:
