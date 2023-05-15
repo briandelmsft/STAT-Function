@@ -72,6 +72,7 @@ def append_unknown(oof, upn):
 
 def append_enabled(oof, upn, internal, external):
     clean_html = re.compile('<.*?>')
-    int_msg = re.sub(clean_html, '', internal)
-    ext_msg = re.sub(clean_html, '', external)
+    replace_nbsp = re.compile('&nbsp;|\\n')
+    int_msg = re.sub(replace_nbsp, ' ', re.sub(clean_html, '', internal))
+    ext_msg = re.sub(replace_nbsp, ' ', re.sub(clean_html, '', external))
     oof.DetailedResults.append({'ExternalMessage': ext_msg, 'InternalMessage': int_msg, 'OOFStatus': 'enabled', 'UPN': upn})
