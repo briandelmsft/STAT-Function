@@ -1,5 +1,5 @@
 from modules import base, kql, watchlist, ti, relatedalerts, scoring, ueba, playbook, oof, aadrisks, test
-from classes import Response, Error
+from classes import Response, STATError
 
 def initiate_module(module_name, req_body):
     '''Call the appropriate STAT Module.'''
@@ -17,11 +17,11 @@ def initiate_module(module_name, req_body):
     elif module_name == 'threatintel':
         return_data = ti.execute_ti_module(req_body)
     elif module_name == 'mcas':
-        return_data = Response(body=Error({'Error': 'Module has not yet been migrated to STAT v2'}), statuscode=400)
+        raise STATError(error='MDCA Module has not yet been migrated to STAT v2', status_code=400)
     elif module_name == 'mde':
-        return_data = Response(body=Error({'Error': 'Module has not yet been migrated to STAT v2'}), statuscode=400)
+        raise STATError(error='MDE Module has not yet been migrated to STAT v2', status_code=400)
     elif module_name == 'file':
-        return_data = Response(body=Error({'Error': 'Module has not yet been migrated to STAT v2'}), statuscode=400)
+        raise STATError(error='File Module has not yet been migrated to STAT v2', status_code=400)
     elif module_name == 'aadrisks':
         return_data = aadrisks.execute_aadrisks_module(req_body)
     elif module_name == 'ueba':
@@ -33,6 +33,6 @@ def initiate_module(module_name, req_body):
     elif module_name == 'test':
         return_data = Response(body=test.execute_test_module(req_body))
     else:
-        return_data = Response(body=Error({'Error': 'Invalid Module'}), statuscode=400)
+        raise STATError(error=f'Invalid module name: {module_name}.', status_code=400)
 
     return return_data

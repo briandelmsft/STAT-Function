@@ -10,12 +10,6 @@ class Response:
         self.statuscode = statuscode
         self.contenttype = contenttype
 
-class Error:
-    '''An error'''
-
-    def __init__(self, error):
-        self.error = error
-
 class STATError(Exception):
     '''A handled STAT exception'''
 

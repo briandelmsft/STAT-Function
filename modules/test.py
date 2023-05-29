@@ -1,4 +1,4 @@
-from classes import BaseModule, Error, STATError
+from classes import BaseModule, STATError
 from shared import rest, data
 import json
 
@@ -35,5 +35,4 @@ def execute_test_module (req_body):
 
     #results = rest.execute_la_query(base_object.WorkspaceId, query, 7)
 
-
-    return Error({'Error': f'Test completed successfully: {out}'})
+    raise STATError(error=f'Test completed successfully: {out}')
