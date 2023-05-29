@@ -36,31 +36,31 @@ def execute_scoring_module (req_body):
 
     return Response(score)
 
-def score_module(score:object, module:str, module_body:dict, per_item:bool, multiplier:int, label:str):
+def score_module(score:ScoringModule, module:str, module_body:dict, per_item:bool, multiplier:int, label:str):
 
     mitre_list = [
         {'Tactic': 'Reconnaissance', 'Score': 2},
         {'Tactic': 'ResourceDevelopment', 'Score': 3},
         {'Tactic': 'InitialAccess', 'Score': 5},
         {'Tactic': 'Execution', 'Score': 5},
-        {'Tactic': 'Persistence', 'Score': 8},
-        {'Tactic': 'PrivilegeEscalation', 'Score': 10},
-        {'Tactic': 'DefenseEvasion', 'Score': 10},
-        {'Tactic': 'CredentialAccess', 'Score': 10},
+        {'Tactic': 'Persistence', 'Score': 6},
+        {'Tactic': 'PrivilegeEscalation', 'Score': 8},
+        {'Tactic': 'DefenseEvasion', 'Score': 8},
+        {'Tactic': 'CredentialAccess', 'Score': 8},
         {'Tactic': 'Discovery', 'Score': 8},
-        {'Tactic': 'LateralMovement', 'Score': 10},
-        {'Tactic': 'Collection', 'Score': 10},
+        {'Tactic': 'LateralMovement', 'Score': 9},
+        {'Tactic': 'Collection', 'Score': 9},
         {'Tactic': 'CommandAndControl', 'Score': 10},
-        {'Tactic': 'Exfiltration', 'Score': 15},
-        {'Tactic': 'Impact', 'Score': 15},
-        {'Tactic': 'InhibitResponseFunction', 'Score': 15},
-        {'Tactic': 'ImpairProcessControl', 'Score': 15}
+        {'Tactic': 'Exfiltration', 'Score': 12},
+        {'Tactic': 'Impact', 'Score': 12},
+        {'Tactic': 'InhibitResponseFunction', 'Score': 12},
+        {'Tactic': 'ImpairProcessControl', 'Score': 12}
     ]
 
     if module == 'WatchlistModule':
         score_watchlist(score, module_body, per_item, multiplier, label)
     elif module == 'AADRisksModule':
-        raise STATError(f'Module name: {module} is not presently supported by the scoring module in STAT v2.')
+        score_aad(score, module_body, per_item, multiplier, label)
     elif module == 'FileModule':
         raise STATError(f'Module name: {module} is not presently supported by the scoring module in STAT v2.')
     elif module == 'KQLModule':
@@ -80,7 +80,7 @@ def score_module(score:object, module:str, module_body:dict, per_item:bool, mult
     else:
         raise STATError(f'Incorrectly formatted data or data from an unsupported module was passed to the Scoring Module, module name: {module}')
 
-def score_kql(score, module_body, per_item, multiplier, label):
+def score_kql(score:ScoringModule, module_body, per_item, multiplier, label):
     kql = KQLModule()
     kql.load_from_input(module_body)
          
@@ -91,10 +91,9 @@ def score_kql(score, module_body, per_item, multiplier, label):
     else:
         module_score = 0
 
-    score.DetailedResults.append({'Score': module_score, 'ScoreSource': label})
-    score.add(module_score)
+    score.append_score(score=module_score, label=label)
 
-def score_watchlist(score, module_body, per_item, multiplier, label):
+def score_watchlist(score:ScoringModule, module_body, per_item, multiplier, label):
     watchlist = WatchlistModule()
     watchlist.load_from_input(module_body)
          
@@ -105,10 +104,9 @@ def score_watchlist(score, module_body, per_item, multiplier, label):
     else:
         module_score = 0
 
-    score.DetailedResults.append({'Score': module_score, 'ScoreSource': label})
-    score.add(module_score)
+    score.append_score(score=module_score, label=label)
 
-def score_ti(score, module_body, per_item, multiplier, label):
+def score_ti(score:ScoringModule, module_body, per_item, multiplier, label):
     ti = TIModule()
     ti.load_from_input(module_body)
          
@@ -119,8 +117,7 @@ def score_ti(score, module_body, per_item, multiplier, label):
     else:
         module_score = 0
 
-    score.DetailedResults.append({'Score': module_score, 'ScoreSource': label})
-    score.add(module_score)
+    score.append_score(score=module_score, label=label)
 
 def score_alerts(score:ScoringModule, module_body, per_item, multiplier, label, mitre_list):
     alerts = RelatedAlertsModule()
@@ -142,17 +139,15 @@ def score_alerts(score:ScoringModule, module_body, per_item, multiplier, label, 
     else:
         module_score = 0
 
-    score.DetailedResults.append({'Score': module_score, 'ScoreSource': label})
-    score.add(module_score)
+    score.append_score(score=module_score, label=label)
 
     if alerts.AllTacticsCount > 0:
         scored_tactics = data.join_lists(left_list={'Tactic': alerts.AllTactics}, right_list=mitre_list, left_key='Tactic', right_key='Tactic', kind='left', fill_nan=8)
         mitre_score = data.sum_column_by_key(scored_tactics, 'Score') * multiplier
         mitre_join = ', '
-        score.DetailedResults.append({'Score': mitre_score, 'ScoreSource': f'{label} - {alerts.AllTacticsCount} MITRE Tactics ({mitre_join.join(alerts.AllTactics)})'})
-        score.add(mitre_score)
+        score.append_score(score=mitre_score, label=f'{label} - {alerts.AllTacticsCount} MITRE Tactics ({mitre_join.join(alerts.AllTactics)})')
     
-def score_ueba(score, module_body, per_item, multiplier, label, mitre_list):
+def score_ueba(score:ScoringModule, module_body, per_item, multiplier, label, mitre_list):
     ueba = UEBAModule()
     ueba.load_from_input(module_body)
 
@@ -165,19 +160,37 @@ def score_ueba(score, module_body, per_item, multiplier, label, mitre_list):
 
     module_score += 10 * ueba.ThreatIntelMatchCount * multiplier
 
-    score.DetailedResults.append({'Score': module_score, 'ScoreSource': label})
-    score.add(module_score)
+    score.append_score(score=module_score, label=label)    
 
     if ueba.AnomalyTactics:
         ueba_mitre = data.join_lists(left_list={'Tactic': ueba.AnomalyTactics}, right_list=mitre_list, left_key='Tactic', right_key='Tactic', kind='left', fill_nan=8)
         ueba_mitre_score = int((data.sum_column_by_key(ueba_mitre, 'Score') / 2) * multiplier)
         mitre_join = ', '
-        score.DetailedResults.append({'Score': ueba_mitre_score, 'ScoreSource': f'{label} - {ueba.AnomalyTacticsCount} Anomaly MITRE Tactics ({mitre_join.join(ueba.AnomalyTactics)})'})
-        score.add(ueba_mitre_score)
+        score.append_score(score=ueba_mitre_score, label=f'{label} - {ueba.AnomalyTacticsCount} Anomaly MITRE Tactics ({mitre_join.join(ueba.AnomalyTactics)})')
 
-def score_custom(score, module_body, multiplier):
+def score_aad(score:ScoringModule, module_body, per_item, multiplier, label):
+    aad = AADModule()
+    aad.load_from_input(module_body)
+
+    score_key = {
+        'high': 10,
+        'medium': 5,
+        'low': 3
+    }
+         
+    if per_item and aad.DetailedResults:
+        for user in aad.DetailedResults:
+            module_score = score_key.get(user['UserRiskLevel'].lower(), 0) * multiplier
+            upn = user['UserPrincipalName']
+            score.append_score(score=module_score, label=f'{label} - {upn}')
+    elif aad.DetailedResults:
+        module_score = score_key.get(aad.HighestRiskLevel.lower(), 0) * multiplier
+        score.append_score(score=module_score, label=label)
+    else:
+        score.append_score(score=0, label=f'{label} - No User Entities')
+
+def score_custom(score:ScoringModule, module_body, multiplier):
 
     for score_item in module_body['ScoringData']:
         item_score = score_item['Score'] * multiplier
-        score.DetailedResults.append({'Score': item_score, 'ScoreSource': score_item['ScoreLabel']})
-        score.add(item_score)
+        score.append_score(score=item_score, label=score_item['ScoreLabel'])

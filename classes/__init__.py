@@ -397,8 +397,10 @@ class ScoringModule:
         self.DetailedResults = []
         self.TotalScore = 0
 
-    def add(self, score):
-        self.TotalScore = self.TotalScore + score
+    def append_score(self, score, label):
+        '''Adds to the TotalScore and DetailedResults list'''
+        self.TotalScore += score
+        self.DetailedResults.append({'Score': score, 'ScoreSource': label})
 
 class AADModule:
     '''An AAD Module object'''
