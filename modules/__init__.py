@@ -17,8 +17,10 @@ def main(req: func.HttpRequest, context: func.Context) -> func.HttpResponse:
     try:
         return_data = coordinator.initiate_module(module_name=module_name, req_body=req_body)
     except STATError as e:
-        return func.HttpResponse(json.dumps({'Error': e.error, 'InvocationId': context.invocation_id, 'SourceError': e.source_error}), status_code=e.status_code, mimetype='applicaiton/json')
+        logging.error(msg={'Error': e.error, 'SourceError': e.source_error}, stack_info=True)
+        return func.HttpResponse(json.dumps({'Error': e.error, 'InvocationId': context.invocation_id, 'SourceError': e.source_error}), status_code=e.status_code, mimetype='application/json')
     except:
-        return func.HttpResponse(json.dumps({'Error': 'Module processing failed, an unknown exception has occurred.', 'InvocationId': context.invocation_id}), status_code=400, mimetype='applicaiton/json')
-
+        logging.error(msg={'Error': 'Module processing failed, an unknown exception has occurred.'}, stack_info=True)
+        return func.HttpResponse(json.dumps({'Error': 'Module processing failed, an unknown exception has occurred.', 'InvocationId': context.invocation_id}), status_code=400, mimetype='application/json')
+    
     return func.HttpResponse(body=json.dumps(return_data.body.__dict__), status_code=return_data.statuscode, mimetype=return_data.contenttype)
