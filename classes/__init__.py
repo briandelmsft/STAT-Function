@@ -444,14 +444,14 @@ class MDCAModule:
     '''A Microsoft Defender for Cloud Apps Module object'''
     
     def __init__(self):
-        self.AboveThreholdCount = 0
+        self.AboveThresholdCount = 0
         self.AnalyzedEntities = 0
         self.DetailedResults = []
         self.MaximumScore = 0
         self.ModuleName = 'MDCAModule'
 
     def load_from_input(self, body):
-        self.AboveThreholdCount = body['AboveThreholdCount']
+        self.AboveThresholdCount = body['AboveThresholdCount']
         self.AnalyzedEntities = body['AnalyzedEntities']
         self.DetailedResults = body['DetailedResults']
         self.MaximumScore = body['MaximumScore']
@@ -474,3 +474,26 @@ class OOFModule:
         self.UsersInOffice = 0
         self.UsersOutOfOffice = 0
         self.UsersUnknown = 0
+
+class MDEModule:
+    '''An MDE module object'''
+    def __init__(self):
+        self.AnalyzedEntities = 0
+        self.IPsHighestExposureLevel = ''
+        self.IPsHighestRiskScore = ''
+        self.UsersHighestExposureLevel = ''
+        self.UsersHighestRiskScore = ''
+        self.HostsHighestExposureLevel = ''
+        self.HostsHighestRiskScore = ''
+        self.ModuleName = 'MDEModule'
+        self.DetailedResults = []
+
+    def load_from_input(self, body):
+        self.AnalyzedEntities = body['AnalyzedEntities']
+        self.IPsHighestExposureLevel = body['IPsHighestExposureLevel']
+        self.IPsHighestRiskScore = body['IPsHighestRiskScore']
+        self.UsersHighestExposureLevel = body['UsersHighestExposureLevel']
+        self.UsersHighestRiskScore = body['UsersHighestRiskScore']
+        self.HostsHighestExposureLevel = body['HostsHighestExposureLevel']
+        self.HostsHighestRiskScore = body['HostsHighestRiskScore']
+        self.DetailedResults = body['DetailedResults']

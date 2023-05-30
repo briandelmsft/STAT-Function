@@ -62,13 +62,13 @@ def score_module(score:ScoringModule, module:str, module_body:dict, per_item:boo
     elif module == 'AADRisksModule':
         score_aad(score, module_body, per_item, multiplier, label)
     elif module == 'FileModule':
-        raise STATError(f'Module name: {module} is not presently supported by the scoring module in STAT v2.')
+        score_file(score, module_body, multiplier, label)
     elif module == 'KQLModule':
         score_kql(score, module_body, per_item, multiplier, label)
     elif module == 'MDCAModule' or module == 'MCASModule':
-        raise STATError(f'Module name: {module} is not presently supported by the scoring module in STAT v2.')
+        score_mdca(score, module_body, per_item, multiplier, label)
     elif module == 'MDEModule':
-        raise STATError(f'Module name: {module} is not presently supported by the scoring module in STAT v2.')
+        score_mde(score, module_body, per_item, multiplier, label)
     elif module == 'RelatedAlerts':
         score_alerts(score, module_body, per_item, multiplier, label, mitre_list)
     elif module == 'TIModule':
@@ -188,6 +188,52 @@ def score_aad(score:ScoringModule, module_body, per_item, multiplier, label):
         score.append_score(score=module_score, label=label)
     else:
         score.append_score(score=0, label=f'{label} - No User Entities')
+
+def score_file(score:ScoringModule, module_body, multiplier, label):
+    file = FileModule()
+    file.load_from_input(module_body)
+
+    if file.HashesLinkedToThreatCount > 0:
+        score.append_score((file.HashesLinkedToThreatCount * 10 * multiplier), f'{label} - Hash linked to threat')
+
+    if file.HashesInvalidSignatureCount > 0:
+        score.append_score((file.HashesInvalidSignatureCount * 5 * multiplier), f'{label} - Invalid Signatures')
+
+    if file.HashesLinkedToThreatCount == 0 and file.HashesInvalidSignatureCount == 0:
+        score.append_score(0, f'{label} - No File threats found')
+
+def score_mdca(score:ScoringModule, module_body, per_item, multiplier, label):
+    mdca = MDCAModule()
+    mdca.load_from_input(module_body)
+    
+    if per_item:
+        score.append_score((mdca.AboveThresholdCount * 10 * multiplier), label)
+    elif mdca.AboveThresholdCount > 0:
+        score.append_score((10 * multiplier), label)
+    else:
+        score.append_score(0, label)
+
+def score_mde(score:ScoringModule, module_body, per_item, multiplier, label):
+    mde = MDEModule()
+    mde.load_from_input(module_body)
+
+    score_key = {
+        'high': 10,
+        'medium': 5,
+        'low': 3,
+        'informational': 1,
+    }
+
+    user_score = score_key.get(mde.UsersHighestRiskScore.lower(), 0)
+    host_score = score_key.get(mde.HostsHighestRiskScore.lower(), 0)
+    ip_score = score_key.get(mde.IPsHighestRiskScore.lower(), 0)
+
+    if per_item:
+        total_score = (user_score + host_score + ip_score) * multiplier
+    else:
+        total_score = max(user_score, host_score, ip_score) * multiplier
+
+    score.append_score(total_score, label)
 
 def score_custom(score:ScoringModule, module_body, multiplier):
 
