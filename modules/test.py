@@ -11,6 +11,8 @@ def execute_test_module (req_body):
     #ip_entities = base_object.get_ip_kql_table()
     #account_entities = base_object.get_account_kql_table()
 
+    test = req_body['fail']
+
     raise STATError('Test from test module', source_error={'TestKey': 'TestValue', 'TestKey2': 'TestValue2'})
 
     list_data = req_body['ListData']

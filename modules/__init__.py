@@ -1,4 +1,5 @@
 import logging
+import traceback as tb
 import json
 import azure.functions as func
 from classes import STATError
@@ -11,16 +12,21 @@ def main(req: func.HttpRequest, context: func.Context) -> func.HttpResponse:
     try:
         req_body = req.get_json()
     except ValueError:
-        logging.error('Could not parse body')
-        return func.HttpResponse(json.dumps({'Error': 'Invalid Request Body', 'InvocationId': context.invocation_id}), status_code=400, mimetype='applicaiton/json')
+        logging.error(msg={'Error': 'Invalid Request Body', 'InvocationId': context.invocation_id})
+        return func.HttpResponse(json.dumps({'Error': 'Invalid Request Body', 'InvocationId': context.invocation_id}), status_code=400, mimetype='application/json')
 
     try:
         return_data = coordinator.initiate_module(module_name=module_name, req_body=req_body)
     except STATError as e:
-        logging.error(msg={'Error': e.error, 'SourceError': e.source_error}, stack_info=True)
-        return func.HttpResponse(json.dumps({'Error': e.error, 'InvocationId': context.invocation_id, 'SourceError': e.source_error}), status_code=e.status_code, mimetype='application/json')
+        trace = ''.join(tb.format_exception(None, e, e.__traceback__))
+        logging.error(msg={'Error': e.error, 'SourceError': e.source_error, 'InvocationId': context.invocation_id}, exc_info=True)
+        return func.HttpResponse(json.dumps({'Error': e.error, 'InvocationId': context.invocation_id, 'SourceError': e.source_error, 'Traceback': trace}), status_code=e.status_code, mimetype='application/json')
+    except Exception as e:
+        trace = ''.join(tb.format_exception(None, e, e.__traceback__))
+        logging.error(e, exc_info=True)
+        return func.HttpResponse(json.dumps({'Error': e.args, 'InvocationId': context.invocation_id, 'Traceback': trace}), status_code=400, mimetype='application/json')
     except:
-        logging.error(msg={'Error': 'Module processing failed, an unknown exception has occurred.'}, stack_info=True)
+        logging.error(msg={'Error': 'Module processing failed, an unknown exception has occurred.', 'InvocationId': context.invocation_id}, exc_info=True)
         return func.HttpResponse(json.dumps({'Error': 'Module processing failed, an unknown exception has occurred.', 'InvocationId': context.invocation_id}), status_code=400, mimetype='application/json')
     
     return func.HttpResponse(body=json.dumps(return_data.body.__dict__), status_code=return_data.statuscode, mimetype=return_data.contenttype)
