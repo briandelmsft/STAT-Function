@@ -18,11 +18,11 @@ def main(req: func.HttpRequest, context: func.Context) -> func.HttpResponse:
     try:
         return_data = coordinator.initiate_module(module_name=module_name, req_body=req_body)
     except STATError as e:
-        trace = ''.join(tb.format_exception(None, e, e.__traceback__))
+        trace = tb.format_exception(None, e, e.__traceback__)
         logging.error(msg={'Error': e.error, 'SourceError': e.source_error, 'InvocationId': context.invocation_id}, exc_info=True)
         return func.HttpResponse(json.dumps({'Error': e.error, 'InvocationId': context.invocation_id, 'SourceError': e.source_error, 'Traceback': trace}), status_code=e.status_code, mimetype='application/json')
     except Exception as e:
-        trace = ''.join(tb.format_exception(None, e, e.__traceback__))
+        trace = tb.format_exception(None, e, e.__traceback__)
         logging.error(e, exc_info=True)
         return func.HttpResponse(json.dumps({'Error': 'Module processing failed, an unknown exception has occurred.', 'InvocationId': context.invocation_id, 'Traceback': trace}), status_code=400, mimetype='application/json')
     except:
