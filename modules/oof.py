@@ -1,4 +1,4 @@
-from classes import BaseModule, Response, OOFModule
+from classes import BaseModule, Response, OOFModule, STATError
 from shared import rest, data
 import json
 import re
@@ -19,7 +19,9 @@ def execute_oof_module (req_body):
             path = f'/v1.0/users/{upn}/mailboxSettings/automaticRepliesSetting'
             try:
                 results = json.loads(rest.rest_call_get(api='msgraph', path=path).content)
-            except:
+            except STATError as e:
+                if e.source_error['status_code'] == 403:
+                    raise STATError(e.error, e.source_error, e.status_code)
                 oof.UsersUnknown += 1
                 append_unknown(oof, upn)
 
