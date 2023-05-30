@@ -100,7 +100,7 @@ def execute_la_query(workspaceid:str, query:str, lookbackindays:int):
     data = json.loads(response.content)
 
     if response.status_code >= 300:
-        raise STATError('KQL Query failed to execute', data)
+        raise STATError('Microsoft Sentinel KQL Query failed to execute', data)
  
     columns = data['tables'][0]['columns']
     rows = data['tables'][0]['rows']
@@ -120,7 +120,12 @@ def execute_m365d_query(query:str):
     url = get_endpoint('m365') + '/api/advancedhunting/run'
     body = {'Query': query}
     response = requests.post(url=url, json=body, headers={"Authorization": "Bearer " + token.token})
-    return json.loads(response.content)['Results']
+    data = json.loads(response.content)
+
+    if response.status_code >= 300:
+        raise STATError('Microsoft 365 Advanced Hunting Query failed to execute', data)
+    
+    return data['Results']
 
 def execute_mde_query(query:str):
     token = token_cache('mde')
