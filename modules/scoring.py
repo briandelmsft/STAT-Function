@@ -57,28 +57,29 @@ def score_module(score:ScoringModule, module:str, module_body:dict, per_item:boo
         {'Tactic': 'ImpairProcessControl', 'Score': 12}
     ]
 
-    if module == 'WatchlistModule':
-        score_watchlist(score, module_body, per_item, multiplier, label)
-    elif module == 'AADRisksModule':
-        score_aad(score, module_body, per_item, multiplier, label)
-    elif module == 'FileModule':
-        score_file(score, module_body, multiplier, label)
-    elif module == 'KQLModule':
-        score_kql(score, module_body, per_item, multiplier, label)
-    elif module == 'MDCAModule' or module == 'MCASModule':
-        score_mdca(score, module_body, per_item, multiplier, label)
-    elif module == 'MDEModule':
-        score_mde(score, module_body, per_item, multiplier, label)
-    elif module == 'RelatedAlerts':
-        score_alerts(score, module_body, per_item, multiplier, label, mitre_list)
-    elif module == 'TIModule':
-        score_ti(score, module_body, per_item, multiplier, label)
-    elif module == 'UEBAModule':
-        score_ueba(score, module_body, per_item, multiplier, label, mitre_list)
-    elif module == 'Custom':
-        score_custom(score, module_body, multiplier)
-    else:
-        raise STATError(f'Incorrectly formatted data or data from an unsupported module was passed to the Scoring Module, module name: {module}')
+    match module:
+        case 'WatchlistModule':
+            score_watchlist(score, module_body, per_item, multiplier, label)
+        case 'AADRisksModule':
+            score_aad(score, module_body, per_item, multiplier, label)
+        case 'FileModule':
+            score_file(score, module_body, multiplier, label)
+        case 'KQLModule':
+            score_kql(score, module_body, per_item, multiplier, label)
+        case 'MDCAModule' | 'MCASModule':
+            score_mdca(score, module_body, per_item, multiplier, label)
+        case 'MDEModule':
+            score_mde(score, module_body, per_item, multiplier, label)
+        case 'RelatedAlerts':
+            score_alerts(score, module_body, per_item, multiplier, label, mitre_list)
+        case 'TIModule':
+            score_ti(score, module_body, per_item, multiplier, label)
+        case 'UEBAModule':
+            score_ueba(score, module_body, per_item, multiplier, label, mitre_list)
+        case 'Custom':
+            score_custom(score, module_body, multiplier)
+        case _:
+            raise STATError(f'Incorrectly formatted data or data from an unsupported module was passed to the Scoring Module, module name: {module}')
 
 def score_kql(score:ScoringModule, module_body, per_item, multiplier, label):
     kql = KQLModule()
