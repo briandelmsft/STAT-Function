@@ -71,20 +71,22 @@ def acquire_token(api):
     elif api == 'mde':
         mdetoken = cred.get_token("https://" + mde_endpoint + "/.default")
 
-def rest_call_get(api, path):
+def rest_call_get(api, path, headers={}):
     token = token_cache(api)
     url = get_endpoint(api) + path
-    response = requests.get(url=url, headers={"Authorization": "Bearer " + token.token})
+    headers['Authorization'] = 'Bearer ' + token.token
+    response = requests.get(url=url, headers=headers)
 
     if response.status_code >= 300:
         raise STATError(f'The API call to {api} with path {path} failed with status {response.status_code}', source_error={'status_code': int(response.status_code), 'reason': str(response.reason)})
     
     return response
 
-def rest_call_post(api, path, body):
+def rest_call_post(api, path, body, headers={}):
     token = token_cache(api)
     url = get_endpoint(api) + path
-    response = requests.post(url=url, json=body, headers={"Authorization": "Bearer " + token.token})
+    headers['Authorization'] = 'Bearer ' + token.token
+    response = requests.post(url=url, json=body, headers=headers)
 
     if response.status_code >= 300:
         raise STATError(f'The API call to {api} with path {path} failed with status {response.status_code}', source_error={'status_code': int(response.status_code), 'reason': str(response.reason)})

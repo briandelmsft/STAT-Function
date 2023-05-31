@@ -9,7 +9,7 @@ def list_to_html_table(input_list:list, max_rows=20, max_cols=10, nan_str='N/A',
     return html_table
 
 def update_column_value_in_list(input_list:list, col_name:str, update_str:str):
-    '''Updates the value of a column in each dict in the list'''
+    '''Updates the value of a column in each dict in the list, to include the column value in your replacement use [col_value]'''
     updated_list = []
     for row in input_list:
         row[col_name] = update_str.replace('[col_value]', row[col_name])
