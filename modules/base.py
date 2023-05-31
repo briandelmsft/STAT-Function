@@ -6,9 +6,13 @@ def execute_base_module (req_body):
     global base_object
     
     base_object = BaseModule()
-    base_object.load_incident_trigger(req_body['Body'])
-    
-    entities = req_body['Body']['object']['properties']['relatedEntities']
+
+    trigger_type = req_body['Body'].get('objectSchemaType', 'alert')
+
+    if trigger_type.lower() == 'incident':
+        entities = process_incident_trigger(req_body)
+    else:
+        entities = process_alert_trigger(req_body)
 
     if not entities:
         rest.add_incident_comment(base_object.IncidentARMId, 'The Microsoft Sentinel Triage AssistanT failed to analyze this incident. \
@@ -45,21 +49,48 @@ def execute_base_module (req_body):
 
     return Response(base_object)
 
+def process_incident_trigger (req_body):
+    base_object.load_incident_trigger(req_body['Body'])
+    return req_body['Body']['object']['properties']['relatedEntities']
+
+def process_alert_trigger (req_body):
+    base_object.load_alert_trigger(req_body['Body'])
+    entities = req_body['Body']['Entities']
+    for entity in entities:
+        entity['kind'] = entity.pop('Type')
+        
+    #Get Workspace ARM Id
+    subscription_id = req_body['Body']['WorkspaceSubscriptionId']
+    workspace_query = json.loads(rest.rest_call_get('arm', f'/subscriptions/{subscription_id}/providers/Microsoft.OperationalInsights/workspaces?api-version=2021-12-01-preview').content)
+    filter_workspace = list(filter(lambda x: x['properties']['customerId'] == req_body['Body']['WorkspaceId'], workspace_query['value']))
+    base_object.WorkspaceARMId = filter_workspace[0]['id']
+
+    #Get Alert Rule
+    rule_ids = json.loads(req_body['Body']['ExtendedProperties']['Analytic Rule Ids'])
+    for rule in rule_ids:
+        rule_data = json.loads(rest.rest_call_get('arm', f'{base_object.WorkspaceARMId}/providers/Microsoft.SecurityInsights/alertRules/{rule}?api-version=2023-02-01').content)
+        current_tactics = rule_data['properties'].get('tactics', [])
+        base_object.Alerts.append({'name': req_body['Body']['SystemAlertId'], 'properties': {'tactics': current_tactics}})
+
+    return entities
+
 def enrich_ips (entities, get_geo):
     ip_entities = list(filter(lambda x: x['kind'].lower() == 'ip', entities))
     base_object.IPsCount = len(ip_entities)
 
     for ip in ip_entities:
+        current_ip = data.coalesce(ip.get('properties', {}).get('address'), ip.get('Address'))
+        raw_entity = data.coalesce(ip.get('properties'), ip)
         if get_geo:
-            path = base_object.SentinelRGARMId + "/providers/Microsoft.SecurityInsights/enrichment/ip/geodata/?api-version=2023-04-01-preview&ipAddress=" + ip['properties']['address']
+            path = base_object.SentinelRGARMId + "/providers/Microsoft.SecurityInsights/enrichment/ip/geodata/?api-version=2023-04-01-preview&ipAddress=" + current_ip
             try:
                 response = rest.rest_call_get(api='arm', path=path)
             except STATError:
-                base_object.add_ip_entity(address=ip['properties']['address'], geo_data={}, rawentity=ip['properties'])
+                base_object.add_ip_entity(address=current_ip, geo_data={}, rawentity=raw_entity)
             else:
-                base_object.add_ip_entity(address=ip['properties']['address'], geo_data=json.loads(response.content), rawentity=ip['properties'])
+                base_object.add_ip_entity(address=current_ip, geo_data=json.loads(response.content), rawentity=raw_entity)
         else:
-            base_object.add_ip_entity(address=ip['properties']['address'], geo_data={}, rawentity=ip['properties'])
+            base_object.add_ip_entity(address=current_ip, geo_data={}, rawentity=raw_entity)
 
 def enrich_accounts(entities):
     account_entities = list(filter(lambda x: x['kind'].lower() == 'account', entities))
@@ -68,60 +99,76 @@ def enrich_accounts(entities):
     attributes = 'userPrincipalName,id,onPremisesSecurityIdentifier,onPremisesDistinguishedName,onPremisesDomainName,onPremisesSamAccountName,onPremisesSyncEnabled,mail,city,state,country,department,jobTitle,officeLocation,accountEnabled&$expand=manager($select=userPrincipalName,mail,id)'
 
     for account in account_entities:
-        properties = account.get('properties')
-        if properties.get('aadUserId'):
-            get_account_by_upn_or_id(properties['aadUserId'], attributes, properties)
-        elif properties.get('upnSuffix'):
-            get_account_by_upn_or_id(properties['accountName'] + '@' + properties['upnSuffix'], attributes, properties)
-        elif properties.get('sid'):
-            get_account_by_sid(properties['sid'], attributes, properties)
-        elif properties.get('ntDomain') and properties.get('accountName'):
-            get_account_by_samaccountname(properties['accountName'], attributes, properties)
+        aad_id = data.coalesce(account.get('properties',{}).get('aadUserId'), account.get('AadUserId'))
+        upn_suffix = data.coalesce(account.get('properties',{}).get('upnSuffix'), account.get('UPNSuffix'))
+        account_name = data.coalesce(account.get('properties',{}).get('accountName'), account.get('Name'))
+        friendly_name = data.coalesce(account.get('properties',{}).get('friendlyName'), account.get('DisplayName'), account.get('Name'))
+        sid = data.coalesce(account.get('properties',{}).get('sid'), account.get('Sid'))
+        nt_domain = data.coalesce(account.get('properties',{}).get('ntDomain'), account.get('NTDomain'))
+        properties = data.coalesce(account.get('properties'), account)
+
+        if aad_id:
+            get_account_by_upn_or_id(aad_id, attributes, properties)
+        elif upn_suffix:
+            get_account_by_upn_or_id(account_name + '@' + upn_suffix, attributes, properties)
+        elif sid:
+            get_account_by_sid(sid, attributes, properties)
+        elif nt_domain and account_name:
+            get_account_by_samaccountname(account_name, attributes, properties)
         else:
-            if properties.get('friendlyName').__contains__('@'):
-                get_account_by_upn_or_id(properties['friendlyName'], attributes, properties)
-            elif properties.get('friendlyName').__contains__('S-1-'):
-                get_account_by_sid(properties['friendlyName'], attributes, properties)
-            elif properties.get('friendlyName').__contains__('CN='):
-                get_account_by_dn(properties['friendlyName'], attributes, properties)
+            if friendly_name.__contains__('@'):
+                get_account_by_upn_or_id(friendly_name, attributes, properties)
+            elif friendly_name.__contains__('S-1-'):
+                get_account_by_sid(friendly_name, attributes, properties)
+            elif friendly_name.__contains__('CN='):
+                get_account_by_dn(friendly_name, attributes, properties)
             else:
-                get_account_by_samaccountname(properties['friendlyName'], attributes, properties)
+                get_account_by_samaccountname(friendly_name, attributes, properties)
 
 
 def enrich_domains(entities):
-    domain_entities = list(filter(lambda x: x['kind'].lower() == 'dnsresolution', entities))
+    domain_entities = list(filter(lambda x: x['kind'].lower() in ('dnsresolution', 'dns'), entities))
     base_object.DomainsCount = len(domain_entities)
     
     for domain in domain_entities:
-        base_object.Domains.append({'Domain': domain['properties']['domainName'], 'RawEntity': domain['properties']})
+        domain_name = data.coalesce(domain.get('properties',{}).get('domainName'), domain.get('DomainName'))
+        raw_entity = data.coalesce(domain.get('properties'), domain)
+        base_object.Domains.append({'Domain': domain_name, 'RawEntity': raw_entity})
 
 def enrich_files(entities):
     file_entities = list(filter(lambda x: x['kind'].lower() == 'file', entities))
     base_object.FilesCount = len(file_entities)
 
     for file in file_entities:
-        base_object.Files.append({'RawEntity': file['properties']})
+        raw_entity = data.coalesce(file.get('properties'), file)
+        base_object.Files.append({'RawEntity': raw_entity})
 
 def enrich_filehashes(entities):
     filehash_entities = list(filter(lambda x: x['kind'].lower() == 'filehash', entities))
     base_object.FileHashesCount = len(filehash_entities)
 
     for hash in filehash_entities:
-        base_object.FileHashes.append({'FileHash': hash['properties']['hashValue'], 'Algorithm': hash['properties']['algorithm'], 'RawEntity': hash['properties']})
+        file_hash = data.coalesce(hash.get('properties',{}).get('hashValue'), hash.get('Value'))
+        hash_alg = data.coalesce(hash.get('properties',{}).get('algorithm'), hash.get('Algorithm'))
+        raw_entity = data.coalesce(hash.get('properties'), hash)
+        base_object.FileHashes.append({'FileHash': file_hash, 'Algorithm': hash_alg, 'RawEntity': raw_entity})
 
 def enrich_urls(entities):
     url_entities = list(filter(lambda x: x['kind'].lower() == 'url', entities))
     base_object.URLsCount = len(url_entities)
 
     for url in url_entities:
-        base_object.URLs.append({'Url': url['properties']['url'], 'RawEntity': url['properties']})
+        url_data = data.coalesce(url.get('properties',{}).get('url'), url.get('Url'))
+        raw_entity = data.coalesce(url.get('properties'), url)
+        base_object.URLs.append({'Url': url_data, 'RawEntity': raw_entity})
 
 def append_other_entities(entities):
-    other_entities = list(filter(lambda x: x['kind'].lower() not in ('ip','account','dnsresolution','file','filehash','url'), entities))
+    other_entities = list(filter(lambda x: x['kind'].lower() not in ('ip','account','dnsresolution','dns','file','filehash','host','url'), entities))
     base_object.OtherEntitiesCount = len(other_entities)
 
     for entity in other_entities:
-        base_object.OtherEntities.append({'RawEntity': entity})
+        raw_entity = data.coalesce(entity.get('properties'), entity)
+        base_object.OtherEntities.append({'RawEntity': raw_entity})
 
 def get_account_by_upn_or_id(account, attributes, properties):
     try:
@@ -224,7 +271,10 @@ def enrich_hosts(entities):
     base_object.HostsCount = len(host_entities)
 
     for host in host_entities:
-        base_object.add_host_entity(fqdn=host['properties']['hostName'] + '.' + host['properties']['dnsDomain'], hostname=host['properties']['hostName'], dnsdomain=host['properties']['dnsDomain'], rawentity=host['properties'])
+        host_name = data.coalesce(host.get('properties',{}).get('hostName'), host.get('HostName'))
+        domain_name = data.coalesce(host.get('properties',{}).get('dnsDomain'), host.get('DnsDomain'))
+        raw_entity = data.coalesce(host.get('properties'), host)
+        base_object.add_host_entity(fqdn=host_name + '.' + domain_name, hostname=host_name, dnsdomain=domain_name, rawentity=raw_entity)
 
 def get_account_comment():
     

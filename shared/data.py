@@ -51,3 +51,8 @@ def sort_list_by_key(input_list, key, ascending=False):
     df = pd.DataFrame(input_list)
     df = df.sort_values(by=[key], ascending=ascending)
     return df.to_dict('records')
+
+def coalesce(*args):
+    for arg in args:
+        if arg is not None:
+            return arg

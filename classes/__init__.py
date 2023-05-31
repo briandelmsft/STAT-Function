@@ -37,6 +37,7 @@ class BaseModule:
         self.IPs = []
         self.IPsCount = 0
         self.IncidentARMId = ""
+        self.IncidentTriggered = False
         self.ModuleVersions = {}
         self.OtherEntities = []
         self.OtherEntitiesCount = 0
@@ -52,11 +53,17 @@ class BaseModule:
     def load_incident_trigger(self, req_body):
         
         self.IncidentARMId = req_body['object']['id']
+        self.IncidentTriggered = True
         self.SentinelRGARMId = "/subscriptions/" + req_body['workspaceInfo']['SubscriptionId'] + "/resourceGroups/" + req_body['workspaceInfo']['ResourceGroupName']
         self.WorkspaceARMId = self.SentinelRGARMId + "/providers/Microsoft.OperationalInsights/workspaces/" + req_body['workspaceInfo']['WorkspaceName']
         self.WorkspaceId = req_body['workspaceId']
         self.RelatedAnalyticRuleIds = req_body['object']['properties'].get('relatedAnalyticRuleIds', [])
         self.Alerts = req_body['object']['properties'].get('alerts', [])
+
+    def load_alert_trigger(self, req_body):
+        self.IncidentTriggered = False
+        self.SentinelRGARMId = "/subscriptions/" + req_body['WorkspaceSubscriptionId'] + "/resourceGroups/" + req_body['WorkspaceResourceGroup']
+        self.WorkspaceId = req_body['WorkspaceId']
 
     def load_from_input(self, basebody):
         self.Accounts = basebody['Accounts']
@@ -246,7 +253,7 @@ class BaseModule:
         for alert in self.Alerts:
             tactics_list = tactics_list + alert['properties']['tactics']
 
-        return tactics_list
+        return list(set(tactics_list))
 
 class KQLModule:
     '''A KQL module object'''
