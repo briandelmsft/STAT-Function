@@ -6,72 +6,64 @@ import os
 import uuid
 from classes import STATError
 
-armtoken = None
-msgraphtoken = None
-latoken = None
-m365token = None
-mdetoken = None
+stat_token = {}
 graph_endpoint = os.getenv('GRAPH_ENDPOINT')
 arm_endpoint = os.getenv('ARM_ENDPOINT')
 la_endpoint = os.getenv('LOGANALYTICS_ENDPOINT')
 m365_endpoint = os.getenv('M365_ENDPOINT')
 mde_endpoint = os.getenv('MDE_ENDPOINT')
+default_tenant_id = os.getenv('AZURE_TENANT_ID')
 
-def token_cache(api):
-    global armtoken
-    global msgraphtoken
-    global latoken
-    global m365token
-    global mdetoken
+def token_cache(api, tenant=default_tenant_id):
+    global stat_token
 
     match api:
         case 'arm':
-            token_expiration_check(api, armtoken)
-            return armtoken
+            token_expiration_check(api, stat_token.get(tenant,{}).get('armtoken'), tenant)
+            return stat_token[tenant]['armtoken']
         case 'msgraph':
-            token_expiration_check(api, msgraphtoken) 
-            return msgraphtoken
+            token_expiration_check(api, stat_token.get(tenant,{}).get('msgraphtoken'), tenant) 
+            return stat_token[tenant]['msgraphtoken']
         case 'la':
-            token_expiration_check(api, latoken)
-            return latoken
+            token_expiration_check(api, stat_token.get(tenant,{}).get('latoken'), tenant)
+            return stat_token[tenant]['latoken']
         case 'm365':
-            token_expiration_check(api, m365token)
-            return m365token
+            token_expiration_check(api, stat_token.get(tenant,{}).get('m365token'), tenant)
+            return stat_token[tenant]['m365token']
         case 'mde':
-            token_expiration_check(api, mdetoken)
-            return mdetoken
+            token_expiration_check(api, stat_token.get(tenant,{}).get('mdetoken'), tenant)
+            return stat_token[tenant]['mdetoken']
 
-def token_expiration_check(api, token):
+def token_expiration_check(api, token, tenant=default_tenant_id):
     
     if token is None:
-        acquire_token(api)
+        acquire_token(api, tenant)
     else:
         expiration_time = dt.datetime.fromtimestamp(token.expires_on) - dt.timedelta(minutes=5)
         current_time = dt.datetime.now()
 
         if current_time > expiration_time:
-            acquire_token(api) 
+            acquire_token(api, tenant) 
 
-def acquire_token(api):
-    global armtoken
-    global msgraphtoken
-    global latoken
-    global m365token
-    global mdetoken
+def acquire_token(api, tenant=default_tenant_id):
+    global stat_token
     
     cred = DefaultAzureCredential()
 
+    if not stat_token.get(tenant):
+        stat_token[tenant] = {}
+
     match api:
         case 'arm':
-            armtoken = cred.get_token("https://" + arm_endpoint + "/.default")
+            stat_token[tenant]['armtoken'] = cred.get_token("https://" + arm_endpoint + "/.default", tenant_id=tenant)
         case 'msgraph':
-            msgraphtoken = cred.get_token("https://" + graph_endpoint + "/.default")
+            stat_token[tenant]['msgraphtoken'] = cred.get_token("https://" + graph_endpoint + "/.default", tenant_id=tenant)
         case 'la':
-            latoken = cred.get_token("https://" + la_endpoint + "/.default")
+            stat_token[tenant]['latoken'] = cred.get_token("https://" + la_endpoint + "/.default", tenant_id=tenant)
         case 'm365':
-            m365token = cred.get_token("https://" + m365_endpoint + "/.default")
+            stat_token[tenant]['m365token'] = cred.get_token("https://" + m365_endpoint + "/.default", tenant_id=tenant)
         case 'mde':
-            mdetoken = cred.get_token("https://" + mde_endpoint + "/.default")
+            stat_token[tenant]['mdetoken'] = cred.get_token("https://" + mde_endpoint + "/.default", tenant_id=tenant)
 
 def rest_call_get(api, path, headers={}):
     token = token_cache(api)
