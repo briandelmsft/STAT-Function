@@ -1,6 +1,8 @@
 from classes import BaseModule, Response, STATError
 from shared import rest, data
 import json
+import time
+import logging
 
 def execute_base_module (req_body):
     global base_object
@@ -15,7 +17,8 @@ def execute_base_module (req_body):
         entities = process_alert_trigger(req_body)
 
     if not entities:
-        rest.add_incident_comment(base_object.IncidentARMId, 'The Microsoft Sentinel Triage AssistanT failed to analyze this incident. \
+        if base_object.IncidentAvailable:
+            rest.add_incident_comment(base_object.IncidentARMId, 'The Microsoft Sentinel Triage AssistanT failed to analyze this incident. \
                                   This error was due to no incident entities being available at the time the incident was processed.')
         raise STATError('No entities found in the trigger data. The Microsoft Sentinel Triage AssistanT requires at least 1 entity be linked to the alert.')
 
@@ -66,11 +69,30 @@ def process_alert_trigger (req_body):
     base_object.WorkspaceARMId = filter_workspace[0]['id']
 
     #Get Security Alert Entity
+    alert_found = False
+    x = 0
     alert_id = base_object.WorkspaceARMId + '/providers/Microsoft.SecurityInsights/entities/' + req_body['Body']['SystemAlertId']
     alert_path = alert_id + '?api-version=2023-05-01-preview'
-    alert_result = json.loads(rest.rest_call_get('arm', alert_path).content)
-    base_object.Alerts.append(alert_result)
+    
+    while not alert_found:
+        x += 1
+        try:
+            alert_result = json.loads(rest.rest_call_get('arm', alert_path).content)
+        except STATError as e:
+            if e.source_error['status_code'] == 404:
+                logging.info('Alert not found, sleeping to try again')
+                if x > 5:
+                    raise STATError('Alert metadata is not currently available, consider adding a delay in the logic app before calling the base module using an alert.', status_code=503)
+                time.sleep(20)
+            else:
+                raise STATError(e.error, e.source_error, e.status_code)
+        else:
+            logging.info('Alert found, processing')
+            base_object.Alerts.append(alert_result)
+            alert_found = True
 
+        
+    #Check if alert is already linked to an incident and retrieve Incident ARM Id
     alert_relation_path = alert_id + '/relations?api-version=2023-05-01-preview'
     alert_relation_result = json.loads(rest.rest_call_get('arm', alert_relation_path).content)
     filter_relations = list(filter(lambda x: x['properties']['relatedResourceType'] == 'Microsoft.SecurityInsights/Incidents', alert_relation_result['value']))

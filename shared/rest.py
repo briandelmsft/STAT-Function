@@ -60,16 +60,17 @@ def acquire_token(api):
     
     cred = DefaultAzureCredential()
 
-    if api == 'arm':
-        armtoken = cred.get_token("https://" + arm_endpoint + "/.default")
-    elif api == 'msgraph':
-        msgraphtoken = cred.get_token("https://" + graph_endpoint + "/.default")
-    elif api == 'la':
-        latoken = cred.get_token("https://" + la_endpoint + "/.default")
-    elif api == 'm365':
-        m365token = cred.get_token("https://" + m365_endpoint + "/.default")
-    elif api == 'mde':
-        mdetoken = cred.get_token("https://" + mde_endpoint + "/.default")
+    match api:
+        case 'arm':
+            armtoken = cred.get_token("https://" + arm_endpoint + "/.default")
+        case 'msgraph':
+            msgraphtoken = cred.get_token("https://" + graph_endpoint + "/.default")
+        case 'la':
+            latoken = cred.get_token("https://" + la_endpoint + "/.default")
+        case 'm365':
+            m365token = cred.get_token("https://" + m365_endpoint + "/.default")
+        case 'mde':
+            mdetoken = cred.get_token("https://" + mde_endpoint + "/.default")
 
 def rest_call_get(api, path, headers={}):
     token = token_cache(api)
@@ -87,6 +88,17 @@ def rest_call_post(api, path, body, headers={}):
     url = get_endpoint(api) + path
     headers['Authorization'] = 'Bearer ' + token.token
     response = requests.post(url=url, json=body, headers=headers)
+
+    if response.status_code >= 300:
+        raise STATError(f'The API call to {api} with path {path} failed with status {response.status_code}', source_error={'status_code': int(response.status_code), 'reason': str(response.reason)})
+    
+    return response
+
+def rest_call_put(api, path, body, headers={}):
+    token = token_cache(api)
+    url = get_endpoint(api) + path
+    headers['Authorization'] = 'Bearer ' + token.token
+    response = requests.put(url=url, json=body, headers=headers)
 
     if response.status_code >= 300:
         raise STATError(f'The API call to {api} with path {path} failed with status {response.status_code}', source_error={'status_code': int(response.status_code), 'reason': str(response.reason)})
@@ -137,16 +149,17 @@ def execute_mde_query(query:str):
     return json.loads(response.content)
 
 def get_endpoint(api):
-    if api == 'arm':
-        return 'https://' + arm_endpoint
-    elif api == 'msgraph':
-        return 'https://' + graph_endpoint
-    elif api == 'la':
-        return 'https://' + la_endpoint
-    elif api == 'm365':
-        return 'https://' + m365_endpoint
-    elif api == 'mde':
-        return 'https://' + mde_endpoint
+    match api:
+        case 'arm':
+            return 'https://' + arm_endpoint
+        case 'msgraph':
+            return 'https://' + graph_endpoint
+        case 'la':
+            return 'https://' + la_endpoint
+        case 'm365':
+            return 'https://' + m365_endpoint
+        case 'mde':
+            return 'https://' + mde_endpoint
     
 def add_incident_comment(incident_armid:str, comment:str):
     token = token_cache('arm')

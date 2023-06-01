@@ -505,3 +505,14 @@ class MDEModule:
         self.HostsHighestExposureLevel = body['HostsHighestExposureLevel']
         self.HostsHighestRiskScore = body['HostsHighestRiskScore']
         self.DetailedResults = body['DetailedResults']
+
+class CreateIncident:
+    '''A CreateIncident object'''
+    def __init__(self):
+        self.IncidentARMId = ''
+        self.AlertARMId = ''
+        self.Title = ''
+        self.Description = ''
+        self.Severity = ''
+        self.IncidentNumber = 0
+        self.IncidentUrl = ''
