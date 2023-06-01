@@ -18,8 +18,7 @@ def execute_base_module (req_body):
 
     if not entities:
         if base_object.IncidentAvailable:
-            rest.add_incident_comment(base_object.IncidentARMId, 'The Microsoft Sentinel Triage AssistanT failed to analyze this incident. \
-                                  This error was due to no incident entities being available at the time the incident was processed.')
+            rest.add_incident_comment(base_object.IncidentARMId, 'The Microsoft Sentinel Triage AssistanT failed to analyze this incident. This error was due to no incident entities being available at the time the incident was processed.')
         raise STATError('No entities found in the trigger data. The Microsoft Sentinel Triage AssistanT requires at least 1 entity be linked to the alert.')
 
     enrich_ips(entities, req_body.get('EnrichIPsWithGeoData', True))
