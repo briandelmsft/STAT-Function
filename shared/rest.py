@@ -24,21 +24,22 @@ def token_cache(api):
     global m365token
     global mdetoken
 
-    if api == 'arm':
-        token_expiration_check(api, armtoken)
-        return armtoken
-    elif api == 'msgraph':
-        token_expiration_check(api, msgraphtoken) 
-        return msgraphtoken
-    elif api == 'la':
-        token_expiration_check(api, latoken)
-        return latoken
-    elif api == 'm365':
-        token_expiration_check(api, m365token)
-        return m365token
-    elif api == 'mde':
-        token_expiration_check(api, mdetoken)
-        return mdetoken
+    match api:
+        case 'arm':
+            token_expiration_check(api, armtoken)
+            return armtoken
+        case 'msgraph':
+            token_expiration_check(api, msgraphtoken) 
+            return msgraphtoken
+        case 'la':
+            token_expiration_check(api, latoken)
+            return latoken
+        case 'm365':
+            token_expiration_check(api, m365token)
+            return m365token
+        case 'mde':
+            token_expiration_check(api, mdetoken)
+            return mdetoken
 
 def token_expiration_check(api, token):
     
