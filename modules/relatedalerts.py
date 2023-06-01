@@ -84,25 +84,24 @@ SecurityAlert
     related_alerts.RelatedIPAlertsCount = len(ip_matches)
     related_alerts.RelatedIPAlertsFound = bool(ip_matches)
 
-    if req_body.get('AddIncidentComments', True):
+    if req_body.get('AddIncidentComments', True) and base_object.IncidentAvailable:
         
         ### Alert Linking
 
-        #arm_id = base_object.IncidentARMId.split('/')
-        #utc_now = dt.datetime.utcnow()
-        #utc_start = utc_now - dt.timedelta(days=lookback)
+        arm_id = base_object.IncidentARMId.split('/')
+        utc_now = dt.datetime.utcnow()
+        utc_start = utc_now - dt.timedelta(days=lookback)
 
-        #link_template = f'<a href="https://portal.azure.com/#blade/Microsoft_Azure_Monitoring_Logs/LogsBlade/scope/%7B%22resources%22%3A%5B%7B%22resourceId%22%3A%22%2Fsubscriptions%2F{arm_id[2]}%2FresourceGroups%2F{arm_id[4]}%2Fproviders%2FMicrosoft.OperationalInsights%2Fworkspaces%2F{arm_id[8]}%22%7D%5D%7D/initiator/ASI_Hunting/query/SecurityAlert%0A%7C%20where%20SystemAlertId%20%3D%3D%20%22[col_value]%22%0A%7C%20summarize%20arg_max%28TimeGenerated%2C%20%2A%29%20by%20SystemAlertId%0A/timespanInIsoFormat/{utc_start.isoformat()}%2F{utc_now.isoformat()}">[col_value]</a>'
-        #linked_alerts = data.update_column_value_in_list(results, 'SystemAlertId', link_template)
-        #html_table = data.list_to_html_table(linked_alerts, escape_html=False)
+        link_template = f'<a href="https://portal.azure.com/#blade/Microsoft_Azure_Monitoring_Logs/LogsBlade/scope/%7B%22resources%22%3A%5B%7B%22resourceId%22%3A%22%2Fsubscriptions%2F{arm_id[2]}%2FresourceGroups%2F{arm_id[4]}%2Fproviders%2FMicrosoft.OperationalInsights%2Fworkspaces%2F{arm_id[8]}%22%7D%5D%7D/initiator/ASI_Hunting/query/SecurityAlert%0A%7C%20where%20SystemAlertId%20%3D%3D%20%22[col_value]%22%0A%7C%20summarize%20arg_max%28TimeGenerated%2C%20%2A%29%20by%20SystemAlertId%0A/timespanInIsoFormat/{utc_start.isoformat()}%2F{utc_now.isoformat()}">[col_value]</a>'
+        linked_alerts = data.update_column_value_in_list(results, 'SystemAlertId', link_template)
+        html_table = data.list_to_html_table(linked_alerts, escape_html=False)
 
-        html_table = data.list_to_html_table(results)
+        #html_table = data.list_to_html_table(results)
         
-
         comment = f'''A total of {related_alerts.RelatedAlertsCount} related alerts were found.<br>{html_table}'''
         comment_result = rest.add_incident_comment(base_object.IncidentARMId, comment)
 
-    if req_body.get('AddIncidentTask', False) and related_alerts.RelatedAlertsFound:
+    if req_body.get('AddIncidentTask', False) and related_alerts.RelatedAlertsFound and base_object.IncidentAvailable:
         task_result = rest.add_incident_task(base_object.IncidentARMId, 'Review Related Alerts', req_body.get('IncidentTaskInstructions'))
 
     return Response(related_alerts)

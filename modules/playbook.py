@@ -17,6 +17,9 @@ def execute_playbook_module (req_body):
 
     if not playbook.TenantId or not playbook.LogicAppArmId:
         raise STATError(f'Missing logic app id {playbook.LogicAppArmId} or tenant id {playbook.TenantId}.')
+    
+    if not base_object.IncidentAvailable:
+        raise STATError(f'There is no incident associated with this STAT triage.  Unable to execute Incident playbook.')
 
     path = f'{base_object.IncidentARMId}/runPlaybook?api-version=2022-07-01-preview'
     body = {

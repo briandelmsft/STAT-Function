@@ -65,12 +65,19 @@ def process_alert_trigger (req_body):
     filter_workspace = list(filter(lambda x: x['properties']['customerId'] == req_body['Body']['WorkspaceId'], workspace_query['value']))
     base_object.WorkspaceARMId = filter_workspace[0]['id']
 
-    #Get Alert Rule
-    rule_ids = json.loads(req_body['Body']['ExtendedProperties']['Analytic Rule Ids'])
-    for rule in rule_ids:
-        rule_data = json.loads(rest.rest_call_get('arm', f'{base_object.WorkspaceARMId}/providers/Microsoft.SecurityInsights/alertRules/{rule}?api-version=2023-02-01').content)
-        current_tactics = rule_data['properties'].get('tactics', [])
-        base_object.Alerts.append({'name': req_body['Body']['SystemAlertId'], 'properties': {'tactics': current_tactics}})
+    #Get Security Alert Entity
+    alert_id = base_object.WorkspaceARMId + '/providers/Microsoft.SecurityInsights/entities/' + req_body['Body']['SystemAlertId']
+    alert_path = alert_id + '?api-version=2023-05-01-preview'
+    alert_result = json.loads(rest.rest_call_get('arm', alert_path).content)
+    base_object.Alerts.append(alert_result)
+
+    alert_relation_path = alert_id + '/relations?api-version=2023-05-01-preview'
+    alert_relation_result = json.loads(rest.rest_call_get('arm', alert_relation_path).content)
+    filter_relations = list(filter(lambda x: x['properties']['relatedResourceType'] == 'Microsoft.SecurityInsights/Incidents', alert_relation_result['value']))
+    
+    if filter_relations:
+        base_object.IncidentARMId = filter_relations[0]['properties']['relatedResourceId']
+        base_object.IncidentAvailable = True
 
     return entities
 

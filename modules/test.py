@@ -1,6 +1,6 @@
 from classes import BaseModule, STATError
 from shared import rest, data
-import json
+import json, os
 
 def execute_test_module (req_body):
     #base_object = BaseModule()
@@ -11,7 +11,13 @@ def execute_test_module (req_body):
     #ip_entities = base_object.get_ip_kql_table()
     #account_entities = base_object.get_account_kql_table()
 
-    test = req_body['fail']
+    sub = os.getenv('SUB_TEMP')
+    rg = os.getenv('RG_TEMP')
+    workspace = os.getenv('WORKSPACE_TEMP')
+    incident = 'd6284a44-5b9e-47dd-8025-e77b60d567d6'
+
+    path = f'/subscriptions/{sub}/resourceGroups/{rg}/providers/Microsoft.OperationalInsights/workspaces/{workspace}/providers/Microsoft.SecurityInsights/incidents/{incident}/relations?api-version=2023-05-01-preview'
+    result = json.loads(rest.rest_call_get('arm', path).content)
 
     raise STATError('Test from test module', source_error={'TestKey': 'TestValue', 'TestKey2': 'TestValue2'})
 

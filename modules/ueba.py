@@ -64,7 +64,7 @@ userDetails
     ueba_object.ThreatIntelFound = bool(total['ThreatIntelMatches'])
     ueba_object.ThreatIntelMatchCount = total['ThreatIntelMatches']
 
-    if req_body.get('AddIncidentComments', True):
+    if req_body.get('AddIncidentComments', True) and base_object.IncidentAvailable:
         
         html_table = data.list_to_html_table(results)
 
@@ -73,7 +73,7 @@ userDetails
         
         comment_result = rest.add_incident_comment(base_object.IncidentARMId, comment)
 
-    if req_body.get('AddIncidentTask', False) and (ueba_object.InvestigationPrioritiesFound or ueba_object.ThreatIntelFound or ueba_object.AnomaliesFound):
+    if req_body.get('AddIncidentTask', False) and (ueba_object.InvestigationPrioritiesFound or ueba_object.ThreatIntelFound or ueba_object.AnomaliesFound) and base_object.IncidentAvailable:
         task_result = rest.add_incident_task(base_object.IncidentARMId, 'Review UEBA Matches', req_body.get('IncidentTaskInstructions'))
 
     return Response(ueba_object)

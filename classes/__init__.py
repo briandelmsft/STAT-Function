@@ -37,6 +37,7 @@ class BaseModule:
         self.IPsCount = 0
         self.IncidentARMId = ""
         self.IncidentTriggered = False
+        self.IncidentAvailable = False
         self.ModuleVersions = {}
         self.OtherEntities = []
         self.OtherEntitiesCount = 0
@@ -53,6 +54,7 @@ class BaseModule:
         
         self.IncidentARMId = req_body['object']['id']
         self.IncidentTriggered = True
+        self.IncidentAvailable = True
         self.SentinelRGARMId = "/subscriptions/" + req_body['workspaceInfo']['SubscriptionId'] + "/resourceGroups/" + req_body['workspaceInfo']['ResourceGroupName']
         self.WorkspaceARMId = self.SentinelRGARMId + "/providers/Microsoft.OperationalInsights/workspaces/" + req_body['workspaceInfo']['WorkspaceName']
         self.WorkspaceId = req_body['workspaceId']
