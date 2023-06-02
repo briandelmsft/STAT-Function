@@ -14,7 +14,7 @@ m365_endpoint = os.getenv('M365_ENDPOINT')
 mde_endpoint = os.getenv('MDE_ENDPOINT')
 default_tenant_id = os.getenv('AZURE_TENANT_ID')
 
-def token_cache(api, tenant=default_tenant_id):
+def token_cache(api:str, tenant:str=default_tenant_id):
     global stat_token
 
     match api:
@@ -34,7 +34,7 @@ def token_cache(api, tenant=default_tenant_id):
             token_expiration_check(api, stat_token.get(tenant,{}).get('mdetoken'), tenant)
             return stat_token[tenant]['mdetoken']
 
-def token_expiration_check(api, token, tenant=default_tenant_id):
+def token_expiration_check(api:str, token, tenant:str=default_tenant_id):
     
     if token is None:
         acquire_token(api, tenant)
@@ -45,7 +45,7 @@ def token_expiration_check(api, token, tenant=default_tenant_id):
         if current_time > expiration_time:
             acquire_token(api, tenant) 
 
-def acquire_token(api, tenant=default_tenant_id):
+def acquire_token(api:str, tenant:str=default_tenant_id):
     global stat_token
     
     cred = DefaultAzureCredential()
@@ -65,7 +65,7 @@ def acquire_token(api, tenant=default_tenant_id):
         case 'mde':
             stat_token[tenant]['mdetoken'] = cred.get_token("https://" + mde_endpoint + "/.default", tenant_id=tenant)
 
-def rest_call_get(api, path, headers={}):
+def rest_call_get(api:str, path:str, headers:dict={}):
     token = token_cache(api)
     url = get_endpoint(api) + path
     headers['Authorization'] = 'Bearer ' + token.token
@@ -76,7 +76,7 @@ def rest_call_get(api, path, headers={}):
     
     return response
 
-def rest_call_post(api, path, body, headers={}):
+def rest_call_post(api:str, path:str, body, headers:dict={}):
     token = token_cache(api)
     url = get_endpoint(api) + path
     headers['Authorization'] = 'Bearer ' + token.token
@@ -87,7 +87,7 @@ def rest_call_post(api, path, body, headers={}):
     
     return response
 
-def rest_call_put(api, path, body, headers={}):
+def rest_call_put(api:str, path:str, body, headers:dict={}):
     token = token_cache(api)
     url = get_endpoint(api) + path
     headers['Authorization'] = 'Bearer ' + token.token
@@ -141,7 +141,7 @@ def execute_mde_query(query:str):
     response = requests.post(url=url, json=body, headers={"Authorization": "Bearer " + token.token})
     return json.loads(response.content)
 
-def get_endpoint(api):
+def get_endpoint(api:str):
     match api:
         case 'arm':
             return 'https://' + arm_endpoint
