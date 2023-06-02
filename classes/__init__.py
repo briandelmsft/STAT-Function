@@ -81,6 +81,8 @@ class BaseModule:
         self.HostsCount = basebody['HostsCount']
         self.IPs = basebody['IPs']
         self.IPsCount = basebody['IPsCount']
+        self.IncidentTriggered = basebody['IncidentTriggered']
+        self.IncidentAvailable = basebody['IncidentAvailable']
         self.IncidentARMId = basebody['IncidentARMId']
         self.ModuleVersions = basebody['ModuleVersions']
         self.OtherEntities = basebody['OtherEntities']
