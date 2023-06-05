@@ -17,7 +17,7 @@ def execute_watchlist_module (req_body):
 
     #Check if the WatchlistName is valid, otherwise the query will succeed and never find anything on the watchlist
     watchlist_check = f'_GetWatchlistAlias\n| where WatchlistAlias == "{watchlist_object.WatchlistName}"'
-    check_watchlist = rest.execute_la_query(base_object.WorkspaceId, watchlist_check, 7)
+    check_watchlist = rest.execute_la_query(base_object, watchlist_check, 7)
 
     if not check_watchlist:
         raise STATError(f'The watchlist name {watchlist_object.WatchlistName} is invalid.', {})
@@ -31,7 +31,7 @@ def execute_watchlist_module (req_body):
 | extend {watchlist_key} = tolower({watchlist_key})) on $left.UserPrincipalName == $right.{watchlist_key}
 | extend OnWatchlist = iff(isempty(_DTItemId), false, true)
 | project OnWatchlist, UserPrincipalName'''
-        results = rest.execute_la_query(base_object.WorkspaceId, query, 7)
+        results = rest.execute_la_query(base_object, query, 7)
         
     elif watchlist_datatype == 'IP':
         ip_entities = base_object.get_ip_kql_table()
@@ -40,7 +40,7 @@ def execute_watchlist_module (req_body):
 | join kind=leftouter (_GetWatchlist('{watchlist_object.WatchlistName}')) on $left.IPAddress == $right.{watchlist_key}
 | extend OnWatchlist = iff(isempty(_DTItemId), false, true)
 | project OnWatchlist, IPAddress'''
-        results = rest.execute_la_query(base_object.WorkspaceId, query, 7)
+        results = rest.execute_la_query(base_object, query, 7)
 
     elif watchlist_datatype == 'CIDR':
         ip_entities = base_object.get_ip_kql_table()
@@ -49,7 +49,7 @@ def execute_watchlist_module (req_body):
 | evaluate ipv4_lookup(_GetWatchlist('{watchlist_object.WatchlistName}'), IPAddress, {watchlist_key}, true)
 | extend OnWatchlist = iff(isempty(_DTItemId), false, true)
 | project OnWatchlist, IPAddress'''
-        results = rest.execute_la_query(base_object.WorkspaceId, query, 7)
+        results = rest.execute_la_query(base_object, query, 7)
         
     elif watchlist_datatype == 'FQDN':
         host_entities = base_object.get_host_kql_table()
@@ -62,7 +62,7 @@ hostEntities
 | join kind=leftouter (watchListItems) on $left.HostKey == $right.Hostname
 | extend OnWatchlist = iff(isempty(_DTItemId) and isempty(_DTItemId1), false, true)
 | project OnWatchlist, FQDN'''
-        results = rest.execute_la_query(base_object.WorkspaceId, query, 7)
+        results = rest.execute_la_query(base_object, query, 7)
 
     else:
         raise STATError(f'Invalid WatchlistKeyDataType: {watchlist_datatype}')
@@ -78,10 +78,10 @@ hostEntities
         html_table = data.list_to_html_table(results)
 
         comment = f'''A total of {watchlist_object.EntitiesOnWatchlistCount} records were found on the {watchlist_object.WatchlistName} watchlist.<br>{html_table}'''
-        comment_result = rest.add_incident_comment(base_object.IncidentARMId, comment)
+        comment_result = rest.add_incident_comment(base_object, comment)
 
     if req_body.get('AddIncidentTask', False) and watchlist_object.EntitiesOnWatchlist and base_object.IncidentAvailable:
-        task_result = rest.add_incident_task(base_object.IncidentARMId, 'Review Watchlist Matches', req_body.get('IncidentTaskInstructions'))
+        task_result = rest.add_incident_task(base_object, 'Review Watchlist Matches', req_body.get('IncidentTaskInstructions'))
 
 
     return Response(watchlist_object)

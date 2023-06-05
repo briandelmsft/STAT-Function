@@ -39,6 +39,7 @@ class BaseModule:
         self.IncidentTriggered = False
         self.IncidentAvailable = False
         self.ModuleVersions = {}
+        self.MultiTenantConfig = {}
         self.OtherEntities = []
         self.OtherEntitiesCount = 0
         self.RelatedAnalyticRuleIds = []
@@ -85,6 +86,7 @@ class BaseModule:
         self.IncidentAvailable = basebody['IncidentAvailable']
         self.IncidentARMId = basebody['IncidentARMId']
         self.ModuleVersions = basebody['ModuleVersions']
+        self.MultiTenantConfig = basebody.get('MultiTenantConfig', {})
         self.OtherEntities = basebody['OtherEntities']
         self.OtherEntitiesCount = basebody['OtherEntitiesCount']
         self.RelatedAnalyticRuleIds = basebody.get('RelatedAnalyticRuleIds', [])

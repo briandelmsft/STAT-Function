@@ -18,9 +18,9 @@ def execute_kql_module (req_body):
     query = arm_id + ip_entities + account_entities + host_entities + req_body['KQLQuery']
 
     if req_body.get('RunQueryAgainst') == 'M365':
-        results = rest.execute_m365d_query(query)
+        results = rest.execute_m365d_query(base_object, query)
     else:
-        results = rest.execute_la_query(base_object.WorkspaceId, query, req_body['LookbackInDays'])
+        results = rest.execute_la_query(base_object, query, req_body['LookbackInDays'])
 
     kql_object.DetailedResults = results
     kql_object.ResultsCount = len(results)
@@ -35,9 +35,9 @@ def execute_kql_module (req_body):
             query_description = ''
 
         comment = f'''{query_description}A total of {kql_object.ResultsCount} records were found in the {req_body.get('RunQueryAgainst')} search.<br>{html_table}'''
-        comment_result = rest.add_incident_comment(base_object.IncidentARMId, comment)
+        comment_result = rest.add_incident_comment(base_object, comment)
 
     if req_body.get('AddIncidentTask', False) and kql_object.ResultsFound and base_object.IncidentAvailable:
-        task_result = rest.add_incident_task(base_object.IncidentARMId, req_body.get('QueryDescription', 'Review KQL Query Results'), req_body.get('IncidentTaskInstructions'))
+        task_result = rest.add_incident_task(base_object, req_body.get('QueryDescription', 'Review KQL Query Results'), req_body.get('IncidentTaskInstructions'))
 
     return Response(kql_object)

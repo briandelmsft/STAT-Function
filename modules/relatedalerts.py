@@ -57,7 +57,7 @@ SecurityAlert
 | sort by Order desc
 | project-away Order, AlertSeverity1'''
 
-    results = rest.execute_la_query(base_object.WorkspaceId, query, lookback)
+    results = rest.execute_la_query(base_object, query, lookback)
 
     account_matches = filter_alerts(results, 'AccountEntityMatch')
     ip_matches = filter_alerts(results, 'IPEntityMatch')
@@ -99,10 +99,10 @@ SecurityAlert
         #html_table = data.list_to_html_table(results)
         
         comment = f'''A total of {related_alerts.RelatedAlertsCount} related alerts were found.<br>{html_table}'''
-        comment_result = rest.add_incident_comment(base_object.IncidentARMId, comment)
+        comment_result = rest.add_incident_comment(base_object, comment)
 
     if req_body.get('AddIncidentTask', False) and related_alerts.RelatedAlertsFound and base_object.IncidentAvailable:
-        task_result = rest.add_incident_task(base_object.IncidentARMId, 'Review Related Alerts', req_body.get('IncidentTaskInstructions'))
+        task_result = rest.add_incident_task(base_object, 'Review Related Alerts', req_body.get('IncidentTaskInstructions'))
 
     return Response(related_alerts)
 

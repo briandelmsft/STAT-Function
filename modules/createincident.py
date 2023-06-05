@@ -32,7 +32,7 @@ def execute_create_incident (req_body):
         }
     }
 
-    incident = json.loads(rest.rest_call_put('arm', create.IncidentARMId + '?api-version=2023-02-01', incident_data).content)
+    incident = json.loads(rest.rest_call_put(base_object, 'arm', create.IncidentARMId + '?api-version=2023-02-01', incident_data).content)
     create.IncidentNumber = incident['properties']['incidentNumber']
     create.IncidentUrl = incident['properties']['incidentUrl']
 
@@ -42,6 +42,6 @@ def execute_create_incident (req_body):
             'relatedResourceId': create.AlertARMId
         }
     }
-    alert_link = rest.rest_call_put('arm', link_path, link_data)
+    alert_link = rest.rest_call_put(base_object, 'arm', link_path, link_data)
 
     return Response(create)

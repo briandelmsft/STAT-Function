@@ -18,7 +18,7 @@ def execute_oof_module (req_body):
         if upn:
             path = f'/v1.0/users/{upn}/mailboxSettings/automaticRepliesSetting'
             try:
-                results = json.loads(rest.rest_call_get(api='msgraph', path=path).content)
+                results = json.loads(rest.rest_call_get(base_object, api='msgraph', path=path).content)
             except STATError as e:
                 if e.source_error['status_code'] == 403:
                     raise STATError(e.error, e.source_error, e.status_code)
@@ -59,10 +59,10 @@ def execute_oof_module (req_body):
         html_table = data.list_to_html_table(oof.DetailedResults)
 
         comment = f'''A total of {oof.UsersOutOfOffice} users have out of office messages set.<br>{html_table}'''
-        comment_result = rest.add_incident_comment(base_object.IncidentARMId, comment)
+        comment_result = rest.add_incident_comment(base_object, comment)
 
     if req_body.get('AddIncidentTask', False) and oof.UsersOutOfOffice > 0 and base_object.IncidentAvailable:
-        task_result = rest.add_incident_task(base_object.IncidentARMId, req_body.get('QueryDescription', 'Review User Out of Office messages'), req_body.get('IncidentTaskInstructions'))
+        task_result = rest.add_incident_task(base_object, req_body.get('QueryDescription', 'Review User Out of Office messages'), req_body.get('IncidentTaskInstructions'))
 
     return Response(oof)
 

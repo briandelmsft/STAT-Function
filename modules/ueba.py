@@ -40,7 +40,7 @@ userDetails
 | project-away UserPrincipalName1
 | extend InvestigationPriorityAverage=iff(isnan(InvestigationPriorityAverage), toreal(0), round(toreal(InvestigationPriorityAverage),2))'''
 
-    results = rest.execute_la_query(base_object.WorkspaceId, query, lookback)
+    results = rest.execute_la_query(base_object, query, lookback)
 
     details = list(filter(lambda x: x['UserPrincipalName'] != 'Total', results))
 
@@ -71,9 +71,9 @@ userDetails
         comment = f'A total of {ueba_object.AllEntityEventCount} matching UEBA events, {ueba_object.ThreatIntelMatchCount} \
             UEBA Threat Intellgience matches and {ueba_object.AnomalyCount} anomalies were found.<br>{html_table}'
         
-        comment_result = rest.add_incident_comment(base_object.IncidentARMId, comment)
+        comment_result = rest.add_incident_comment(base_object, comment)
 
     if req_body.get('AddIncidentTask', False) and (ueba_object.InvestigationPrioritiesFound or ueba_object.ThreatIntelFound or ueba_object.AnomaliesFound) and base_object.IncidentAvailable:
-        task_result = rest.add_incident_task(base_object.IncidentARMId, 'Review UEBA Matches', req_body.get('IncidentTaskInstructions'))
+        task_result = rest.add_incident_task(base_object, 'Review UEBA Matches', req_body.get('IncidentTaskInstructions'))
 
     return Response(ueba_object)

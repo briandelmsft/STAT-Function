@@ -29,10 +29,10 @@ def execute_scoring_module (req_body):
         html_table = data.list_to_html_table(score.DetailedResults)
 
         comment = f'''The total calculated risk score is {score.TotalScore}.<br>{html_table}'''
-        comment_result = rest.add_incident_comment(base_object.IncidentARMId, comment)
+        comment_result = rest.add_incident_comment(base_object, comment)
 
     if req_body.get('AddIncidentTask', False) and score.TotalScore > 0 and base_object.IncidentAvailable:
-        task_result = rest.add_incident_task(base_object.IncidentARMId, 'Review Incident Risk Score', req_body.get('IncidentTaskInstructions')) 
+        task_result = rest.add_incident_task(base_object, 'Review Incident Risk Score', req_body.get('IncidentTaskInstructions')) 
 
     return Response(score)
 

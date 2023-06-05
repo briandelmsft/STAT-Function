@@ -28,15 +28,15 @@ def execute_playbook_module (req_body):
     }
 
     try:
-        response = rest.rest_call_post(api='arm', path=path, body=body)
+        response = rest.rest_call_post(base_object, api='arm', path=path, body=body)
     except STATError as e:
         comment = f'The Sentinel Triage AssistanT failed to start the playbook {playbook.PlaybookName} on this incident.<br>Playbook resource id: {playbook.LogicAppArmId}'
-        rest.add_incident_comment(base_object.IncidentARMId, comment)
+        rest.add_incident_comment(base_object, comment)
         raise STATError(e.error, e.source_error, e.status_code)
 
     if req_body.get('AddIncidentComments', True):
         
         comment = f'The Playbook {playbook.PlaybookName} was successfully started on this incident by the Microsoft Sentinel Triage AssistanT (STAT)<br>Playbook resource id: {playbook.LogicAppArmId}'
-        comment_result = rest.add_incident_comment(base_object.IncidentARMId, comment)
+        comment_result = rest.add_incident_comment(base_object, comment)
 
     return Response(playbook)

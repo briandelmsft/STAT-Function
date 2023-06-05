@@ -11,15 +11,21 @@ def execute_test_module (req_body):
     #ip_entities = base_object.get_ip_kql_table()
     #account_entities = base_object.get_account_kql_table()
 
-    sub = os.getenv('SUB_TEMP')
-    rg = os.getenv('RG_TEMP')
-    workspace = os.getenv('WORKSPACE_TEMP')
-    incident = 'd6284a44-5b9e-47dd-8025-e77b60d567d6'
+    tenant2_id = os.getenv('TENANT2')
 
-    path = f'/subscriptions/{sub}/resourceGroups/{rg}/providers/Microsoft.OperationalInsights/workspaces/{workspace}/providers/Microsoft.SecurityInsights/incidents/{incident}/relations?api-version=2023-05-01-preview'
-    result = json.loads(rest.rest_call_get('arm', path).content)
+    org_info = json.loads(rest.rest_call_get_test(api='msgraph', path='/v1.0/organization').content)
+    org2_info = json.loads(rest.rest_call_get_test(api='msgraph', path='/v1.0/organization', tenant=tenant2_id).content)
+    org2_users = json.loads(rest.rest_call_get_test(api='msgraph', path='/v1.0/users', tenant=tenant2_id).content)
 
-    raise STATError('Test from test module', source_error={'TestKey': 'TestValue', 'TestKey2': 'TestValue2'})
+    # sub = os.getenv('SUB_TEMP')
+    # rg = os.getenv('RG_TEMP')
+    # workspace = os.getenv('WORKSPACE_TEMP')
+    # incident = 'd6284a44-5b9e-47dd-8025-e77b60d567d6'
+
+    # path = f'/subscriptions/{sub}/resourceGroups/{rg}/providers/Microsoft.OperationalInsights/workspaces/{workspace}/providers/Microsoft.SecurityInsights/incidents/{incident}/relations?api-version=2023-05-01-preview'
+    # result = json.loads(rest.rest_call_get('arm', path).content)
+
+    raise STATError('Test from test module', status_code=200)
 
     list_data = req_body['ListData']
     item_key = req_body['Key']

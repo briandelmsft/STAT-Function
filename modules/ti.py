@@ -25,7 +25,7 @@ def execute_ti_module (req_body):
 | where Active
 | extend DomainName = tolower(DomainName)) on DomainName
 | project TIType="Domain", TIData=Domain, SourceSystem, Description, ThreatType, ConfidenceScore, IndicatorId'''
-        results = rest.execute_la_query(base_object.WorkspaceId, query, 14)
+        results = rest.execute_la_query(base_object, query, 14)
         ti_object.DetailedResults = ti_object.DetailedResults + results
         ti_object.DomainEntitiesCount = len(base_object.get_domain_list())
         ti_object.DomainEntitiesWithTI = len(results)
@@ -40,7 +40,7 @@ def execute_ti_module (req_body):
 | where Active
 | extend FileHash = tolower(FileHashValue)) on FileHash
 | project TIType="FileHash", TIData=FileHash, SourceSystem, Description, ThreatType, ConfidenceScore, IndicatorId'''
-        results = rest.execute_la_query(base_object.WorkspaceId, query, 14)
+        results = rest.execute_la_query(base_object, query, 14)
         ti_object.DetailedResults = ti_object.DetailedResults + results
         ti_object.FileHashEntitiesCount = len(base_object.get_filehash_list())
         ti_object.FileHashEntitiesWithTI = len(results)
@@ -54,7 +54,7 @@ def execute_ti_module (req_body):
 | summarize arg_max(TimeGenerated, *) by IndicatorId
 | where Active) on $left.IPAddress == $right.tiIP
 | project TIType="IP", TIData=IPAddress, SourceSystem, Description, ThreatType, ConfidenceScore, IndicatorId'''
-        results = rest.execute_la_query(base_object.WorkspaceId, query, 14)
+        results = rest.execute_la_query(base_object, query, 14)
         ti_object.DetailedResults = ti_object.DetailedResults + results
         ti_object.IPEntitiesCount = len(base_object.get_ip_list())
         ti_object.IPEntitiesWithTI = len(results)
@@ -70,7 +70,7 @@ def execute_ti_module (req_body):
 | extend Url = tolower(Url)) on Url
 | extend Url = strcat('[', tostring(split(Url, '//')[0]), ']//', tostring(split(Url, '//')[1]))
 | project TIType="URL", TIData=Url, SourceSystem, Description, ThreatType, ConfidenceScore, IndicatorId'''
-        results = rest.execute_la_query(base_object.WorkspaceId, query, 14)
+        results = rest.execute_la_query(base_object, query, 14)
         ti_object.DetailedResults = ti_object.DetailedResults + results
         ti_object.URLEntitiesCount = len(base_object.get_url_list())
         ti_object.URLEntitiesWithTI = len(results)
@@ -84,9 +84,9 @@ def execute_ti_module (req_body):
         html_table = data.list_to_html_table(ti_object.DetailedResults)
 
         comment = f'''A total of {ti_object.TotalTIMatchCount} records were found with matching Threat Intelligence data.<br>{html_table}'''
-        comment_result = rest.add_incident_comment(base_object.IncidentARMId, comment)
+        comment_result = rest.add_incident_comment(base_object, comment)
 
     if req_body.get('AddIncidentTask', False) and ti_object.AnyTIFound and base_object.IncidentAvailable:
-        task_result = rest.add_incident_task(base_object.IncidentARMId, 'Review Threat Intelligence Matches', req_body.get('IncidentTaskInstructions'))
+        task_result = rest.add_incident_task(base_object, 'Review Threat Intelligence Matches', req_body.get('IncidentTaskInstructions'))
 
     return Response(ti_object)

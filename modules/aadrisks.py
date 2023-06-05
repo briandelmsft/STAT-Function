@@ -23,17 +23,17 @@ def execute_aadrisks_module (req_body):
                 'UserRiskLevel': 'unknown'
             }
             path = f'/v1.0/identityProtection/riskyUsers/{userid}'
-            current_account.UserRiskLevel = json.loads(rest.rest_call_get(api='msgraph', path=path).content)['riskLevel']
+            current_account.UserRiskLevel = json.loads(rest.rest_call_get(base_object, api='msgraph', path=path).content)['riskLevel']
             if req_body.get('MFAFailureLookup', True):
                 MFAFailureLookup_query = f'SigninLogs\n| where ResultType == \"500121\"\n| where UserId== \"{userid}\"\n| summarize Count=count() by UserPrincipalName'
-                MFAFailureLookup = json.loads(rest.execute_la_query(base_object.WorkspaceId, MFAFailureLookup_query, req_body.get('LookbackInDays')).content)
+                MFAFailureLookup = json.loads(rest.execute_la_query(base_object, MFAFailureLookup_query, req_body.get('LookbackInDays')).content)
                 if MFAFailureLookup:
                     current_account.UserFailedMFACount = MFAFailureLookup['Count']
                 else:
                     current_account.UserFailedMFACount = 0
             if req_body.get('MFAFraudLookup', True):
                 MFAFraudLookup_query = f'AuditLogs \n| where OperationName in (\"Fraud reported - user is blocked for MFA\",\"Fraud reported - no action taken\")\n| where ResultDescription == \"Successfully reported fraud\"\n| extend Id= tostring(parse_json(tostring(InitiatedBy.user)).id)\n| where Id == \"{userid}\"\n| summarize Count=count() by Id'
-                MFAFraudLookup = json.loads(rest.execute_la_query(base_object.WorkspaceId, MFAFraudLookup_query, req_body.get('LookbackInDays')).content)
+                MFAFraudLookup = json.loads(rest.execute_la_query(base_object, MFAFraudLookup_query, req_body.get('LookbackInDays')).content)
                 if MFAFraudLookup:
                     current_account.UserMFAFraudCount = MFAFraudLookup['Count']
                 else:
@@ -54,9 +54,9 @@ def execute_aadrisks_module (req_body):
         comment += f'<li>Total MFA failures: {aadrisks_object.FailedMFATotalCount} </li>'
         comment += f'<li>Total MFA Fraud: {aadrisks_object.MFAFraudTotalCount} </li></ul><br />'
         comment += f'{html_table}'
-        comment_result = rest.add_incident_comment(base_object.IncidentARMId, comment)
+        comment_result = rest.add_incident_comment(base_object, comment)
 
     if req_body.get('AddIncidentTask', True) and aadrisks_object.FailedMFATotalCount > 0 or aadrisks_object.MFAFraudTotalCount > 0 or ( aadrisks_object.HighestRiskLevel != 'None' and aadrisks_object.HighestRiskLevel != 'Unknown'):
-        task_result = rest.add_incident_task(base_object.IncidentARMId, req_body.get('QueryDescription', 'Review users Azure AD risks level and MFA results'), req_body.get('IncidentTaskInstructions'))
+        task_result = rest.add_incident_task(base_object, req_body.get('QueryDescription', 'Review users Azure AD risks level and MFA results'), req_body.get('IncidentTaskInstructions'))
 
     return Response(aadrisks_object)

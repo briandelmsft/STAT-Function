@@ -11,6 +11,8 @@ def execute_base_module (req_body):
 
     trigger_type = req_body['Body'].get('objectSchemaType', 'alert')
 
+    base_object.MultiTenantConfig = req_body.get('MultiTenantConfig', {})
+
     if trigger_type.lower() == 'incident':
         entities = process_incident_trigger(req_body)
     else:
@@ -18,7 +20,7 @@ def execute_base_module (req_body):
 
     if not entities:
         if base_object.IncidentAvailable:
-            rest.add_incident_comment(base_object.IncidentARMId, 'The Microsoft Sentinel Triage AssistanT failed to analyze this incident. This error was due to no incident entities being available at the time the incident was processed.')
+            rest.add_incident_comment(base_object, 'The Microsoft Sentinel Triage AssistanT failed to analyze this incident. This error was due to no incident entities being available at the time the incident was processed.')
         raise STATError('No entities found in the trigger data. The Microsoft Sentinel Triage AssistanT requires at least 1 entity be linked to the alert.')
 
     enrich_ips(entities, req_body.get('EnrichIPsWithGeoData', True))
@@ -32,7 +34,7 @@ def execute_base_module (req_body):
 
     base_object.EntitiesCount = base_object.AccountsCount + base_object.DomainsCount + base_object.FileHashesCount + base_object.FilesCount + base_object.HostsCount + base_object.OtherEntitiesCount + base_object.URLsCount
 
-    org_info = json.loads(rest.rest_call_get(api='msgraph', path='/v1.0/organization').content)
+    org_info = json.loads(rest.rest_call_get(base_object, api='msgraph', path='/v1.0/organization').content)
     base_object.TenantDisplayName = org_info['value'][0]['displayName']
     base_object.TenantId = org_info['value'][0]['id']
 
@@ -47,7 +49,7 @@ def execute_base_module (req_body):
 
     if (req_body.get('AddAccountComment', True) and base_object.AccountsCount > 0) or (req_body.get('AddIPComment', True) and base_object.IPsCount > 0):
         comment = account_comment + '<br><p>' + ip_comment
-        rest.add_incident_comment(base_object.IncidentARMId, comment)
+        rest.add_incident_comment(base_object, comment)
 
     return Response(base_object)
 
@@ -63,7 +65,7 @@ def process_alert_trigger (req_body):
         
     #Get Workspace ARM Id
     subscription_id = req_body['Body']['WorkspaceSubscriptionId']
-    workspace_query = json.loads(rest.rest_call_get('arm', f'/subscriptions/{subscription_id}/providers/Microsoft.OperationalInsights/workspaces?api-version=2021-12-01-preview').content)
+    workspace_query = json.loads(rest.rest_call_get(base_object, 'arm', f'/subscriptions/{subscription_id}/providers/Microsoft.OperationalInsights/workspaces?api-version=2021-12-01-preview').content)
     filter_workspace = list(filter(lambda x: x['properties']['customerId'] == req_body['Body']['WorkspaceId'], workspace_query['value']))
     base_object.WorkspaceARMId = filter_workspace[0]['id']
 
@@ -76,7 +78,7 @@ def process_alert_trigger (req_body):
     while not alert_found:
         x += 1
         try:
-            alert_result = json.loads(rest.rest_call_get('arm', alert_path).content)
+            alert_result = json.loads(rest.rest_call_get(base_object, 'arm', alert_path).content)
         except STATError as e:
             if e.source_error['status_code'] == 404:
                 logging.info('Alert not found, sleeping to try again')
@@ -93,7 +95,7 @@ def process_alert_trigger (req_body):
         
     #Check if alert is already linked to an incident and retrieve Incident ARM Id
     alert_relation_path = alert_id + '/relations?api-version=2023-05-01-preview'
-    alert_relation_result = json.loads(rest.rest_call_get('arm', alert_relation_path).content)
+    alert_relation_result = json.loads(rest.rest_call_get(base_object, 'arm', alert_relation_path).content)
     filter_relations = list(filter(lambda x: x['properties']['relatedResourceType'] == 'Microsoft.SecurityInsights/Incidents', alert_relation_result['value']))
     
     if filter_relations:
@@ -112,7 +114,7 @@ def enrich_ips (entities, get_geo):
         if get_geo:
             path = base_object.SentinelRGARMId + "/providers/Microsoft.SecurityInsights/enrichment/ip/geodata/?api-version=2023-04-01-preview&ipAddress=" + current_ip
             try:
-                response = rest.rest_call_get(api='arm', path=path)
+                response = rest.rest_call_get(base_object, api='arm', path=path)
             except STATError:
                 base_object.add_ip_entity(address=current_ip, geo_data={}, rawentity=raw_entity)
             else:
@@ -200,7 +202,7 @@ def append_other_entities(entities):
 
 def get_account_by_upn_or_id(account, attributes, properties):
     try:
-        user_info = json.loads(rest.rest_call_get(api='msgraph', path='/v1.0/users/' + account + '?$select=' + attributes).content)
+        user_info = json.loads(rest.rest_call_get(base_object, api='msgraph', path='/v1.0/users/' + account + '?$select=' + attributes).content)
     except STATError:
         if account.__contains__('@'):
             get_account_by_mail(account, attributes, properties)
@@ -211,7 +213,7 @@ def get_account_by_upn_or_id(account, attributes, properties):
 
 def get_account_by_mail(account, attributes, properties):
     try:
-        user_info = json.loads(rest.rest_call_get(api='msgraph', path=f'''/v1.0/users?$filter=(mail%20eq%20'{account}')&$select={attributes}''').content)
+        user_info = json.loads(rest.rest_call_get(base_object, api='msgraph', path=f'''/v1.0/users?$filter=(mail%20eq%20'{account}')&$select={attributes}''').content)
     except STATError:
         base_object.add_account_entity({'RawEntity': properties})
     else:
@@ -227,7 +229,7 @@ def get_account_by_dn(account, attributes, properties):
 | summarize arg_max(TimeGenerated, *) by OnPremisesDistinguishedName
 | project AccountUPN'''
 
-    results = rest.execute_la_query(base_object.WorkspaceId, query, 14)
+    results = rest.execute_la_query(base_object, query, 14)
     if results:
         get_account_by_upn_or_id(results[0]['AccountUPN'], attributes, properties)
     else:
@@ -235,7 +237,7 @@ def get_account_by_dn(account, attributes, properties):
 
 def get_account_by_sid(account, attributes, properties):
     try:
-        user_info = json.loads(rest.rest_call_get(api='msgraph', path=f'''/v1.0/users?$filter=(onPremisesSecurityIdentifier%20eq%20'{account}')&$select={attributes}''').content)
+        user_info = json.loads(rest.rest_call_get(base_object, api='msgraph', path=f'''/v1.0/users?$filter=(onPremisesSecurityIdentifier%20eq%20'{account}')&$select={attributes}''').content)
     except STATError:
         base_object.add_account_entity({'RawEntity': properties})
     else:
@@ -250,7 +252,7 @@ def get_account_by_samaccountname(account, attributes, properties):
 | summarize arg_max(TimeGenerated, *) by AccountName
 | project AccountUPN'''
 
-    results = rest.execute_la_query(base_object.WorkspaceId, query, 14)
+    results = rest.execute_la_query(base_object, query, 14)
     if results:
         get_account_by_upn_or_id(results[0]['AccountUPN'], attributes, properties)
     else:
@@ -281,7 +283,7 @@ def append_account_details(account, user_info, raw_entity):
     base_object.add_account_entity(user_info)
 
 def get_account_roles(id):
-    role_info = json.loads(rest.rest_call_get(api='msgraph', path="/v1.0/roleManagement/directory/roleAssignments?$filter=principalId%20eq%20'" + id + "'&$expand=roleDefinition").content)
+    role_info = json.loads(rest.rest_call_get(base_object, api='msgraph', path="/v1.0/roleManagement/directory/roleAssignments?$filter=principalId%20eq%20'" + id + "'&$expand=roleDefinition").content)
     roles = []
     
     for role in role_info['value']:
@@ -289,7 +291,7 @@ def get_account_roles(id):
     return roles
 
 def get_security_info(upn):
-    response = json.loads(rest.rest_call_get(api='msgraph', path="/beta/reports/credentialUserRegistrationDetails?$filter=userPrincipalName%20eq%20'" + upn + "'").content)
+    response = json.loads(rest.rest_call_get(base_object, api='msgraph', path="/beta/reports/credentialUserRegistrationDetails?$filter=userPrincipalName%20eq%20'" + upn + "'").content)
     security_info = response['value'][0]
     return security_info
 
