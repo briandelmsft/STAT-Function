@@ -62,12 +62,15 @@ def process_alert_trigger (req_body):
     entities = req_body['Body']['Entities']
     for entity in entities:
         entity['kind'] = entity.pop('Type')
-        
+             
     #Get Workspace ARM Id
     subscription_id = req_body['Body']['WorkspaceSubscriptionId']
     workspace_query = json.loads(rest.rest_call_get(base_object, 'arm', f'/subscriptions/{subscription_id}/providers/Microsoft.OperationalInsights/workspaces?api-version=2021-12-01-preview').content)
     filter_workspace = list(filter(lambda x: x['properties']['customerId'] == req_body['Body']['WorkspaceId'], workspace_query['value']))
     base_object.WorkspaceARMId = filter_workspace[0]['id']
+
+    alert_rule_id = base_object.WorkspaceARMId + '/providers/Microsoft.SecurityInsights/alertRules/' + req_body['Body']['AlertType'].split('_')[-1]
+    base_object.RelatedAnalyticRuleIds.append(alert_rule_id)
 
     #Get Security Alert Entity
     alert_found = False

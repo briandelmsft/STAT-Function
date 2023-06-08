@@ -1,6 +1,7 @@
-from classes import BaseModule, Response, RelatedAlertsModule
+from classes import BaseModule, Response, RelatedAlertsModule, STATError
 from shared import rest, data
 import datetime as dt
+import json, copy
 
 def execute_relatedalerts_module (req_body):
 
@@ -21,8 +22,15 @@ def execute_relatedalerts_module (req_body):
     if alert_filter is None:
         alert_filter = '// No Custom Alert Filter Provided'
 
-    related_alerts.FusionIncident = str(base_object.RelatedAnalyticRuleIds).lower().__contains__('builtinfusion')
-
+    for rule in base_object.RelatedAnalyticRuleIds:
+        path = rule + '?api-version=2023-02-01'
+        try:
+            rule_data = json.loads(rest.rest_call_get(base_object, 'arm', path).content)
+        except STATError:
+            pass
+        else:
+            if rule_data.get('kind', '').lower() == 'fusion':
+                related_alerts.FusionIncident = True            
 
     query = f'''let lookback = {str(lookback)}d;
 let currentIncidentAlerts = dynamic({str(base_object.get_alert_ids())});
@@ -73,7 +81,7 @@ SecurityAlert
 
     related_alerts.AllTactics =  tactics_list
     related_alerts.AllTacticsCount = len(tactics_list)
-    related_alerts.DetailedResults = results
+    related_alerts.DetailedResults = copy.deepcopy(results)
     related_alerts.HighestSeverityAlert = data.return_highest_value(results, 'AlertSeverity')
     related_alerts.RelatedAccountAlertsCount = len(account_matches)
     related_alerts.RelatedAccountAlertsFound = bool(account_matches)
