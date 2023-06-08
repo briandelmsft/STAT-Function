@@ -30,7 +30,8 @@ def execute_relatedalerts_module (req_body):
             pass
         else:
             if rule_data.get('kind', '').lower() == 'fusion':
-                related_alerts.FusionIncident = True            
+                related_alerts.FusionIncident = True
+                break         
 
     query = f'''let lookback = {str(lookback)}d;
 let currentIncidentAlerts = dynamic({str(base_object.get_alert_ids())});
