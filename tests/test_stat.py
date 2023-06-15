@@ -156,13 +156,14 @@ def test_ueba():
     ueba_input = {
         'AddIncidentComments': False,
         'AddIncidentTask': False,
-        'MinimumInvestigationPriority': 4,
+        'MinimumInvestigationPriority': 2,
         'LookbackInDays': 60,
         'BaseModuleBody': get_base_module_body()
     }
     ueba_response:Response = ueba.execute_ueba_module(ueba_input)
 
     assert ueba_response.statuscode == 200
+    assert ueba_response.body.InvestigationPrioritiesFound == True
 
 def test_oof():
     oof_input = {
