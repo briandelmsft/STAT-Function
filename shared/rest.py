@@ -73,6 +73,7 @@ def acquire_token(api:str, tenant:str):
             stat_token[tenant]['mdetoken'] = cred.get_token("https://" + mde_endpoint + "/.default", tenant_id=tenant)
 
 def rest_call_get(base_module:BaseModule, api:str, path:str, headers:dict={}):
+    '''Perform a GET HTTP call to a REST API.  Accepted API values are arm, msgraph, la, m365 and mde'''
     token = token_cache(base_module, api)
     url = get_endpoint(api) + path
     headers['Authorization'] = 'Bearer ' + token.token
@@ -84,6 +85,7 @@ def rest_call_get(base_module:BaseModule, api:str, path:str, headers:dict={}):
     return response
 
 def rest_call_post(base_module:BaseModule, api:str, path:str, body, headers:dict={}):
+    '''Perform a POST HTTP call to a REST API.  Accepted API values are arm, msgraph, la, m365 and mde'''
     token = token_cache(base_module, api)
     url = get_endpoint(api) + path
     headers['Authorization'] = 'Bearer ' + token.token
@@ -95,6 +97,7 @@ def rest_call_post(base_module:BaseModule, api:str, path:str, body, headers:dict
     return response
 
 def rest_call_put(base_module:BaseModule, api:str, path:str, body, headers:dict={}):
+    '''Perform a PUT HTTP call to a REST API.  Accepted API values are arm, msgraph, la, m365 and mde'''
     token = token_cache(base_module, api)
     url = get_endpoint(api) + path
     headers['Authorization'] = 'Bearer ' + token.token
@@ -146,7 +149,12 @@ def execute_mde_query(base_module:BaseModule, query:str):
     url = get_endpoint('mde') + '/api/advancedqueries/run'
     body = {'Query': query}
     response = requests.post(url=url, json=body, headers={"Authorization": "Bearer " + token.token})
-    return json.loads(response.content)
+    data = json.loads(response.content)
+
+    if response.status_code >= 300:
+        raise STATError('Microsoft 365 Advanced Hunting Query failed to execute', data)
+    
+    return data['Results']
 
 def get_endpoint(api:str):
     match api:

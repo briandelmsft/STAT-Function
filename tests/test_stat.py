@@ -1,0 +1,192 @@
+from modules import base, relatedalerts, watchlist, kql, ti, ueba, oof, scoring
+from classes import Response
+import json
+
+
+def test_base_module_incident():
+    base_response:Response = base.execute_base_module(get_incident_trigger_data())
+
+    assert base_response.statuscode == 200
+    assert base_response.body.AccountsCount == 2
+
+def test_base_module_alert():
+    base_response:Response = base.execute_base_module(get_alert_trigger_data())
+
+    assert base_response.statuscode == 200
+
+def test_related_alerts():
+    alerts_input = {
+        'AddIncidentComments': False,
+        'AddIncidentTask': False,
+        'CheckAccountEntityMatches': True,
+        'CheckHostEntityMatches': True,
+        'CheckIPEntityMatches': True,
+        'AlertKQLFilter': None,
+        'IncidentTaskInstructions': "",
+        'LookbackInDays': 20,
+        'BaseModuleBody': get_base_module_body(),
+    }
+    alerts_response:Response = relatedalerts.execute_relatedalerts_module(alerts_input)
+
+    assert alerts_response.statuscode == 200
+
+def test_threat_intel():
+    ti_input = {
+        'AddIncidentComments': False,
+        'AddIncidentTask': False,
+        'IncidentTaskInstructions': '',
+        'BaseModuleBody': get_base_module_body(),
+    }
+    ti_response:Response = ti.execute_ti_module(ti_input)
+
+    assert ti_response.statuscode == 200
+    assert ti_response.body.AnyTIFound == True
+    assert ti_response.body.IPTIFound == True
+
+def test_watchlist_upn():
+    watchlist_input = {
+        'AddIncidentComments': False,
+        'AddIncidentTask': False,
+        'WatchlistName': 'VIPUsers',
+        'WatchlistKey': 'SearchKey',
+        'WatchlistKeyDataType': 'UPN',
+        'BaseModuleBody': get_base_module_body()
+    }
+    watchlist_response:Response = watchlist.execute_watchlist_module(watchlist_input)
+
+    assert watchlist_response.statuscode == 200
+    assert watchlist_response.body.EntitiesOnWatchlist == True
+    assert watchlist_response.body.EntitiesOnWatchlistCount == 1
+
+def test_watchlist_ip():
+    watchlist_input = {
+        'AddIncidentComments': False,
+        'AddIncidentTask': False,
+        'WatchlistName': 'IPWatchlist',
+        'WatchlistKey': 'SearchKey',
+        'WatchlistKeyDataType': 'IP',
+        'BaseModuleBody': get_base_module_body()
+    }
+    watchlist_response:Response = watchlist.execute_watchlist_module(watchlist_input)
+
+    assert watchlist_response.statuscode == 200
+    assert watchlist_response.body.EntitiesOnWatchlist == True
+    assert watchlist_response.body.EntitiesOnWatchlistCount == 1
+
+def test_watchlist_cidr():
+    watchlist_input = {
+        'AddIncidentComments': False,
+        'AddIncidentTask': False,
+        'WatchlistName': 'NetworkAddresses',
+        'WatchlistKey': 'SearchKey',
+        'WatchlistKeyDataType': 'CIDR',
+        'BaseModuleBody': get_base_module_body()
+    }
+    watchlist_response:Response = watchlist.execute_watchlist_module(watchlist_input)
+
+    assert watchlist_response.statuscode == 200
+    assert watchlist_response.body.EntitiesOnWatchlist == True
+    assert watchlist_response.body.EntitiesOnWatchlistCount == 1
+
+def test_watchlist_fqdn():
+    watchlist_input = {
+        'AddIncidentComments': False,
+        'AddIncidentTask': False,
+        'WatchlistName': 'HighValueAssets',
+        'WatchlistKey': 'SearchKey',
+        'WatchlistKeyDataType': 'FQDN',
+        'BaseModuleBody': get_base_module_body()
+    }
+    watchlist_response:Response = watchlist.execute_watchlist_module(watchlist_input)
+
+    assert watchlist_response.statuscode == 200
+    assert watchlist_response.body.EntitiesOnWatchlist == True
+    assert watchlist_response.body.EntitiesOnWatchlistCount == 1
+
+def test_kql_sentinel():
+    kql_input = {
+        'AddIncidentComments': False,
+        'AddIncidentTask': False,
+        'KQLQuery': 'SigninLogs | take 5 | project UserPrincipalName',
+        'RunQueryAgainst': 'Sentinel',
+        'QueryDescription': 'Test Query',
+        'LookbackInDays': 30,
+        'BaseModuleBody': get_base_module_body()
+    }
+    kql_response:Response = kql.execute_kql_module(kql_input)
+
+    assert kql_response.statuscode == 200
+    assert kql_response.body.ResultsCount == 5
+
+def test_kql_m365():
+    kql_input = {
+        'AddIncidentComments': False,
+        'AddIncidentTask': False,
+        'KQLQuery': 'DeviceInfo | take 5 | project DeviceId',
+        'RunQueryAgainst': 'M365',
+        'QueryDescription': 'Test Query',
+        'LookbackInDays': 30,
+        'BaseModuleBody': get_base_module_body()
+    }
+    kql_response:Response = kql.execute_kql_module(kql_input)
+
+    assert kql_response.statuscode == 200
+    assert kql_response.body.ResultsCount == 5
+
+def test_ueba():
+    ueba_input = {
+        'AddIncidentComments': False,
+        'AddIncidentTask': False,
+        'MinimumInvestigationPriority': 4,
+        'LookbackInDays': 60,
+        'BaseModuleBody': get_base_module_body()
+    }
+    ueba_response:Response = ueba.execute_ueba_module(ueba_input)
+
+    assert ueba_response.statuscode == 200
+
+def test_oof():
+    oof_input = {
+        'AddIncidentComments': False,
+        'AddIncidentTask': False,
+        'BaseModuleBody': get_base_module_body()
+    }
+    oof_response:Response = oof.execute_oof_module(oof_input)
+
+    assert oof_response.statuscode == 200
+
+def test_scoring():
+    scoring_input = {
+        'AddIncidentComments': False,
+        'AddIncidentTask': False,
+        'ScoringData': get_scoring_data(),
+        'BaseModuleBody': get_base_module_body()
+    }
+    scoring_response:Response = scoring.execute_scoring_module(scoring_input)
+
+    assert scoring_response.statuscode == 200
+    assert scoring_response.body.TotalScore == 532
+
+def get_base_module_body():
+    f = open('.\\tests\\basebody.json')
+    base_module_body = json.load(f)
+    f.close()
+    return base_module_body
+
+def get_incident_trigger_data():
+    f = open('.\\tests\\incidenttriggerdata.json')
+    trigger_data = json.load(f)
+    f.close()
+    return trigger_data
+
+def get_alert_trigger_data():
+    f = open('.\\tests\\alerttriggerdata.json')
+    trigger_data = json.load(f)
+    f.close()
+    return trigger_data
+
+def get_scoring_data():
+    f = open('.\\tests\\riskscoringdata.json')
+    scoring_data = json.load(f)
+    f.close()
+    return scoring_data
