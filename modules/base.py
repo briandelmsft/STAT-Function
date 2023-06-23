@@ -3,6 +3,7 @@ from shared import rest, data
 import json
 import time
 import logging
+import requests, os
 
 def execute_base_module (req_body):
     global base_object
@@ -37,6 +38,16 @@ def execute_base_module (req_body):
     org_info = json.loads(rest.rest_call_get(base_object, api='msgraph', path='/v1.0/organization').content)
     base_object.TenantDisplayName = org_info['value'][0]['displayName']
     base_object.TenantId = org_info['value'][0]['id']
+
+    req_header = {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36 Edg/114.0.1823.58'
+    }
+
+    version_data = json.loads(requests.get('https://aka.ms/mstatversion', headers=req_header, allow_redirects=True).content)
+    version_check_type = req_body.get('VersionCheckType', 'Minor')
+    
+    if version_check_type is not 'None':
+        version_check_result = data.version_check(os.getenv('STAT_VERSION', '1.5.0'), version_data.get('STATFunction', '1.5.0'), version_check_type)
 
     account_comment = ''
     ip_comment = ''

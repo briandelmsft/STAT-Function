@@ -50,6 +50,27 @@ def test_coalesce():
 
     assert test_value == 'test'
     assert test_value_none is None
+
+def test_version_check():
+    assert data.version_check('1.0.0', '1.0.0', 'Major') == {'UpdateAvailable': False, 'UpdateType': 'None'}
+    assert data.version_check('1.0.0', '1.0.0', 'Minor') == {'UpdateAvailable': False, 'UpdateType': 'None'}
+    assert data.version_check('1.0.0', '1.0.0', 'Build') == {'UpdateAvailable': False, 'UpdateType': 'None'}
+
+    assert data.version_check('1.0.0', '1.0.1', 'Major') == {'UpdateAvailable': False, 'UpdateType': 'None'}
+    assert data.version_check('1.0.0', '1.0.1', 'Minor') == {'UpdateAvailable': False, 'UpdateType': 'None'}
+    assert data.version_check('1.0.0', '1.0.1', 'Build') == {'UpdateAvailable': True, 'UpdateType': 'Build'}
+
+    assert data.version_check('1.0.0', '1.1.1', 'Major') == {'UpdateAvailable': False, 'UpdateType': 'None'}
+    assert data.version_check('1.0.0', '1.1.1', 'Minor') == {'UpdateAvailable': True, 'UpdateType': 'Minor'}
+    assert data.version_check('1.0.0', '1.1.1', 'Build') == {'UpdateAvailable': True, 'UpdateType': 'Minor'}
+
+    assert data.version_check('1.0.0', '2.1.1', 'Major') == {'UpdateAvailable': True, 'UpdateType': 'Major'}
+    assert data.version_check('1.0.0', '2.1.1', 'Minor') == {'UpdateAvailable': True, 'UpdateType': 'Major'}
+    assert data.version_check('1.0.0', '2.1.1', 'Build') == {'UpdateAvailable': True, 'UpdateType': 'Major'}
+
+    assert data.version_check('2.0.0', '1.1.1', 'Build') == {'UpdateAvailable': False, 'UpdateType': 'None'}
+    assert data.version_check('1.2.0', '1.1.1', 'Build') == {'UpdateAvailable': False, 'UpdateType': 'None'}
+    assert data.version_check('1.1.5', '1.1.1', 'Build') == {'UpdateAvailable': False, 'UpdateType': 'None'}
     
 
 def list_data():

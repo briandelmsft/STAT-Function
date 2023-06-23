@@ -56,3 +56,28 @@ def coalesce(*args):
     for arg in args:
         if arg is not None:
             return arg
+        
+def version_check(current_version:str, avaialble_version:str, update_check_type:str):
+    current = current_version.split('.')
+    available = avaialble_version.split('.')
+
+    update_dict = {
+        'Major': 1,
+        'Minor': 2,
+        'Build': 3
+    }
+
+    if available[0] > current[0]:
+        return {'UpdateAvailable': True, 'UpdateType': 'Major'}
+    elif available[1] > current[1] and available[0] == current[0] and update_dict[update_check_type] > 1:
+        return {'UpdateAvailable': True, 'UpdateType': 'Minor'}
+    elif available[2] > current[2] and available[0] == current[0] and available[1] == current[1] and update_dict[update_check_type] == 3:
+        return {'UpdateAvailable': True, 'UpdateType': 'Build'}
+    else:
+        return {'UpdateAvailable': False, 'UpdateType': 'None'}
+
+def return_property_as_list(input_list:list, property_name:str):
+    return_list = []
+    for item in input_list:
+        return_list.append(item[property_name])
+    return return_list

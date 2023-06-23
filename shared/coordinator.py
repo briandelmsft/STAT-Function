@@ -1,4 +1,4 @@
-from modules import base, kql, watchlist, ti, relatedalerts, scoring, ueba, playbook, oof, aadrisks, createincident, test
+from modules import base, kql, watchlist, ti, relatedalerts, scoring, ueba, playbook, oof, aadrisks, file, createincident, test
 from classes import Response, STATError
 
 def initiate_module(module_name, req_body):
@@ -22,7 +22,7 @@ def initiate_module(module_name, req_body):
         case 'mde':
             raise STATError(error='MDE Module has not yet been migrated to STAT v2', status_code=400)
         case 'file':
-            raise STATError(error='File Module has not yet been migrated to STAT v2', status_code=400)
+            return_data = file.execute_file_module(req_body)
         case 'aadrisks':
             return_data = aadrisks.execute_aadrisks_module(req_body)
         case 'ueba':
