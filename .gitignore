@@ -139,3 +139,4 @@ basebody.json
 incidenttriggerdata.json
 alerttriggerdata.json
 riskscoringdata.json
+.test/

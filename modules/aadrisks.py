@@ -23,22 +23,22 @@ def execute_aadrisks_module (req_body):
                 'UserRiskLevel': 'unknown'
             }
             path = f'/v1.0/identityProtection/riskyUsers/{userid}'
-            current_account.UserRiskLevel = json.loads(rest.rest_call_get(base_object, api='msgraph', path=path).content)['riskLevel']
+            current_account['UserRiskLevel'] = json.loads(rest.rest_call_get(base_object, api='msgraph', path=path).content)['riskLevel']
             if req_body.get('MFAFailureLookup', True):
                 MFAFailureLookup_query = f'SigninLogs\n| where ResultType == \"500121\"\n| where UserId== \"{userid}\"\n| summarize Count=count() by UserPrincipalName'
-                MFAFailureLookup = json.loads(rest.execute_la_query(base_object, MFAFailureLookup_query, req_body.get('LookbackInDays')).content)
+                MFAFailureLookup = rest.execute_la_query(base_object, MFAFailureLookup_query, req_body.get('LookbackInDays'))
                 if MFAFailureLookup:
-                    current_account.UserFailedMFACount = MFAFailureLookup['Count']
+                    current_account['UserFailedMFACount'] = MFAFailureLookup[0]['Count']
                 else:
-                    current_account.UserFailedMFACount = 0
+                    current_account['UserFailedMFACount'] = 0
             if req_body.get('MFAFraudLookup', True):
                 MFAFraudLookup_query = f'AuditLogs \n| where OperationName in (\"Fraud reported - user is blocked for MFA\",\"Fraud reported - no action taken\")\n| where ResultDescription == \"Successfully reported fraud\"\n| extend Id= tostring(parse_json(tostring(InitiatedBy.user)).id)\n| where Id == \"{userid}\"\n| summarize Count=count() by Id'
-                MFAFraudLookup = json.loads(rest.execute_la_query(base_object, MFAFraudLookup_query, req_body.get('LookbackInDays')).content)
+                MFAFraudLookup = rest.execute_la_query(base_object, MFAFraudLookup_query, req_body.get('LookbackInDays'))
                 if MFAFraudLookup:
-                    current_account.UserMFAFraudCount = MFAFraudLookup['Count']
+                    current_account['UserMFAFraudCount'] = MFAFraudLookup[0]['Count']
                 else:
-                    current_account.UserMFAFraudCount = 0
-        aadrisks_object.DetailedResults.append(json.dumps(current_account))
+                    current_account['UserMFAFraudCount'] = 0
+        aadrisks_object.DetailedResults.append(current_account)
 
     entities_nb = len(aadrisks_object.DetailedResults)
     if entities_nb != 0:
