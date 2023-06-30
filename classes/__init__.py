@@ -413,9 +413,10 @@ class AADModule:
 
     def __init__(self):
         self.AnalyzedEntities = 0
-        self.FailedMFATotalCount = 0
+        self.FailedMFATotalCount = None
         self.HighestRiskLevel = ''
-        self.MFAFraudTotalCount = 0
+        self.MFAFraudTotalCount = None
+        self.SuspiciousActivityReportTotalCount = None
         self.ModuleName = 'AADRisksModule'
         self.DetailedResults = []
 
@@ -424,6 +425,7 @@ class AADModule:
         self.FailedMFATotalCount = body['FailedMFATotalCount']
         self.HighestRiskLevel = body['HighestRiskLevel']
         self.MFAFraudTotalCount = body['MFAFraudTotalCount']
+        self.SuspiciousActivityReportTotalCount = body['SuspiciousActivityReportTotalCount']
         self.DetailedResults = body['DetailedResults']
 
 class FileModule:
