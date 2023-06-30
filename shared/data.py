@@ -30,12 +30,15 @@ def return_highest_value(input_list:list, key:str, order:list=['High','Medium','
     
     return 'Unknown'
 
-def join_lists(left_list, right_list, kind, left_key, right_key, fill_nan=0):
+def join_lists(left_list, right_list, kind, left_key, right_key, fill_nan=None):
     '''Join 2 lists of objects using a key.  Supported join kinds left, right, outer, inner, cross'''
     left_df = pd.DataFrame(left_list)
     right_df = pd.DataFrame(right_list)
     join_data = left_df.merge(right=right_df, how=kind, left_on=left_key, right_on=right_key)
-    join_data = join_data.fillna(fill_nan)
+    if fill_nan is None:
+        join_data = join_data.where(join_data.notna(), None)
+    else:
+        join_data = join_data.fillna(fill_nan)
 
     return join_data.to_dict('records')
 

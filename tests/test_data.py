@@ -38,7 +38,7 @@ def test_update_column_values_in_list():
 
 def test_join_lists():
 
-    merged_data = data.join_lists(list_data(), list_data2(), 'left', 'Description', 'Description')
+    merged_data = data.join_lists(list_data(), list_data2(), 'left', 'Description', 'Description', fill_nan=0)
 
     assert merged_data[0]['MergedData'] == 'merge1'
     assert merged_data[3].get('MergedData') == 0
