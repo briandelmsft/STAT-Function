@@ -8,7 +8,7 @@ def execute_mdca_module (req_body):
     base_object.load_from_input(req_body['BaseModuleBody'])
 
     mdca_endpoint_url = base_object.MultiTenantConfig.get('MDCAUrl',os.getenv('MDCA_ENDPOINT'))
-    if mdca_endpoint_url is None:
+    if mdca_endpoint_url is None or mdca_endpoint_url == "":
         raise STATError('There are no configured endpoint for MDCA.')
 
     mdac_object = MDCAModule()
