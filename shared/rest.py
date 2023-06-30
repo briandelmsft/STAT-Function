@@ -13,6 +13,7 @@ la_endpoint = os.getenv('LOGANALYTICS_ENDPOINT')
 m365_endpoint = os.getenv('M365_ENDPOINT')
 mde_endpoint = os.getenv('MDE_ENDPOINT')
 default_tenant_id = os.getenv('AZURE_TENANT_ID')
+mdca_endpoint = os.getenv('MDCA_ENDPOINT')
 
 def token_cache(base_module:BaseModule, api:str):
     global stat_token
@@ -40,6 +41,10 @@ def token_cache(base_module:BaseModule, api:str):
             tenant = base_module.MultiTenantConfig.get('MDETenantId', base_module.MultiTenantConfig.get('TenantId', default_tenant))
             token_expiration_check(api, stat_token.get(tenant,{}).get('mdetoken'), tenant)
             return stat_token[tenant]['mdetoken']
+        case 'mdca':
+            tenant = base_module.MultiTenantConfig.get('MDCAUrl', base_module.MultiTenantConfig.get('TenantId', default_tenant))
+            token_expiration_check(api, stat_token.get(tenant,{}).get('mdcatoken'), tenant)
+            return stat_token[tenant]['mdcatoken']
 
 def token_expiration_check(api:str, token, tenant:str):
     
@@ -71,6 +76,8 @@ def acquire_token(api:str, tenant:str):
             stat_token[tenant]['m365token'] = cred.get_token("https://" + m365_endpoint + "/.default", tenant_id=tenant)
         case 'mde':
             stat_token[tenant]['mdetoken'] = cred.get_token("https://" + mde_endpoint + "/.default", tenant_id=tenant)
+        case 'mdca':
+            stat_token[tenant]['mdcatoken'] = cred.get_token("05a65629-4c1b-48c1-a78b-804c4abdd4af/.default", tenant_id=tenant)
 
 def rest_call_get(base_module:BaseModule, api:str, path:str, headers:dict={}):
     '''Perform a GET HTTP call to a REST API.  Accepted API values are arm, msgraph, la, m365 and mde'''
@@ -168,6 +175,8 @@ def get_endpoint(api:str):
             return 'https://' + m365_endpoint
         case 'mde':
             return 'https://' + mde_endpoint
+        case 'mdca':
+            return 'https://' + mdca_endpoint
     
 def add_incident_comment(base_module:BaseModule, comment:str):
     token = token_cache(base_module, 'arm')
