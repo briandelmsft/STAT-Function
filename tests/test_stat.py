@@ -7,7 +7,7 @@ def test_base_module_incident():
     base_response:Response = base.execute_base_module(get_incident_trigger_data())
 
     assert base_response.statuscode == 200
-    assert base_response.body.AccountsCount == 1
+    assert base_response.body.AccountsCount == 2
     assert len(base_response.body.Accounts) == base_response.body.AccountsCount
     assert len(base_response.body.Domains) == base_response.body.DomainsCount
     assert len(base_response.body.FileHashes) == base_response.body.FileHashesCount
