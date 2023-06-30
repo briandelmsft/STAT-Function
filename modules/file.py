@@ -11,29 +11,10 @@ def execute_file_module (req_body):
 
     file_object = FileModule()
 
-
-#data.return_property_as_list(hash_list, 'FileHash')
-
     sha1_hashes = data.return_property_as_list(list(filter(lambda x: x['Algorithm'].lower() == 'sha1', base_object.FileHashes)), 'FileHash')
     sha256_hashes = data.return_property_as_list(list(filter(lambda x: x['Algorithm'].lower() == 'sha256', base_object.FileHashes)), 'FileHash')
-    #sha1_hashes = list(filter(lambda x: x['Algorithm'].lower() == 'sha1', base_object.FileHashes))
-    #sha256_hashes = list(filter(lambda x: x['Algorithm'].lower() == 'sha256', base_object.FileHashes))
 
-    #file_object.AnalyzedEntities = len(hash_entities)
-
-#     hash_string = "('" + "','".join(data.return_property_as_list(sha256_hashes, 'FileHash')) + "')"
-
-#     email_hash_query = f'''EmailAttachmentInfo
-# | where Timestamp > ago(30d)
-# | where SHA256 in~ {hash_string}
-# | summarize FirstSeen=min(Timestamp), LastSeen=max(Timestamp), Count=count() by FileName,SHA256, FileSize'''
-    
-    #sha256_hash_string = "','".join(data.return_property_as_list(sha256_hashes, 'FileHash')).lower()
-    #sha1_hash_string = "','".join(data.return_property_as_list(sha1_hashes, 'FileHash')).lower()
-
-    #result_index = {}
     results_data = {}
-    #matching_sha1_sha256 = {}
 
     device_file_query = f'''let sha1Hashes = datatable(SHA1:string)['{get_hashes_as_string(sha1_hashes)}'];
 let sha256Hashes = datatable(SHA256:string)['{get_hashes_as_string(sha256_hashes)}'];
@@ -70,19 +51,6 @@ union
         result = call_file_api(base_object, hash)
         if result:
             add_file_api_result(result, results_data)
-        #     if not results_data.get(result['sha256']):
-        #         results_data[result['sha256']] = {
-        #             'SHA1': result['sha1'],
-        #             'SHA256': result['sha256']
-        #         }
-        #     results_data[result['sha256']]['GlobalFirstSeen'] = result['globalFirstObserved']
-        #     results_data[result['sha256']]['GlobalLastSeen'] = result['globalLastObserved']
-        #     results_data[result['sha256']]['GlobalPrevalence'] = result['globalPrevalence']
-        #     results_data[result['sha256']]['Publisher'] = result['filePublisher']
-        #     results_data[result['sha256']]['Signer'] = result['signer']
-        #     results_data[result['sha256']]['IsCertificateValid'] = result['isValidCertificate']
-        #     results_data[result['sha256']]['FileSize'] = result['size']
-        #     results_data[result['sha256']]['ThreatName'] = result['determinationValue']
 
             try:
                 sha1_hashes.remove(result['sha1'])
