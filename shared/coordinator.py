@@ -17,8 +17,6 @@ def initiate_module(module_name, req_body):
             return_data = relatedalerts.execute_relatedalerts_module(req_body)
         case 'threatintel':
             return_data = ti.execute_ti_module(req_body)
-        case 'mcas': #For compatibility with all versions 
-            return_data = mdca.execute_mdca_module(req_body)
         case 'mdca': 
             return_data = mdca.execute_mdca_module(req_body)
         case 'mde':
