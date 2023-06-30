@@ -41,7 +41,7 @@ def execute_mdca_module (req_body):
     if req_body.get('AddIncidentComments', True):
         html_table = data.list_to_html_table( [{k: v for k, v in DetailedResults.items() if k != 'ThreatScoreHistory'} for DetailedResults in mdac_object.DetailedResults])
         comment = f'<h3>Microsoft Defender for Cloud Apps Module</h3>'
-        comment += f'A total of {mdac_object.AnalyzedEntities} entites were analyzed.<br />'
+        comment += f'A total of {mdac_object.AnalyzedEntities} entities were analyzed.<br />'
         comment += f'<ul><li>Maximum investigation score: {mdac_object.MaximumScore}</li>'
         comment += f'<li>Users above the score threshold of {ScoreThreshold}: {mdac_object.AboveThresholdCount} </li></ul><br />'
         comment += f'{html_table}'
