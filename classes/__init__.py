@@ -425,7 +425,7 @@ class AADModule:
         self.FailedMFATotalCount = body['FailedMFATotalCount']
         self.HighestRiskLevel = body['HighestRiskLevel']
         self.MFAFraudTotalCount = body['MFAFraudTotalCount']
-        self.SuspiciousActivityReportTotalCount = body['SuspiciousActivityReportCount']
+        self.SuspiciousActivityReportTotalCount = body['SuspiciousActivityReportTotalCount']
         self.DetailedResults = body['DetailedResults']
 
 class FileModule:
