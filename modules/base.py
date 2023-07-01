@@ -185,7 +185,7 @@ def enrich_files(entities):
 
     for file in file_entities:
         raw_entity = data.coalesce(file.get('properties'), file)
-        base_object.Files.append({'RawEntity': raw_entity})
+        base_object.Files.append({'FileName': data.coalesce(file.get('properties',{}).get('friendlyName'), file.get('Name')),'RawEntity': raw_entity})
 
 def enrich_filehashes(entities):
     filehash_entities = list(filter(lambda x: x['kind'].lower() == 'filehash', entities))

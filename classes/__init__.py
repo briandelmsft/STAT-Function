@@ -433,8 +433,10 @@ class FileModule:
     
     def __init__(self):
         self.AnalyzedEntities = 0
+        self.DeviceUniqueDeviceTotalCount = 0
+        self.DeviceUniqueFileNameTotalCount = 0
+        self.DeviceFileActionTotalCount = 0
         self.EntitiesAttachmentCount = 0
-        self.HashesInvalidSignatureCount = 0
         self.HashesLinkedToThreatCount = 0
         self.HashesNotMicrosoftSignedCount = 0
         self.HashesThreatList = []
@@ -445,8 +447,10 @@ class FileModule:
 
     def load_from_input(self, body):
         self.AnalyzedEntities = body['AnalyzedEntities']
+        self.DeviceUniqueDeviceTotalCount = body['DeviceUniqueDeviceTotalCount']
+        self.DeviceUniqueFileNameTotalCount = body['DeviceUniqueFileNameTotalCount']
+        self.DeviceFileActionTotalCount = body['DeviceFileActionTotalCount']
         self.EntitiesAttachmentCount = body['EntitiesAttachmentCount']
-        self.HashesInvalidSignatureCount = body['HashesInvalidSignatureCount']
         self.HashesLinkedToThreatCount = body['HashesLinkedToThreatCount']
         self.HashesNotMicrosoftSignedCount = body['HashesNotMicrosoftSignedCount']
         self.HashesThreatList = body['HashesThreatList']

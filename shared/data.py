@@ -50,6 +50,10 @@ def max_column_by_key(input_list, key):
     df = pd.DataFrame(input_list)
     return int(df[key].max())
 
+def min_column_by_key(input_list, key):
+    df = pd.DataFrame(input_list)
+    return int(df[key].min())
+
 def sort_list_by_key(input_list, key, ascending=False):
     df = pd.DataFrame(input_list)
     df = df.sort_values(by=[key], ascending=ascending)

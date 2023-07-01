@@ -11,13 +11,16 @@ def execute_file_module (req_body):
 
     file_object = FileModule()
 
+    file_names = data.return_property_as_list(base_object.Files, 'FileName')
     sha1_hashes = data.return_property_as_list(list(filter(lambda x: x['Algorithm'].lower() == 'sha1', base_object.FileHashes)), 'FileHash')
     sha256_hashes = data.return_property_as_list(list(filter(lambda x: x['Algorithm'].lower() == 'sha256', base_object.FileHashes)), 'FileHash')
 
+    file_object.AnalyzedEntities = len(sha1_hashes) + len(sha256_hashes)
+
     results_data = {}
 
-    device_file_query = f'''let sha1Hashes = datatable(SHA1:string)['{get_hashes_as_string(sha1_hashes)}'];
-let sha256Hashes = datatable(SHA256:string)['{get_hashes_as_string(sha256_hashes)}'];
+    device_file_query = f'''let sha1Hashes = datatable(SHA1:string)['{convert_list_to_string(sha1_hashes)}'];
+let sha256Hashes = datatable(SHA256:string)['{convert_list_to_string(sha256_hashes)}'];
 union
 (DeviceFileEvents
 | where Timestamp > ago(30d)
@@ -50,7 +53,7 @@ union
     for hash in sha256_hashes:
         result = call_file_api(base_object, hash)
         if result:
-            add_file_api_result(result, results_data)
+            add_file_api_result(result, results_data, file_object)
 
             try:
                 sha1_hashes.remove(result['sha1'])
@@ -60,7 +63,7 @@ union
     for hash in sha1_hashes:
         result = call_file_api(base_object, hash)
         if result:
-            add_file_api_result(result, results_data)
+            add_file_api_result(result, results_data, file_object)
             sha256_hashes.append(result['sha256'])
             
             try:
@@ -68,43 +71,68 @@ union
             except:
                 pass
        
-
-    email_hash_query = f'''datatable(SHA256:string)['{get_hashes_as_string(sha256_hashes)}']
+    if sha256_hashes:
+        email_hash_query = f'''datatable(SHA256:string)['{convert_list_to_string(sha256_hashes)}']
 | join (EmailAttachmentInfo | where Timestamp > ago(30d)) on SHA256
 | summarize AttachmentCount=countif(isnotempty(NetworkMessageId)), FirstSeen=min(Timestamp), LastSeen=max(Timestamp), FileName=min(FileName), FileSize=max(FileSize) by SHA256'''
     
-    email_attachments_by_hash = rest.execute_m365d_query(base_object, email_hash_query)
+        email_attachments_by_hash = rest.execute_m365d_query(base_object, email_hash_query)
 
-    for attachment in email_attachments_by_hash:
-        if not results_data.get(attachment['SHA256']):
-            results_data[attachment['SHA256']] = {
-                'SHA256': attachment['SHA256']
-            }
-        results_data[attachment['SHA256']]['EmailAttachmentCount'] = attachment['AttachmentCount']
-        results_data[attachment['SHA256']]['EmailAttachmentFileSize'] = attachment['FileSize']
-        results_data[attachment['SHA256']]['EmailAttachmentFirstSeen'] = attachment['FirstSeen']
-        results_data[attachment['SHA256']]['EmailAttachmentLastSeen'] = attachment['LastSeen']
-        if not results_data[attachment['SHA256']].get('FileName'):
-            results_data[attachment['SHA256']]['FileName'] = attachment['FileName']
+        for attachment in email_attachments_by_hash:
+            if not results_data.get(attachment['SHA256']):
+                results_data[attachment['SHA256']] = {
+                    'SHA256': attachment['SHA256']
+                }
+            results_data[attachment['SHA256']]['EmailAttachmentCount'] = attachment['AttachmentCount']
+            results_data[attachment['SHA256']]['EmailAttachmentFileSize'] = attachment['FileSize']
+            results_data[attachment['SHA256']]['EmailAttachmentFirstSeen'] = attachment['FirstSeen']
+            results_data[attachment['SHA256']]['EmailAttachmentLastSeen'] = attachment['LastSeen']
+            if not results_data[attachment['SHA256']].get('FileName'):
+                results_data[attachment['SHA256']]['FileName'] = attachment['FileName']
+    
+    if file_names:
+        email_file_query = f'''EmailAttachmentInfo
+| where Timestamp > ago(30d)
+| where FileName in~ ('{convert_list_to_string(file_names)}')
+| summarize FirstSeen=min(Timestamp), LastSeen=max(Timestamp), AttachmentCount=count() by FileName,SHA256, FileSize'''
+        file_results = rest.execute_m365d_query(base_object, email_file_query)
 
+        for file in file_results:
+            if not results_data.get(file['SHA256']):
+                results_data[file['SHA256']] = {
+                    'SHA256': file['SHA256']
+                }
+            results_data[file['SHA256']]['EmailAttachmentCount'] = file['AttachmentCount']
+            results_data[file['SHA256']]['EmailAttachmentFileSize'] = file['FileSize']
+            results_data[file['SHA256']]['EmailAttachmentFirstSeen'] = file['FirstSeen']
+            results_data[file['SHA256']]['EmailAttachmentLastSeen'] = file['LastSeen']
+            results_data[file['SHA256']]['FileName'] = file['FileName']
 
     for key in results_data:
         file_object.DetailedResults.append(results_data[key])
 
+    file_object.EntitiesAttachmentCount = data.sum_column_by_key(file_object.DetailedResults, 'EmailAttachmentCount')
+    file_object.DeviceFileActionTotalCount = data.sum_column_by_key(file_object.DetailedResults, 'DeviceFileActionCount')
+    file_object.DeviceUniqueDeviceTotalCount = data.sum_column_by_key(file_object.DetailedResults, 'DeviceUniqueDeviceCount')
+    file_object.DeviceUniqueFileNameTotalCount = data.sum_column_by_key(file_object.DetailedResults, 'DeviceUniqueFileNameCount')
+    file_object.HashesLinkedToThreatCount = len(file_object.HashesThreatList)
+    file_object.MaximumGlobalPrevalence = data.max_column_by_key(file_object.DetailedResults, 'GlobalPrevalence')
+    file_object.MinimumGlobalPrevalence = data.min_column_by_key(file_object.DetailedResults, 'GlobalPrevalence')
 
-    # if req_body.get('AddIncidentComments', True) and base_object.IncidentAvailable:
+
+    if req_body.get('AddIncidentComments', True) and base_object.IncidentAvailable:
         
-    #     html_table = data.list_to_html_table(ti_object.DetailedResults)
+        html_table = data.list_to_html_table(file_object.DetailedResults)
 
-    #     comment = f'''A total of {ti_object.TotalTIMatchCount} records were found with matching Threat Intelligence data.<br>{html_table}'''
-    #     comment_result = rest.add_incident_comment(base_object, comment)
+        comment = f'''<h3>File Module</h3>A total of {file_object.AnalyzedEntities} entities were analyzed.<br>{html_table}'''
+        comment_result = rest.add_incident_comment(base_object, comment)
 
-    # if req_body.get('AddIncidentTask', False) and ti_object.AnyTIFound and base_object.IncidentAvailable:
-    #     task_result = rest.add_incident_task(base_object, 'Review Threat Intelligence Matches', req_body.get('IncidentTaskInstructions'))
+    if req_body.get('AddIncidentTask', False) and file_object.AnalyzedEntities > 0 and base_object.IncidentAvailable:
+        task_result = rest.add_incident_task(base_object, 'Review File Module Results', req_body.get('IncidentTaskInstructions'))
 
     return Response(file_object)
 
-def get_hashes_as_string(hash_list:list, ):
+def convert_list_to_string(hash_list:list):
     return "','".join(list(set(hash_list))).lower()
 
 def call_file_api(base_object, hash):
@@ -120,7 +148,7 @@ def call_file_api(base_object, hash):
         
     return file_data
 
-def add_file_api_result(result, results_data):
+def add_file_api_result(result, results_data, file_object:FileModule):
     if not results_data.get(result['sha256']):
         results_data[result['sha256']] = {
             'SHA1': result['sha1'],
@@ -134,3 +162,10 @@ def add_file_api_result(result, results_data):
     results_data[result['sha256']]['IsCertificateValid'] = result['isValidCertificate']
     results_data[result['sha256']]['FileSize'] = result['size']
     results_data[result['sha256']]['ThreatName'] = result['determinationValue']
+
+    if results_data[result['sha256']]['Publisher'] != 'Microsoft Corporation':
+        file_object.HashesNotMicrosoftSignedCount += 1
+
+    if results_data[result['sha256']]['ThreatName'] != '' and results_data[result['sha256']]['ThreatName'] is not None:
+        file_object.HashesThreatList.append(results_data[result['sha256']]['ThreatName'])
+        file_object.HashesLinkedToThreatCount += 1
