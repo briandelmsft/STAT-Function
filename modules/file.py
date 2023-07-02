@@ -15,12 +15,31 @@ def execute_file_module (req_body):
     sha1_hashes = data.return_property_as_list(list(filter(lambda x: x['Algorithm'].lower() == 'sha1', base_object.FileHashes)), 'FileHash')
     sha256_hashes = data.return_property_as_list(list(filter(lambda x: x['Algorithm'].lower() == 'sha256', base_object.FileHashes)), 'FileHash')
 
-    file_object.AnalyzedEntities = len(sha1_hashes) + len(sha256_hashes)
+    file_object.AnalyzedEntities = len(sha1_hashes) + len(sha256_hashes) + len(base_object.Files)
 
     results_data = {}
 
-    device_file_query = f'''let sha1Hashes = datatable(SHA1:string)['{convert_list_to_string(sha1_hashes)}'];
-let sha256Hashes = datatable(SHA256:string)['{convert_list_to_string(sha256_hashes)}'];
+    if file_names:
+        email_file_query = f'''EmailAttachmentInfo
+| where Timestamp > ago(30d)
+| where FileName in~ ({convert_list_to_string(file_names)})
+| summarize FirstSeen=min(Timestamp), LastSeen=max(Timestamp), AttachmentCount=count() by FileName,SHA256, FileSize'''
+        file_results = rest.execute_m365d_query(base_object, email_file_query)
+
+        for file in file_results:
+            if not results_data.get(file['SHA256']):
+                results_data[file['SHA256']] = {
+                    'SHA256': file['SHA256']
+                }
+            results_data[file['SHA256']]['EmailAttachmentCount'] = file['AttachmentCount']
+            results_data[file['SHA256']]['EmailAttachmentFileSize'] = file['FileSize']
+            results_data[file['SHA256']]['EmailAttachmentFirstSeen'] = file['FirstSeen']
+            results_data[file['SHA256']]['EmailAttachmentLastSeen'] = file['LastSeen']
+            results_data[file['SHA256']]['FileName'] = file['FileName']
+            file_object.EntitiesAttachmentCount += file['AttachmentCount']
+
+    device_file_query = f'''let sha1Hashes = datatable(SHA1:string)[{convert_list_to_string(sha1_hashes)}];
+let sha256Hashes = datatable(SHA256:string)[{convert_list_to_string(sha256_hashes)}];
 union
 (DeviceFileEvents
 | where Timestamp > ago(30d)
@@ -36,7 +55,8 @@ union
     device_file_results = rest.execute_m365d_query(base_object, device_file_query)
 
     for file in device_file_results:
-        sha256_hashes.append(file['SHA256'])
+        if file['SHA256'] not in sha256_hashes:
+            sha256_hashes.append(file['SHA256'])
         try:
             sha1_hashes.remove(file['SHA1'])
         except:
@@ -72,7 +92,7 @@ union
                 pass
        
     if sha256_hashes:
-        email_hash_query = f'''datatable(SHA256:string)['{convert_list_to_string(sha256_hashes)}']
+        email_hash_query = f'''datatable(SHA256:string)[{convert_list_to_string(sha256_hashes)}]
 | join (EmailAttachmentInfo | where Timestamp > ago(30d)) on SHA256
 | summarize AttachmentCount=countif(isnotempty(NetworkMessageId)), FirstSeen=min(Timestamp), LastSeen=max(Timestamp), FileName=min(FileName), FileSize=max(FileSize) by SHA256'''
     
@@ -87,26 +107,9 @@ union
             results_data[attachment['SHA256']]['EmailAttachmentFileSize'] = attachment['FileSize']
             results_data[attachment['SHA256']]['EmailAttachmentFirstSeen'] = attachment['FirstSeen']
             results_data[attachment['SHA256']]['EmailAttachmentLastSeen'] = attachment['LastSeen']
+            file_object.EntitiesAttachmentCount += attachment['AttachmentCount']
             if not results_data[attachment['SHA256']].get('FileName'):
                 results_data[attachment['SHA256']]['FileName'] = attachment['FileName']
-    
-    if file_names:
-        email_file_query = f'''EmailAttachmentInfo
-| where Timestamp > ago(30d)
-| where FileName in~ ('{convert_list_to_string(file_names)}')
-| summarize FirstSeen=min(Timestamp), LastSeen=max(Timestamp), AttachmentCount=count() by FileName,SHA256, FileSize'''
-        file_results = rest.execute_m365d_query(base_object, email_file_query)
-
-        for file in file_results:
-            if not results_data.get(file['SHA256']):
-                results_data[file['SHA256']] = {
-                    'SHA256': file['SHA256']
-                }
-            results_data[file['SHA256']]['EmailAttachmentCount'] = file['AttachmentCount']
-            results_data[file['SHA256']]['EmailAttachmentFileSize'] = file['FileSize']
-            results_data[file['SHA256']]['EmailAttachmentFirstSeen'] = file['FirstSeen']
-            results_data[file['SHA256']]['EmailAttachmentLastSeen'] = file['LastSeen']
-            results_data[file['SHA256']]['FileName'] = file['FileName']
 
     for key in results_data:
         file_object.DetailedResults.append(results_data[key])
@@ -133,7 +136,10 @@ union
     return Response(file_object)
 
 def convert_list_to_string(hash_list:list):
-    return "','".join(list(set(hash_list))).lower()
+    if hash_list:
+        return "'" + "','".join(list(set(hash_list))).lower() + "'"
+    else:
+        return ''
 
 def call_file_api(base_object, hash):
     path = f'/api/files/{hash}'

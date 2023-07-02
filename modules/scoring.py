@@ -197,10 +197,7 @@ def score_file(score:ScoringModule, module_body, multiplier, label):
     if file.HashesLinkedToThreatCount > 0:
         score.append_score((file.HashesLinkedToThreatCount * 10 * multiplier), f'{label} - Hash linked to threat')
 
-    if file.HashesInvalidSignatureCount > 0:
-        score.append_score((file.HashesInvalidSignatureCount * 5 * multiplier), f'{label} - Invalid Signatures')
-
-    if file.HashesLinkedToThreatCount == 0 and file.HashesInvalidSignatureCount == 0:
+    if file.HashesLinkedToThreatCount == 0:
         score.append_score(0, f'{label} - No File threats found')
 
 def score_mdca(score:ScoringModule, module_body, per_item, multiplier, label):

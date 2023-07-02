@@ -46,7 +46,7 @@ def sum_column_by_key(input_list, key):
     df = pd.DataFrame(input_list)
     try:
         val = int(df[key].sum())
-    except:
+    except KeyError:
         val = int(0)
     return val
 
@@ -54,7 +54,7 @@ def max_column_by_key(input_list, key):
     df = pd.DataFrame(input_list)
     try:
         val = int(df[key].max())
-    except:
+    except KeyError:
         val = int(0)
     return val
 
@@ -62,7 +62,7 @@ def min_column_by_key(input_list, key):
     df = pd.DataFrame(input_list)
     try:
         val = int(df[key].min())
-    except:
+    except KeyError:
         val = int(0)
     return val
 
