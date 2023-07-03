@@ -43,11 +43,15 @@ def execute_base_module (req_body):
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36 Edg/114.0.1823.58'
     }
 
-    version_data = json.loads(requests.get('https://aka.ms/mstatversion', headers=req_header, allow_redirects=True).content)
+    base_object.ModuleVersions = json.loads(requests.get('https://aka.ms/mstatversion', headers=req_header, allow_redirects=True).content)
     version_check_type = req_body.get('VersionCheckType', 'Minor')
     
     if version_check_type is not 'None':
-        version_check_result = data.version_check(os.getenv('STAT_VERSION', '1.5.0'), version_data.get('STATFunction', '1.5.0'), version_check_type)
+        installed_version = os.getenv('STAT_VERSION', '1.5.0')
+        available_version = base_object.ModuleVersions.get('STATFunction', '1.5.0')
+        version_check_result = data.version_check(installed_version, available_version, version_check_type)
+        if version_check_result['UpdateAvailable'] and base_object.IncidentAvailable:
+            rest.add_incident_comment(base_object, f'<h4>A Microsoft Sentinel Triage AssistanT update is available</h4>The currently installed version is {installed_version}, the available version is {available_version}.')
 
     account_comment = ''
     ip_comment = ''
@@ -337,7 +341,7 @@ def get_ip_comment():
     ip_list = []
     for ip in base_object.IPs:
         geo = ip.get('GeoData')
-        ip_list.append({'IP': geo.get('ipAddr'), 'City': geo.get('city'), 'State': geo.get('state'), 'Country': geo.get('country'), \
+        ip_list.append({'IP': ip.get('Address'), 'City': geo.get('city'), 'State': geo.get('state'), 'Country': geo.get('country'), \
                         'Organization': geo.get('organization'), 'OrganizationType': geo.get('organizationType'), 'ASN': geo.get('asn') })
         
     return data.list_to_html_table(ip_list)
