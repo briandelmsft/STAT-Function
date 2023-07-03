@@ -44,11 +44,27 @@ def join_lists(left_list, right_list, kind, left_key, right_key, fill_nan=None):
 
 def sum_column_by_key(input_list, key):
     df = pd.DataFrame(input_list)
-    return int(df[key].sum())
+    try:
+        val = int(df[key].sum())
+    except KeyError:
+        val = int(0)
+    return val
 
 def max_column_by_key(input_list, key):
     df = pd.DataFrame(input_list)
-    return int(df[key].max())
+    try:
+        val = int(df[key].max())
+    except KeyError:
+        val = int(0)
+    return val
+
+def min_column_by_key(input_list, key):
+    df = pd.DataFrame(input_list)
+    try:
+        val = int(df[key].min())
+    except KeyError:
+        val = int(0)
+    return val
 
 def sort_list_by_key(input_list, key, ascending=False):
     df = pd.DataFrame(input_list)
