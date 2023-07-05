@@ -20,7 +20,7 @@ def initiate_module(module_name, req_body):
         case 'mdca': 
             return_data = mdca.execute_mdca_module(req_body)
         case 'mde':
-            return_data = mdca.execute_mde_module(req_body)
+            return_data = mde.execute_mde_module(req_body)
         case 'file':
             return_data = file.execute_file_module(req_body)
         case 'aadrisks':
