@@ -1,4 +1,4 @@
-from modules import base, relatedalerts, watchlist, kql, ti, ueba, oof, scoring
+from modules import base, relatedalerts, watchlist, kql, ti, ueba, oof, scoring, aadrisks, mdca, mde
 from classes import Response
 import json
 
@@ -174,6 +174,39 @@ def test_oof():
     oof_response:Response = oof.execute_oof_module(oof_input)
 
     assert oof_response.statuscode == 200
+
+def test_aad_risks():
+    aad_input = {
+        'AddIncidentComments': False,
+        'AddIncidentTask': False,
+        'LookbackInDays': 14,
+        'BaseModuleBody': get_base_module_body()
+    }
+    aad_response:Response = aadrisks.execute_aadrisks_module(aad_input)
+
+    assert aad_response.statuscode == 200
+
+def test_mde_module():
+    aad_input = {
+        'AddIncidentComments': False,
+        'AddIncidentTask': False,
+        'LookbackInDays': 14,
+        'BaseModuleBody': get_base_module_body()
+    }
+    mde_response:Response = mde.execute_mde_module(aad_input)
+
+    assert mde_response.statuscode == 200
+
+def test_mdca_module():
+    aad_input = {
+        'AddIncidentComments': False,
+        'AddIncidentTask': False,
+        'ScoreThreshold': 1,
+        'BaseModuleBody': get_base_module_body()
+    }
+    mdca_response:Response = mdca.execute_mdca_module(aad_input)
+
+    assert mdca_response.statuscode == 200
 
 def test_scoring():
     scoring_input = {
