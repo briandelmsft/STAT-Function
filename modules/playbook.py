@@ -1,5 +1,5 @@
 from classes import BaseModule, Response, STATError, RunPlaybook
-from shared import rest, data
+from shared import rest
 
 def execute_playbook_module (req_body):
 

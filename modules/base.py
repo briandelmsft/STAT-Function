@@ -46,7 +46,7 @@ def execute_base_module (req_body):
     base_object.ModuleVersions = json.loads(requests.get('https://aka.ms/mstatversion', headers=req_header, allow_redirects=True).content)
     version_check_type = req_body.get('VersionCheckType', 'Minor')
     
-    if version_check_type is not 'None':
+    if version_check_type != 'None':
         installed_version = os.getenv('STAT_VERSION', '1.5.0')
         available_version = base_object.ModuleVersions.get('STATFunction', '1.5.0')
         version_check_result = data.version_check(installed_version, available_version, version_check_type)
@@ -321,8 +321,9 @@ def enrich_hosts(entities):
     for host in host_entities:
         host_name = data.coalesce(host.get('properties',{}).get('hostName'), host.get('HostName'))
         domain_name = data.coalesce(host.get('properties',{}).get('dnsDomain'), host.get('DnsDomain'))
+        mde_device_id = data.coalesce(host.get('properties',{}).get('additionalData', {}).get('MdatpDeviceId'), host.get('MdatpDeviceId'))
         raw_entity = data.coalesce(host.get('properties'), host)
-        base_object.add_host_entity(fqdn=host_name + '.' + domain_name, hostname=host_name, dnsdomain=domain_name, rawentity=raw_entity)
+        base_object.add_host_entity(fqdn=host_name + '.' + domain_name, hostname=host_name, dnsdomain=domain_name, mdedeviceid=mde_device_id, rawentity=raw_entity)
 
 def get_account_comment():
     

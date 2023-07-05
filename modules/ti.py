@@ -1,4 +1,4 @@
-from classes import BaseModule, Response, TIModule, STATError
+from classes import BaseModule, Response, TIModule
 from shared import rest, data
 
 def execute_ti_module (req_body):

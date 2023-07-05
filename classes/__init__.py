@@ -101,8 +101,11 @@ class BaseModule:
     def add_ip_entity(self, address, geo_data, rawentity):
         self.IPs.append({'Address': address, 'GeoData': geo_data, 'RawEntity': rawentity })
 
-    def add_host_entity(self, fqdn, hostname, dnsdomain, rawentity):
-        self.Hosts.append({'DnsDomain': dnsdomain, 'FQDN': fqdn, 'Hostname': hostname, 'RawEntity': rawentity })
+    def add_host_entity(self, fqdn, hostname, dnsdomain, mdedeviceid, rawentity):
+        if mdedeviceid:
+            self.Hosts.append({'DnsDomain': dnsdomain, 'FQDN': fqdn, 'Hostname': hostname, 'MdatpDeviceId': mdedeviceid, 'RawEntity': rawentity })
+        else:
+            self.Hosts.append({'DnsDomain': dnsdomain, 'FQDN': fqdn, 'Hostname': hostname, 'RawEntity': rawentity })
 
     def add_account_entity(self, data):
         self.Accounts.append(data)
