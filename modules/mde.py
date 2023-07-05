@@ -33,7 +33,7 @@ def execute_mde_module (req_body):
             results = rest.execute_m365d_query(base_object, get_devices)
             if results:
                 current_account['UserDevices'] = []
-                #Split the results into chuncks of 30 in case there are many devices assocaited with that users 
+                #Split the results into chuncks of 30 in case there are many devices associated with that user
                 max_device_per_query = 30
                 splited_results = [results[i:i+max_device_per_query] for i in range(0, len(results), max_device_per_query)]
                 for result_chunck in splited_results:
