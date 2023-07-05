@@ -1,5 +1,9 @@
 # STAT-Function
 
+This function is part of the Microsoft Sentinel Triage AssistanT project.  For more information and deployment instructions visit https://aka.ms/mstat
+
+## Debug Info
+
 To debug in VS Code create a local.settings.json file in the root of the project
 
 ```
