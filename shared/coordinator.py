@@ -1,4 +1,4 @@
-from modules import base, kql, watchlist, ti, relatedalerts, scoring, ueba, playbook, oof, aadrisks, file, createincident, mdca
+from modules import base, kql, watchlist, ti, relatedalerts, scoring, ueba, playbook, oof, aadrisks, file, createincident, mdca, mde
 from classes import STATError
 
 def initiate_module(module_name, req_body):
@@ -20,7 +20,7 @@ def initiate_module(module_name, req_body):
         case 'mdca': 
             return_data = mdca.execute_mdca_module(req_body)
         case 'mde':
-            raise STATError(error='MDE Module has not yet been migrated to STAT v2', status_code=400)
+            return_data = mdca.execute_mde_module(req_body)
         case 'file':
             return_data = file.execute_file_module(req_body)
         case 'aadrisks':

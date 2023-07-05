@@ -507,7 +507,7 @@ class MDEModule:
         self.HostsHighestExposureLevel = ''
         self.HostsHighestRiskScore = ''
         self.ModuleName = 'MDEModule'
-        self.DetailedResults = []
+        self.DetailedResults = {}
 
     def load_from_input(self, body):
         self.AnalyzedEntities = body['AnalyzedEntities']
