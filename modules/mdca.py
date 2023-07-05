@@ -24,13 +24,20 @@ def execute_mdca_module (req_body):
                 'UserPrincipalName': f'{upn}',
                 'ThreatScoreHistory': []
             }
-        pkuser = f'{{"id":"{userid}","inst":0,"saas":11161}}'
-        pkuser64 = base64.b64encode(pkuser.encode('ascii')).decode('ascii')
-        path = f'/api/v1/entities/{pkuser64}'
-        mdcaresults = json.loads(rest.rest_call_get(base_object, api='mdca', path=path).content)
-        current_account['ThreatScore'] = mdcaresults['threatScore']
-        current_account['ThreatScoreHistory'] = mdcaresults['threatScoreHistory']
-        mdac_object.DetailedResults.append(current_account)
+            pkuser = f'{{"id":"{userid}","inst":0,"saas":11161}}'
+            pkuser64 = base64.b64encode(pkuser.encode('ascii')).decode('ascii')
+            path = f'/api/v1/entities/{pkuser64}'
+            try:
+                mdcaresults = json.loads(rest.rest_call_get(base_object, api='mdca', path=path).content)
+            except STATError as e:
+                if e.source_error['status_code'] == 404:
+                    pass
+                else:
+                    raise STATError(e.error, e.source_error, e.status_code)
+            else:
+                current_account['ThreatScore'] = 0 if mdcaresults['threatScore'] is None else mdcaresults['threatScore']
+                current_account['ThreatScoreHistory'] = mdcaresults['threatScoreHistory']
+            mdac_object.DetailedResults.append(current_account)
 
     entities_nb = len(mdac_object.DetailedResults)
     if entities_nb != 0:

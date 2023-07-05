@@ -24,7 +24,16 @@ def execute_aadrisks_module (req_body):
                 'UserRiskLevel': 'unknown'
             }
             path = f'/v1.0/identityProtection/riskyUsers/{userid}'
-            current_account['UserRiskLevel'] = json.loads(rest.rest_call_get(base_object, api='msgraph', path=path).content)['riskLevel']
+            try:
+                user_risk_level = json.loads(rest.rest_call_get(base_object, api='msgraph', path=path).content)['riskLevel']
+            except STATError as e:
+                if e.source_error['status_code'] == 404:
+                    pass
+                else:
+                    raise STATError(e.error, e.source_error, e.status_code)
+            else:
+                current_account['UserRiskLevel'] = user_risk_level
+
             if req_body.get('MFAFailureLookup', True):
                 MFAFailureLookup_query = f'SigninLogs\n| where ResultType == \"500121\"\n| where UserId== \"{userid}\"\n| summarize Count=count() by UserPrincipalName'
                 MFAFailureLookup_results = rest.execute_la_query(base_object, MFAFailureLookup_query, req_body.get('LookbackInDays'))
