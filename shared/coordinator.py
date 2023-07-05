@@ -1,5 +1,5 @@
-from modules import base, kql, watchlist, ti, relatedalerts, scoring, ueba, playbook, oof, aadrisks, file, createincident, test, mdca
-from classes import Response, STATError
+from modules import base, kql, watchlist, ti, relatedalerts, scoring, ueba, playbook, oof, aadrisks, file, createincident, mdca
+from classes import STATError
 
 def initiate_module(module_name, req_body):
     '''Call the appropriate STAT Module.'''
@@ -33,8 +33,6 @@ def initiate_module(module_name, req_body):
             return_data = playbook.execute_playbook_module(req_body)
         case 'createincident':
             return_data = createincident.execute_create_incident(req_body)
-        case 'test':
-            return_data = Response(body=test.execute_test_module(req_body))
         case _:
             raise STATError(error=f'Invalid module name: {module_name}.', status_code=400)
 
