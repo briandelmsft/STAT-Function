@@ -11,7 +11,7 @@ Only the main branch of this repository is being supported with security updates
 
 ## Reporting a Vulnerability
 
-1. Navigate to the [main page](https://aka.ms/mstat) of the repository.
+1. Navigate to the [main page](https://github.com/briandelmsft/STAT-Function) of the repository.
 2. Under the repository name, click the Security tab.
 3. In the left sidebar, under Reporting, click Advisories.
 4. Click Report a vulnerability to open the advisory form.
