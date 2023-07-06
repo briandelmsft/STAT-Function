@@ -1,0 +1,46 @@
+name: Build and ZIP STAT Function
+
+on:
+  push:
+    branches:
+      - main
+      - 'build*'
+
+env:
+  AZURE_FUNCTIONAPP_PACKAGE_PATH: '.'       # set this to the path to your function app project, defaults to the repository root
+  PYTHON_VERSION: '3.10'                     # set this to the python version to use (e.g. '3.6', '3.7', '3.8')
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    environment: dev
+    steps:
+    - name: 'Checkout GitHub Action'
+      uses: actions/checkout@v3
+
+    - name: Setup Python ${{ env.PYTHON_VERSION }} Environment
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+
+    - name: 'Resolve Project Dependencies Using Pip'
+      shell: bash
+      run: |
+        pushd './${{ env.AZURE_FUNCTIONAPP_PACKAGE_PATH }}'
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt --target=".python_packages/lib/site-packages"
+        popd
+        zip -r stat.zip test/ host.json requirements.txt -x '*__pycache__*'
+        
+    - name: 'ZIP Function App'
+      shell: bash
+      run: |
+        cd './${{ env.AZURE_FUNCTIONAPP_PACKAGE_PATH }}'
+        zip -r stat.zip test/ .python_packages/ host.json requirements.txt -x '*__pycache__*'
+        
+    #When updating SAS token the secret must be double quoted    
+    - name: 'Upload to Blob Storage'
+      uses: azure/CLI@v1
+      with:
+        inlineScript: |
+          az storage blob upload -f '${{ env.AZURE_FUNCTIONAPP_PACKAGE_PATH }}/stat.zip' -c statbuild -n ${{ github.ref_name }}-stat.zip --account-name briandel --sas-token ${{ secrets.SAS_TOKEN }} --overwrite
