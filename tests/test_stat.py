@@ -1,4 +1,4 @@
-from modules import base, relatedalerts, watchlist, kql, ti, ueba, oof, scoring, aadrisks, mdca, mde
+from modules import base, relatedalerts, watchlist, kql, ti, ueba, oof, scoring, aadrisks, mdca, mde, file
 from classes import Response
 import json
 
@@ -198,15 +198,26 @@ def test_mde_module():
     assert mde_response.statuscode == 200
 
 def test_mdca_module():
-    aad_input = {
+    mdca_input = {
         'AddIncidentComments': False,
         'AddIncidentTask': False,
         'ScoreThreshold': 1,
         'BaseModuleBody': get_base_module_body()
     }
-    mdca_response:Response = mdca.execute_mdca_module(aad_input)
+    mdca_response:Response = mdca.execute_mdca_module(mdca_input)
 
     assert mdca_response.statuscode == 200
+
+def test_file_module():
+    file_input = {
+        'AddIncidentComments': False,
+        'AddIncidentTask': False,
+        'BaseModuleBody': get_base_module_body()
+    }
+    file_response:Response = file.execute_file_module(file_input)
+
+    assert file_response.statuscode == 200
+    assert file_response.body.HashesLinkedToThreatCount > 0
 
 def test_scoring():
     scoring_input = {
