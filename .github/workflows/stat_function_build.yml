@@ -30,7 +30,6 @@ jobs:
         python -m pip install --upgrade pip
         pip install -r requirements.txt --target=".python_packages/lib/site-packages"
         popd
-        zip -r stat.zip test/ host.json requirements.txt -x '*__pycache__*'
         
     - name: 'ZIP Function App'
       shell: bash
