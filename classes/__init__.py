@@ -17,6 +17,10 @@ class STATError(Exception):
         self.source_error = source_error
         self.status_code = status_code
 
+class STATNotFound(STATError):
+    '''A handled STAT exception where the API call returned a 404 error'''
+    pass
+
 class BaseModule:
     '''A base module object'''
     
