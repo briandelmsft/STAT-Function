@@ -1,4 +1,4 @@
-from classes import BaseModule, Response, AADModule, STATError
+from classes import BaseModule, Response, AADModule, STATError, STATNotFound
 from shared import rest, data
 import json
 
@@ -26,11 +26,8 @@ def execute_aadrisks_module (req_body):
             path = f'/v1.0/identityProtection/riskyUsers/{userid}'
             try:
                 user_risk_level = json.loads(rest.rest_call_get(base_object, api='msgraph', path=path).content)['riskLevel']
-            except STATError as e:
-                if e.source_error['status_code'] == 404:
-                    pass
-                else:
-                    raise STATError(e.error, e.source_error, e.status_code)
+            except STATNotFound:
+                pass
             else:
                 current_account['UserRiskLevel'] = user_risk_level
 
