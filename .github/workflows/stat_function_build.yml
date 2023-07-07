@@ -5,6 +5,13 @@ on:
     branches:
       - main
       - 'build*'
+    paths:
+      - 'classes/**'
+      - 'modules/**'
+      - 'shared/**'
+      - 'requirements.txt'
+      - 'host.json'
+
 
 env:
   AZURE_FUNCTIONAPP_PACKAGE_PATH: '.'       # set this to the path to your function app project, defaults to the repository root
