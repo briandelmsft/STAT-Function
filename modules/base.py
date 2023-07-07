@@ -3,7 +3,10 @@ from shared import rest, data
 import json
 import time
 import logging
-import requests, os
+import requests
+import pathlib
+
+stat_version = None
 
 def execute_base_module (req_body):
     global base_object
@@ -44,14 +47,13 @@ def execute_base_module (req_body):
     }
 
     base_object.ModuleVersions = json.loads(requests.get('https://aka.ms/mstatversion', headers=req_header, allow_redirects=True).content)
-    version_check_type = req_body.get('VersionCheckType', 'Minor')
+    version_check_type = req_body.get('VersionCheckType', 'Build')
     
     if version_check_type != 'None':
-        installed_version = os.getenv('STAT_VERSION', '1.5.0')
-        available_version = base_object.ModuleVersions.get('STATFunction', '1.5.0')
-        version_check_result = data.version_check(installed_version, available_version, version_check_type)
-        if version_check_result['UpdateAvailable'] and base_object.IncidentAvailable:
-            rest.add_incident_comment(base_object, f'<h4>A Microsoft Sentinel Triage AssistanT update is available</h4>The currently installed version is {installed_version}, the available version is {available_version}.')
+        try:
+            get_stat_version(version_check_type)
+        except:
+            pass
 
     account_comment = ''
     ip_comment = ''
@@ -346,3 +348,16 @@ def get_ip_comment():
                         'Organization': geo.get('organization'), 'OrganizationType': geo.get('organizationType'), 'ASN': geo.get('asn') })
         
     return data.list_to_html_table(ip_list)
+
+def get_stat_version(version_check_type):
+    global stat_version
+
+    if stat_version is None:
+        with open(pathlib.Path(__file__).parent / 'version.json') as f:
+            stat_version = json.loads(f.read())['FunctionVersion']
+    
+    available_version = base_object.ModuleVersions.get('STATFunction', '1.4.9')
+    logging.info(f'STAT Version check info. Current Version: {stat_version}, Available Version: {available_version}')
+    version_check_result = data.version_check(stat_version, available_version, version_check_type)
+    if version_check_result['UpdateAvailable'] and base_object.IncidentAvailable:
+        rest.add_incident_comment(base_object, f'<h4>A Microsoft Sentinel Triage AssistanT update is available</h4>The currently installed version is {stat_version}, the available version is {available_version}.')
