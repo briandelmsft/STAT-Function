@@ -331,13 +331,23 @@ def get_account_comment():
     
     account_list = []
     for account in base_object.Accounts:
-        account_list.append({'UserPrincipalName': account.get('userPrincipalName'), 'City': account.get('city'), 'Country': account.get('country'), \
+        account_id = account.get('id')
+        account_upn = account.get('userPrincipalName')
+        account_mail = account.get('mail')
+        if account_id:    
+            upn_data = f'<a href="https://portal.azure.com/#view/Microsoft_AAD_UsersAndTenants/UserProfileMenuBlade/~/overview/userId/{account_id}" target="_blank">{account_upn}</a><br>(<a href="mailto:{account_mail}">Contact User</a>)'
+        else:
+            upn_data = account_upn
+            
+        account_list.append({'UserPrincipalName': upn_data, 'City': account.get('city'), 'Country': account.get('country'), \
                              'Department': account.get('department'), 'JobTitle': account.get('jobTitle'), 'Office': account.get('officeLocation'), \
                              'AADRoles': account.get('AssignedRoles'), 'ManagerUPN': account.get('manager', {}).get('userPrincipalName'), \
                              'MfaRegistered': account.get('isMfaRegistered'), 'SSPREnabled': account.get('isSSPREnabled'), \
                              'SSPRRegistered': account.get('isSSPRRegistered')})
         
-    return data.list_to_html_table(account_list, 20, 20)
+    link_template = f'https://portal.azure.com/#view/Microsoft_AAD_UsersAndTenants/UserProfileMenuBlade/~/overview/userId/ed2a76d8-c545-4ada-9f45-8c86667394f4'
+        
+    return data.list_to_html_table(account_list, 20, 20, escape_html=False)
 
 def get_ip_comment():
     
