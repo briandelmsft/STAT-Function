@@ -122,4 +122,6 @@ def execute_mde_module (req_body):
             comment += f'{html_table_ips}'
         comment_result = rest.add_incident_comment(base_object, comment)
 
+    #Add Task Support
+    
     return Response(mde_object)
