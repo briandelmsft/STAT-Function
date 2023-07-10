@@ -122,6 +122,8 @@ def execute_mde_module (req_body):
             comment += f'{html_table_ips}'
         comment_result = rest.add_incident_comment(base_object, comment)
 
-    #Add Task Support
+    if req_body.get('AddIncidentTask', False) and ( mde_object.UsersHighestRiskScore != "None" and mde_object.UsersHighestExposureLevel != "Unknown" or  mde_object.HostsHighestRiskScore != "None" and mde_object.HostsHighestExposureLevel != "Unknown" or  mde_object.IPsHighestRiskScore != "None" and mde_object.IPsHighestRiskScore != "Unknown" ):
+        task_result = rest.add_incident_task(base_object, 'Review the risk score and exposure level of the entities', req_body.get('IncidentTaskInstructions'))
     
     return Response(mde_object)
+    
