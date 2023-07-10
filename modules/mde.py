@@ -4,7 +4,7 @@ import json
 
 def execute_mde_module (req_body):
 
-    #Inputs AddIncidentComments, AddIncidentTask, Entities, IncidentTaskInstructions
+    #Inputs AddIncidentComments, AddIncidentTask, Entities, IncidentTaskInstructions, LookbackInDays
 
     base_object = BaseModule()
     base_object.load_from_input(req_body['BaseModuleBody'])
