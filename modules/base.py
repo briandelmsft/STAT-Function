@@ -1,4 +1,4 @@
-from classes import BaseModule, Response, STATError
+from classes import BaseModule, Response, STATError, STATNotFound
 from shared import rest, data
 import json
 import time
@@ -99,14 +99,10 @@ def process_alert_trigger (req_body):
         x += 1
         try:
             alert_result = json.loads(rest.rest_call_get(base_object, 'arm', alert_path).content)
-        except STATError as e:
-            if e.source_error['status_code'] == 404:
-                logging.info('Alert not found, sleeping to try again')
-                if x > 5:
-                    raise STATError('Alert metadata is not currently available, consider adding a delay in the logic app before calling the base module using an alert.', status_code=503)
-                time.sleep(20)
-            else:
-                raise STATError(e.error, e.source_error, e.status_code)
+        except STATNotFound:
+            if x > 5:
+                raise STATError('Alert metadata is not currently available, consider adding a delay in the logic app before calling the base module using an alert.', status_code=503)
+            time.sleep(20)
         else:
             logging.info('Alert found, processing')
             base_object.Alerts.append(alert_result)
