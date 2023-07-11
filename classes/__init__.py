@@ -252,7 +252,9 @@ class BaseModule:
     def get_alert_ids(self):
         alert_list = []
         for alert in self.Alerts:
-            alert_list.append(alert['name'])
+            alert_id = alert.get('properties', {}).get('systemAlertId')
+            if alert_id:
+                alert_list.append(alert_id)
         
         return alert_list
     
