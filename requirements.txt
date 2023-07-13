@@ -6,3 +6,4 @@ azure-functions
 azure-identity
 requests
 pandas
+openai
