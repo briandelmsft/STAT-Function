@@ -8,6 +8,13 @@ def list_to_html_table(input_list:list, max_rows=20, max_cols=10, nan_str='N/A',
 
     return html_table
 
+def list_to_csv_table(input_list:list):
+    '''Convert a list of dictionaries into a CSV table'''
+    df = pd.DataFrame(input_list)
+    csv_table = df.to_csv(index=False)
+    
+    return csv_table
+
 def update_column_value_in_list(input_list:list, col_name:str, update_str:str):
     '''Updates the value of a column in each dict in the list, to include the column value in your replacement use [col_value]'''
     updated_list = []
@@ -65,6 +72,15 @@ def min_column_by_key(input_list, key):
     except KeyError:
         val = int(0)
     return val
+
+def select_columns(input_list:list, selected_columns:list):
+    df = pd.DataFrame(input_list)
+    selection = df[selected_columns]
+    return selection.to_dict('records')
+
+def expand_column_containing_dict(input_list:list, column_name:str):
+    df = pd.DataFrame(input_list)
+    return df.join(pd.json_normalize(df[column_name])).drop(column_name, axis='columns').to_dict('records')
 
 def sort_list_by_key(input_list, key, ascending=False):
     df = pd.DataFrame(input_list)

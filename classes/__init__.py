@@ -36,6 +36,9 @@ class BaseModule:
         self.IPs = []
         self.IPsCount = 0
         self.IncidentARMId = ""
+        self.Title = ""
+        self.Description = None
+        self.Severity = ''
         self.IncidentTriggered = False
         self.IncidentAvailable = False
         self.ModuleVersions = {}
@@ -54,6 +57,9 @@ class BaseModule:
     def load_incident_trigger(self, req_body):
         
         self.IncidentARMId = req_body['object']['id']
+        self.Title = req_body['object']['properties'].get('title')
+        self.Description = req_body['object']['properties'].get('description')
+        self.Severity = req_body['object']['properties'].get('severity')
         self.IncidentTriggered = True
         self.IncidentAvailable = True
         self.SentinelRGARMId = "/subscriptions/" + req_body['workspaceInfo']['SubscriptionId'] + "/resourceGroups/" + req_body['workspaceInfo']['ResourceGroupName']
@@ -64,6 +70,9 @@ class BaseModule:
 
     def load_alert_trigger(self, req_body):
         self.IncidentTriggered = False
+        self.Title = req_body.get('AlertDisplayName')
+        self.Description = req_body.get('Description')
+        self.Severity = req_body.get('Severity')
         self.SentinelRGARMId = "/subscriptions/" + req_body['WorkspaceSubscriptionId'] + "/resourceGroups/" + req_body['WorkspaceResourceGroup']
         self.WorkspaceId = req_body['WorkspaceId']
 
@@ -71,6 +80,7 @@ class BaseModule:
         self.Accounts = basebody['Accounts']
         self.AccountsCount = basebody['AccountsCount']
         self.Alerts = basebody.get('Alerts', [])
+        self.Description = basebody.get('Description')
         self.Domains = basebody['Domains']
         self.DomainsCount = basebody['DomainsCount']
         self.EntitiesCount = basebody['EntitiesCount']
@@ -91,8 +101,10 @@ class BaseModule:
         self.OtherEntitiesCount = basebody['OtherEntitiesCount']
         self.RelatedAnalyticRuleIds = basebody.get('RelatedAnalyticRuleIds', [])
         self.SentinelRGARMId = basebody['SentinelRGARMId']
+        self.Severity = basebody['Severity']
         self.TenantDisplayName = basebody['TenantDisplayName']
         self.TenantId = basebody['TenantId']
+        self.Title = basebody.get('Title', '')
         self.URLs = basebody['URLs']
         self.URLsCount = basebody['URLsCount']
         self.WorkspaceARMId = basebody['WorkspaceARMId']
@@ -407,6 +419,11 @@ class ScoringModule:
     def __init__(self):
         self.DetailedResults = []
         self.TotalScore = 0
+        self.ModuleName = 'ScoringModule'
+
+    def load_from_input(self, body):
+        self.DetailedResults = body['DetailedResults']
+        self.TotalScore = body['TotalScore']
 
     def append_score(self, score, label):
         '''Adds to the TotalScore and DetailedResults list'''
@@ -531,3 +548,9 @@ class CreateIncident:
         self.Severity = ''
         self.IncidentNumber = 0
         self.IncidentUrl = ''
+
+class GPTModule:
+    '''A GPT Module object'''
+    def __init__(self):
+        self.Response = ''
+        self.Messages = []
