@@ -1,4 +1,4 @@
-from modules import base, kql, watchlist, ti, relatedalerts, scoring, ueba, playbook, oof, aadrisks, file, createincident, mdca, mde
+from modules import base, kql, watchlist, ti, relatedalerts, scoring, ueba, playbook, oof, aadrisks, file, createincident, mdca, mde, gpt
 from classes import STATError
 
 def initiate_module(module_name, req_body):
@@ -33,6 +33,8 @@ def initiate_module(module_name, req_body):
             return_data = playbook.execute_playbook_module(req_body)
         case 'createincident':
             return_data = createincident.execute_create_incident(req_body)
+        case 'gpt':
+            return_data = gpt.execute_gpt_module(req_body)
         case _:
             raise STATError(error=f'Invalid module name: {module_name}.', status_code=400)
 
