@@ -25,7 +25,6 @@ def execute_gpt_module (req_body):
     openai.api_key = api_key
     openai.api_version = "2023-05-15"
 
-    #add_message(gpt_object, 'system', 'You are a helpful security analysis bot that utilizes Microsoft Security tools that will help respond to this security incident. You will be provided with information related to a specific incident in Microsoft Sentinel.')
     add_message(gpt_object, 'system', 'You are a helpful security analysis bot that utilizes Microsoft Security tools that will help respond to this security incident. You will be provided with information related to a specific incident in Microsoft Sentinel. When asked, respond exclusively in the following JSON format {"Summary": "", "Actions": [{"ActionName": "", "ActionDescription": ""}]}')
 
     base_module_messages(gpt_object, base_object)
