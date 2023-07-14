@@ -75,7 +75,7 @@ def add_message(gpt_object:GPTModule, msg_type:str, instruction:str, data_list:l
     if msg_type == 'data':
         message =  {
                 'role': 'assistant',
-                'content': instruction + '\\n' + data.list_to_csv_table(data_list)
+                'content': instruction + '\n' + data.list_to_csv_table(data_list)
             }
         gpt_object.Messages.append(message)
         gpt_object.AssistantMessages.append(message)
