@@ -73,17 +73,26 @@ def add_message(gpt_object:GPTModule, msg_type:str, instruction:str, data_list:l
         raise STATError(f'Invalid message type: {msg_type}')
 
     if msg_type == 'data':
-        gpt_object.Messages.append(
-            {
+        message =  {
                 'role': 'assistant',
                 'content': instruction + '\\n' + data.list_to_csv_table(data_list)
-            })
+            }
+        gpt_object.Messages.append(message)
+        gpt_object.AssistantMessages.append(message)
     else:
-        gpt_object.Messages.append(
-            {
+        message = {
                 'role': msg_type,
                 'content': instruction
-            })
+            }
+        gpt_object.Messages.append(message)
+
+        match msg_type:
+            case 'system':
+                gpt_object.SystemMessages.append(message)
+            case 'assistant':
+                gpt_object.AssistantMessages.append(message)
+            case 'user':
+                gpt_object.UserMessages.append(message)
 
 def base_module_messages(gpt_object:GPTModule, base_object:BaseModule):
     add_message(gpt_object, 'assistant', f'The incident title is {base_object.Title}')
@@ -92,13 +101,23 @@ def base_module_messages(gpt_object:GPTModule, base_object:BaseModule):
     if base_object.Description:
         add_message(gpt_object, 'assistant', f'The incident description is {base_object.Description}')
 
+    if base_object.Tactics:
+        add_message(gpt_object, 'assistant', f'This incident is linked to these MITRE Tactics f{str(base_object.Tactics)}')
+
+    if base_object.Techniques:
+        add_message(gpt_object, 'assistant', f'This incident is linked to these MITRE Techniques f{str(base_object.Techniques)}')
+
     if base_object.Accounts:
-        account_info = data.select_columns(base_object.Accounts, ['userPrincipalName', 'state', 'country', 'department', 'jobTitle'])
+        account_info = data.select_columns(base_object.Accounts, ['userPrincipalName', 'state', 'country', 'department', 'jobTitle', 'isMfaRegistered', 'isSSPREnabled', 'AssignedRoles'])
         add_message(gpt_object, 'data', 'The impacted user is', account_info)
 
     if base_object.IPs:
-         ip_info = data.select_columns(data.expand_column_containing_dict(base_object.IPs, 'GeoData'), ['Address', 'country', 'organization'])
-         add_message(gpt_object, 'data', 'The impacted IP Address is', ip_info)
+        try:
+            ip_info = data.select_columns(data.expand_column_containing_dict(base_object.IPs, 'GeoData'), ['Address', 'country', 'organization'])
+        except:
+            ip_info = data.select_columns(data.expand_column_containing_dict(base_object.IPs, 'GeoData'), ['Address'])
+        
+        add_message(gpt_object, 'data', 'The impacted IP Address is', ip_info)
 
 def kql_messages(gpt_object:GPTModule, module_body, ai_context):
     kql = KQLModule()

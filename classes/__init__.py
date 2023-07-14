@@ -43,6 +43,8 @@ class BaseModule:
         self.Title = ""
         self.Description = None
         self.Severity = ''
+        self.Tactics = []
+        self.Techniques = []
         self.IncidentTriggered = False
         self.IncidentAvailable = False
         self.ModuleVersions = {}
@@ -64,6 +66,8 @@ class BaseModule:
         self.Title = req_body['object']['properties'].get('title')
         self.Description = req_body['object']['properties'].get('description')
         self.Severity = req_body['object']['properties'].get('severity')
+        self.Tactics = req_body['object']['properties'].get('additionalData', {}).get('tactics', [])
+        self.Techniques = req_body['object']['properties'].get('additionalData', {}).get('techniques', [])
         self.IncidentTriggered = True
         self.IncidentAvailable = True
         self.SentinelRGARMId = "/subscriptions/" + req_body['workspaceInfo']['SubscriptionId'] + "/resourceGroups/" + req_body['workspaceInfo']['ResourceGroupName']
@@ -77,8 +81,13 @@ class BaseModule:
         self.Title = req_body.get('AlertDisplayName')
         self.Description = req_body.get('Description')
         self.Severity = req_body.get('Severity')
+        self.Techniques = req_body.get('Techniques', [])
         self.SentinelRGARMId = "/subscriptions/" + req_body['WorkspaceSubscriptionId'] + "/resourceGroups/" + req_body['WorkspaceResourceGroup']
         self.WorkspaceId = req_body['WorkspaceId']
+
+        tactics = str(req_body.get('Intent'))
+        if tactics:
+            [self.Tactics.append(tactic.strip()) for tactic in tactics.split(',')]
 
     def load_from_input(self, basebody):
         self.Accounts = basebody['Accounts']
@@ -106,6 +115,8 @@ class BaseModule:
         self.RelatedAnalyticRuleIds = basebody.get('RelatedAnalyticRuleIds', [])
         self.SentinelRGARMId = basebody['SentinelRGARMId']
         self.Severity = basebody['Severity']
+        self.Tactics = basebody.get('Tactics', [])
+        self.Techniques = basebody.get('Techniques', [])
         self.TenantDisplayName = basebody['TenantDisplayName']
         self.TenantId = basebody['TenantId']
         self.Title = basebody.get('Title', '')
@@ -558,3 +569,6 @@ class GPTModule:
     def __init__(self):
         self.Response = ''
         self.Messages = []
+        self.SystemMessages = []
+        self.AssistantMessages = []
+        self.UserMessages = []
