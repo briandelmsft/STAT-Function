@@ -13,11 +13,12 @@ def execute_gpt_module (req_body):
 
     base_url = os.getenv('OPENAI_ENDPOINT')
     api_key = os.getenv('OPENAI_APIKEY')
+    deploy_name = os.getenv('OPENAI_DEPLOYMENTNAME')
 
     ai_request = req_body.get('AIRequest', 'Please provide a summary of the incident and a list of recommended investigation actions.')
 
-    if not base_url or not api_key:
-        raise STATError('Environment variables for OpenAI are not configured.  This module requires both the OPENAI_ENDPOINT and OPENAI_APIKEY environment variables to be set.')
+    if not base_url or not api_key or not deploy_name:
+        raise STATError('Environment variables for OpenAI are not configured.  This module requires the OPENAI_ENDPOINT, OPENAI_APIKEY and OPENAI_DEPLOYMENTNAME environment variables to be set.')
 
     openai.api_type = 'azure'
     openai.api_base = f'https://{base_url}/'
@@ -50,7 +51,7 @@ def execute_gpt_module (req_body):
 
     add_message(gpt_object, 'user', ai_request)
 
-    response = openai.ChatCompletion.create(engine="stat", messages=gpt_object.Messages, temperature=0.1)
+    response = openai.ChatCompletion.create(engine=deploy_name, messages=gpt_object.Messages, temperature=0.1)
     gpt_object.Response = response['choices'][0]['message']['content'] 
 
     logging.info(f"Usage: Completion {response['usage']['completion_tokens']}, Prompt {response['usage']['prompt_tokens']}, Total {response['usage']['total_tokens']}, Response Time {response.response_ms}")
