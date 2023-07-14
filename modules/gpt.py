@@ -102,10 +102,10 @@ def base_module_messages(gpt_object:GPTModule, base_object:BaseModule):
         add_message(gpt_object, 'assistant', f'The incident description is {base_object.Description}')
 
     if base_object.Tactics:
-        add_message(gpt_object, 'assistant', f'This incident is linked to these MITRE Tactics f{str(base_object.Tactics)}')
+        add_message(gpt_object, 'assistant', f'This incident is linked to these MITRE Tactics {str(base_object.Tactics)}')
 
     if base_object.Techniques:
-        add_message(gpt_object, 'assistant', f'This incident is linked to these MITRE Techniques f{str(base_object.Techniques)}')
+        add_message(gpt_object, 'assistant', f'This incident is linked to these MITRE Techniques {str(base_object.Techniques)}')
 
     if base_object.Accounts:
         account_info = data.select_columns(base_object.Accounts, ['userPrincipalName', 'state', 'country', 'department', 'jobTitle', 'isMfaRegistered', 'isSSPREnabled', 'AssignedRoles'])
