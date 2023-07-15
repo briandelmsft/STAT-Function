@@ -4,7 +4,7 @@ import datetime as dt
 import json
 import os
 import uuid
-from classes import STATError, BaseModule
+from classes import STATError, STATNotFound, BaseModule
 
 stat_token = {}
 graph_endpoint = os.getenv('GRAPH_ENDPOINT')
@@ -86,7 +86,9 @@ def rest_call_get(base_module:BaseModule, api:str, path:str, headers:dict={}):
     headers['Authorization'] = 'Bearer ' + token.token
     response = requests.get(url=url, headers=headers)
 
-    if response.status_code >= 300:
+    if response.status_code == 404:
+        raise STATNotFound(f'The API call to {api} with path {path} failed with status {response.status_code}', source_error={'status_code': int(response.status_code), 'reason': str(response.reason)})
+    elif response.status_code >= 300:
         raise STATError(f'The API call to {api} with path {path} failed with status {response.status_code}', source_error={'status_code': int(response.status_code), 'reason': str(response.reason)})
     
     return response
@@ -98,7 +100,9 @@ def rest_call_post(base_module:BaseModule, api:str, path:str, body, headers:dict
     headers['Authorization'] = 'Bearer ' + token.token
     response = requests.post(url=url, json=body, headers=headers)
 
-    if response.status_code >= 300:
+    if response.status_code == 404:
+        raise STATNotFound(f'The API call to {api} with path {path} failed with status {response.status_code}', source_error={'status_code': int(response.status_code), 'reason': str(response.reason)})
+    elif response.status_code >= 300:
         raise STATError(f'The API call to {api} with path {path} failed with status {response.status_code}', source_error={'status_code': int(response.status_code), 'reason': str(response.reason)})
     
     return response
@@ -110,7 +114,9 @@ def rest_call_put(base_module:BaseModule, api:str, path:str, body, headers:dict=
     headers['Authorization'] = 'Bearer ' + token.token
     response = requests.put(url=url, json=body, headers=headers)
 
-    if response.status_code >= 300:
+    if response.status_code == 404:
+        raise STATNotFound(f'The API call to {api} with path {path} failed with status {response.status_code}', source_error={'status_code': int(response.status_code), 'reason': str(response.reason)})
+    elif response.status_code >= 300:
         raise STATError(f'The API call to {api} with path {path} failed with status {response.status_code}', source_error={'status_code': int(response.status_code), 'reason': str(response.reason)})
     
     return response

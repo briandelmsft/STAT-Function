@@ -1,4 +1,4 @@
-from classes import BaseModule, Response, MDCAModule, STATError
+from classes import BaseModule, Response, MDCAModule, STATError, STATNotFound
 from shared import rest, data
 import json,os,base64
 
@@ -29,11 +29,8 @@ def execute_mdca_module (req_body):
             path = f'/api/v1/entities/{pkuser64}'
             try:
                 mdcaresults = json.loads(rest.rest_call_get(base_object, api='mdca', path=path).content)
-            except STATError as e:
-                if e.source_error['status_code'] == 404:
-                    pass
-                else:
-                    raise STATError(e.error, e.source_error, e.status_code)
+            except STATNotFound:
+                pass
             else:
                 current_account['ThreatScore'] = 0 if mdcaresults['threatScore'] is None else mdcaresults['threatScore']
                 current_account['ThreatScoreHistory'] = mdcaresults['threatScoreHistory']

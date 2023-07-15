@@ -1,4 +1,4 @@
-from classes import BaseModule, Response, FileModule, STATError
+from classes import BaseModule, Response, FileModule, STATError, STATNotFound
 from shared import rest, data
 import json
 
@@ -144,13 +144,9 @@ def convert_list_to_string(hash_list:list):
 def call_file_api(base_object, hash):
     path = f'/api/files/{hash}'
     try:
-        file_data = json.loads(rest.rest_call_get(base_object, 'mde', path).content)
-         
-    except STATError as e:
-        if e.source_error['status_code'] == 404:
-            return None
-        else:
-            raise STATError(e.error, e.source_error, e.status_code)
+        file_data = json.loads(rest.rest_call_get(base_object, 'mde', path).content)   
+    except STATNotFound:
+        return None
         
     return file_data
 
