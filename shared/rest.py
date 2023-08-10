@@ -1,4 +1,5 @@
-from azure.identity import DefaultAzureCredential
+from azure.identity import DefaultAzureCredential, ClientSecretCredential
+from azure.keyvault.secrets import SecretClient
 import requests
 import datetime as dt
 import json
@@ -14,6 +15,10 @@ m365_endpoint = os.getenv('M365_ENDPOINT')
 mde_endpoint = os.getenv('MDE_ENDPOINT')
 default_tenant_id = os.getenv('AZURE_TENANT_ID')
 mdca_endpoint = os.getenv('MDCA_ENDPOINT')
+kv_endpoint = os.getenv('KEYVAULT_ENDPOINT')
+kv_secret_name = os.getenv('KEYVAULT_SECRET_NAME')
+kv_client_id = os.getenv('KEYVAULT_CLIENT_ID')
+kv_secret = None
 
 def token_cache(base_module:BaseModule, api:str):
     global stat_token
@@ -59,8 +64,14 @@ def token_expiration_check(api:str, token, tenant:str):
 
 def acquire_token(api:str, tenant:str):
     global stat_token
-    
-    cred = DefaultAzureCredential(additionally_allowed_tenants='*')
+    global kv_secret
+
+    if kv_endpoint and kv_secret_name and kv_client_id:
+        if not kv_secret:
+            kv_secret = get_kv_secret()
+        cred = ClientSecretCredential(tenant_id=tenant, client_id=kv_client_id, client_secret=kv_secret, additionally_allowed_tenants='*')
+    else:
+        cred = DefaultAzureCredential(additionally_allowed_tenants='*')
 
     if not stat_token.get(tenant):
         stat_token[tenant] = {}
@@ -78,6 +89,12 @@ def acquire_token(api:str, tenant:str):
             stat_token[tenant]['mdetoken'] = cred.get_token("https://" + mde_endpoint + "/.default", tenant_id=tenant)
         case 'mdca':
             stat_token[tenant]['mdcatoken'] = cred.get_token("05a65629-4c1b-48c1-a78b-804c4abdd4af/.default", tenant_id=tenant)
+
+def get_kv_secret():
+    cred = DefaultAzureCredential()
+    client = SecretClient(f'https://{kv_endpoint}/', cred)
+    kv_return = client.get_secret(kv_secret_name)
+    return kv_return.value
 
 def rest_call_get(base_module:BaseModule, api:str, path:str, headers:dict={}):
     '''Perform a GET HTTP call to a REST API.  Accepted API values are arm, msgraph, la, m365 and mde'''
