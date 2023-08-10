@@ -35,7 +35,7 @@ def execute_playbook_module (req_body):
             rest.add_incident_comment(base_object, comment)
         if e.source_error['status_code'] == 400:
             raise STATError(f'{e.error}. This is usually due to missing permissions on the Playbook you are attempting to run. '
-                            'The STAT function must have the Microsoft Sentinel Playbook Operator RBAC role and Azure Security Insights must have '
+                            'The identity used by the STAT function must have the Microsoft Sentinel Playbook Operator RBAC role and Azure Security Insights must have '
                             'the Microsoft Sentinel Automation Contributor role on the resource group containing the playbook.', e.source_error, e.status_code)
         else:
             raise STATError(e.error, e.source_error, e.status_code)
