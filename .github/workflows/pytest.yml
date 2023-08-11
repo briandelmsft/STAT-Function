@@ -13,9 +13,8 @@ on:
         - 'host.json'
 
 jobs:
-  runPytest:
+  pytest:
     runs-on: ubuntu-latest
-    environment: dev
     strategy:
       fail-fast: false
       matrix:
