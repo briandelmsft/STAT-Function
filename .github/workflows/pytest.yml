@@ -43,3 +43,9 @@ jobs:
         AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
         AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
         AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+        ARM_ENDPOINT: management.azure.com
+        GRAPH_ENDPOINT: graph.microsoft.com
+        LOGANALYTICS_ENDPOINT: api.loganalytics.io
+        M365_ENDPOINT: api.security.microsoft.com
+        MDE_ENDPOINT: api.securitycenter.microsoft.com
+        MDCA_ENDPOINT: ${{ secrets.MDCA_ENDPOINT }}
