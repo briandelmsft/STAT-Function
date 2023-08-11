@@ -9,6 +9,7 @@ on:
         - 'classes/**'
         - 'modules/**'
         - 'shared/**'
+        - 'tests/**'
         - 'requirements.txt'
         - 'host.json'
 
