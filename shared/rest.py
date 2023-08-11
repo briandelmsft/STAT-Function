@@ -67,17 +67,22 @@ def acquire_token(api:str, tenant:str):
 
     match api:
         case 'arm':
-            stat_token[tenant]['armtoken'] = cred.get_token("https://" + arm_endpoint + "/.default", tenant_id=tenant)
+            stat_token[tenant]['armtoken'] = cred.get_token("https://" + check_endpoint(arm_endpoint, 'ARM_ENDPOINT') + "/.default", tenant_id=tenant)
         case 'msgraph':
-            stat_token[tenant]['msgraphtoken'] = cred.get_token("https://" + graph_endpoint + "/.default", tenant_id=tenant)
+            stat_token[tenant]['msgraphtoken'] = cred.get_token("https://" + check_endpoint(graph_endpoint, 'GRAPH_ENDPOINT') + "/.default", tenant_id=tenant)
         case 'la':
-            stat_token[tenant]['latoken'] = cred.get_token("https://" + la_endpoint + "/.default", tenant_id=tenant)
+            stat_token[tenant]['latoken'] = cred.get_token("https://" + check_endpoint(la_endpoint, 'LOGANALYTICS_ENDPOINT') + "/.default", tenant_id=tenant)
         case 'm365':
-            stat_token[tenant]['m365token'] = cred.get_token("https://" + m365_endpoint + "/.default", tenant_id=tenant)
+            stat_token[tenant]['m365token'] = cred.get_token("https://" + check_endpoint(m365_endpoint, 'M365_ENDPOINT') + "/.default", tenant_id=tenant)
         case 'mde':
-            stat_token[tenant]['mdetoken'] = cred.get_token("https://" + mde_endpoint + "/.default", tenant_id=tenant)
+            stat_token[tenant]['mdetoken'] = cred.get_token("https://" + check_endpoint(mde_endpoint, 'MDE_ENDPOINT') + "/.default", tenant_id=tenant)
         case 'mdca':
             stat_token[tenant]['mdcatoken'] = cred.get_token("05a65629-4c1b-48c1-a78b-804c4abdd4af/.default", tenant_id=tenant)
+
+def check_endpoint(endpoint, env_variable:str):
+    if endpoint is None:
+        raise STATError(f'The STAT Function Application Setting {env_variable} was not configured with the required API endpoint information.')
+    return endpoint
 
 def rest_call_get(base_module:BaseModule, api:str, path:str, headers:dict={}):
     '''Perform a GET HTTP call to a REST API.  Accepted API values are arm, msgraph, la, m365 and mde'''
