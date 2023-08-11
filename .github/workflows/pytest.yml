@@ -1,4 +1,4 @@
-name: Python package
+name: STAT Test Automation
 
 on:
   pull_request:
