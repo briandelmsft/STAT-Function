@@ -414,7 +414,7 @@ class ScoringModule:
 
     def append_score(self, score, label):
         '''Adds to the TotalScore and DetailedResults list'''
-        self.TotalScore += score
+        self.TotalScore += (score + 1) #Testing to fail pytest, remove +1
         self.DetailedResults.append({'Score': score, 'ScoreSource': label})
 
 class AADModule:
