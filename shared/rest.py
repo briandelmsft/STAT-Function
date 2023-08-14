@@ -187,7 +187,7 @@ def get_endpoint(api:str):
     except TypeError:
         raise STATError(f'The STAT Function Application Setting was not configured for the {api} API. '
                         'Ensure that all API endpoint enrivonrment variables are correctly set in the STAT Function App '
-                        '(ARM_ENDPOINT, LOGANALYTICS_ENDPOINT, M365_ENDPOINT, MDE_ENDPOINT, and MDCA_ENDPOINT).')
+                        '(ARM_ENDPOINT, GRAPH_ENDPOINT, LOGANALYTICS_ENDPOINT, M365_ENDPOINT, MDE_ENDPOINT, and MDCA_ENDPOINT).')
     
 def add_incident_comment(base_module:BaseModule, comment:str):
     token = token_cache(base_module, 'arm')
