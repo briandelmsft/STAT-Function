@@ -67,22 +67,17 @@ def acquire_token(api:str, tenant:str):
 
     match api:
         case 'arm':
-            stat_token[tenant]['armtoken'] = cred.get_token("https://" + check_endpoint(arm_endpoint, 'ARM_ENDPOINT') + "/.default", tenant_id=tenant)
+            stat_token[tenant]['armtoken'] = cred.get_token(get_endpoint('arm') + "/.default", tenant_id=tenant)
         case 'msgraph':
-            stat_token[tenant]['msgraphtoken'] = cred.get_token("https://" + check_endpoint(graph_endpoint, 'GRAPH_ENDPOINT') + "/.default", tenant_id=tenant)
+            stat_token[tenant]['msgraphtoken'] = cred.get_token(get_endpoint('msgraph') + "/.default", tenant_id=tenant)
         case 'la':
-            stat_token[tenant]['latoken'] = cred.get_token("https://" + check_endpoint(la_endpoint, 'LOGANALYTICS_ENDPOINT') + "/.default", tenant_id=tenant)
+            stat_token[tenant]['latoken'] = cred.get_token(get_endpoint('la') + "/.default", tenant_id=tenant)
         case 'm365':
-            stat_token[tenant]['m365token'] = cred.get_token("https://" + check_endpoint(m365_endpoint, 'M365_ENDPOINT') + "/.default", tenant_id=tenant)
+            stat_token[tenant]['m365token'] = cred.get_token(get_endpoint('m365') + "/.default", tenant_id=tenant)
         case 'mde':
-            stat_token[tenant]['mdetoken'] = cred.get_token("https://" + check_endpoint(mde_endpoint, 'MDE_ENDPOINT') + "/.default", tenant_id=tenant)
+            stat_token[tenant]['mdetoken'] = cred.get_token(get_endpoint('mde') + "/.default", tenant_id=tenant)
         case 'mdca':
             stat_token[tenant]['mdcatoken'] = cred.get_token("05a65629-4c1b-48c1-a78b-804c4abdd4af/.default", tenant_id=tenant)
-
-def check_endpoint(endpoint, env_variable:str):
-    if endpoint is None:
-        raise STATError(f'The STAT Function Application Setting {env_variable} was not configured with the required API endpoint information.')
-    return endpoint
 
 def rest_call_get(base_module:BaseModule, api:str, path:str, headers:dict={}):
     '''Perform a GET HTTP call to a REST API.  Accepted API values are arm, msgraph, la, m365 and mde'''
@@ -175,19 +170,24 @@ def execute_mde_query(base_module:BaseModule, query:str):
     return data['Results']
 
 def get_endpoint(api:str):
-    match api:
-        case 'arm':
-            return 'https://' + arm_endpoint
-        case 'msgraph':
-            return 'https://' + graph_endpoint
-        case 'la':
-            return 'https://' + la_endpoint
-        case 'm365':
-            return 'https://' + m365_endpoint
-        case 'mde':
-            return 'https://' + mde_endpoint
-        case 'mdca':
-            return 'https://' + mdca_endpoint
+    try:
+        match api:
+            case 'arm':
+                return 'https://' + arm_endpoint
+            case 'msgraph':
+                return 'https://' + graph_endpoint
+            case 'la':
+                return 'https://' + la_endpoint
+            case 'm365':
+                return 'https://' + m365_endpoint
+            case 'mde':
+                return 'https://' + mde_endpoint
+            case 'mdca':
+                return 'https://' + mdca_endpoint
+    except TypeError:
+        raise STATError(f'The STAT Function Application Setting was not configured for the {api} API. '
+                        'Ensure that all API endpoint enrivonrment variables are correctly set in the STAT Function App '
+                        '(ARM_ENDPOINT, LOGANALYTICS_ENDPOINT, M365_ENDPOINT, MDE_ENDPOINT, and MDCA_ENDPOINT).')
     
 def add_incident_comment(base_module:BaseModule, comment:str):
     token = token_cache(base_module, 'arm')
