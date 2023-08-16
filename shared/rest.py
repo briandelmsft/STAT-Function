@@ -67,15 +67,15 @@ def acquire_token(api:str, tenant:str):
 
     match api:
         case 'arm':
-            stat_token[tenant]['armtoken'] = cred.get_token("https://" + arm_endpoint + "/.default", tenant_id=tenant)
+            stat_token[tenant]['armtoken'] = cred.get_token(get_endpoint('arm') + "/.default", tenant_id=tenant)
         case 'msgraph':
-            stat_token[tenant]['msgraphtoken'] = cred.get_token("https://" + graph_endpoint + "/.default", tenant_id=tenant)
+            stat_token[tenant]['msgraphtoken'] = cred.get_token(get_endpoint('msgraph') + "/.default", tenant_id=tenant)
         case 'la':
-            stat_token[tenant]['latoken'] = cred.get_token("https://" + la_endpoint + "/.default", tenant_id=tenant)
+            stat_token[tenant]['latoken'] = cred.get_token(get_endpoint('la') + "/.default", tenant_id=tenant)
         case 'm365':
-            stat_token[tenant]['m365token'] = cred.get_token("https://" + m365_endpoint + "/.default", tenant_id=tenant)
+            stat_token[tenant]['m365token'] = cred.get_token(get_endpoint('m365') + "/.default", tenant_id=tenant)
         case 'mde':
-            stat_token[tenant]['mdetoken'] = cred.get_token("https://" + mde_endpoint + "/.default", tenant_id=tenant)
+            stat_token[tenant]['mdetoken'] = cred.get_token(get_endpoint('mde') + "/.default", tenant_id=tenant)
         case 'mdca':
             stat_token[tenant]['mdcatoken'] = cred.get_token("05a65629-4c1b-48c1-a78b-804c4abdd4af/.default", tenant_id=tenant)
 
@@ -170,19 +170,24 @@ def execute_mde_query(base_module:BaseModule, query:str):
     return data['Results']
 
 def get_endpoint(api:str):
-    match api:
-        case 'arm':
-            return 'https://' + arm_endpoint
-        case 'msgraph':
-            return 'https://' + graph_endpoint
-        case 'la':
-            return 'https://' + la_endpoint
-        case 'm365':
-            return 'https://' + m365_endpoint
-        case 'mde':
-            return 'https://' + mde_endpoint
-        case 'mdca':
-            return 'https://' + mdca_endpoint
+    try:
+        match api:
+            case 'arm':
+                return 'https://' + arm_endpoint
+            case 'msgraph':
+                return 'https://' + graph_endpoint
+            case 'la':
+                return 'https://' + la_endpoint
+            case 'm365':
+                return 'https://' + m365_endpoint
+            case 'mde':
+                return 'https://' + mde_endpoint
+            case 'mdca':
+                return 'https://' + mdca_endpoint
+    except TypeError:
+        raise STATError(f'The STAT Function Application Setting was not configured for the {api} API. '
+                        'Ensure that all API endpoint enrivonrment variables are correctly set in the STAT Function App '
+                        '(ARM_ENDPOINT, GRAPH_ENDPOINT, LOGANALYTICS_ENDPOINT, M365_ENDPOINT, MDE_ENDPOINT, and MDCA_ENDPOINT).')
     
 def add_incident_comment(base_module:BaseModule, comment:str):
     token = token_cache(base_module, 'arm')
