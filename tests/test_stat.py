@@ -1,6 +1,6 @@
 from modules import base, relatedalerts, watchlist, kql, ti, ueba, oof, scoring, aadrisks, mdca, mde, file
 from classes import Response
-import json
+import json, os, requests
 
 
 def test_base_module_incident():
@@ -232,25 +232,17 @@ def test_scoring():
     assert scoring_response.body.TotalScore == 532
 
 def get_base_module_body():
-    f = open('.\\tests\\basebody.json')
-    base_module_body = json.load(f)
-    f.close()
+    base_module_body = json.loads(requests.get(url=os.getenv('BASEDATA')).content)
     return base_module_body
 
 def get_incident_trigger_data():
-    f = open('.\\tests\\incidenttriggerdata.json')
-    trigger_data = json.load(f)
-    f.close()
+    trigger_data = json.loads(requests.get(url=os.getenv('INCIDENTDATA')).content)
     return trigger_data
 
 def get_alert_trigger_data():
-    f = open('.\\tests\\alerttriggerdata.json')
-    trigger_data = json.load(f)
-    f.close()
+    trigger_data = json.loads(requests.get(url=os.getenv('ALERTDATA')).content)
     return trigger_data
 
 def get_scoring_data():
-    f = open('.\\tests\\riskscoringdata.json')
-    scoring_data = json.load(f)
-    f.close()
+    scoring_data = json.loads(requests.get(url=os.getenv('SCORINGDATA')).content)
     return scoring_data
