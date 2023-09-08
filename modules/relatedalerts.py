@@ -1,7 +1,7 @@
 from classes import BaseModule, Response, RelatedAlertsModule, STATError
 from shared import rest, data
 import datetime as dt
-import json, copy
+import json
 
 def execute_relatedalerts_module (req_body):
 
