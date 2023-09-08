@@ -1,7 +1,7 @@
 from classes import BaseModule, Response, RelatedAlertsModule, STATError
 from shared import rest, data
 import datetime as dt
-import json, copy
+import json
 
 def execute_relatedalerts_module (req_body):
 
@@ -82,7 +82,7 @@ SecurityAlert
 
     related_alerts.AllTactics =  tactics_list
     related_alerts.AllTacticsCount = len(tactics_list)
-    related_alerts.DetailedResults = copy.deepcopy(results)
+    related_alerts.DetailedResults = results
     related_alerts.HighestSeverityAlert = data.return_highest_value(results, 'AlertSeverity')
     related_alerts.RelatedAccountAlertsCount = len(account_matches)
     related_alerts.RelatedAccountAlertsFound = bool(account_matches)
