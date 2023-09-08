@@ -4,6 +4,7 @@
 
 azure-functions
 azure-identity
+azure-keyvault-secrets
 requests
 pandas
 openai

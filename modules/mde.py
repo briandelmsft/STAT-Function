@@ -75,6 +75,7 @@ def execute_mde_module (req_body):
                     '| extend IPs = todynamic(IPAddresses)'
                     '| mv-expand IPs'
                     '| evaluate bag_unpack(IPs)'
+                    '| extend IPAddress = column_ifexists("IPAddress","")'
                     f'| where IPAddress == "{ipaddress}"'
                     '| distinct IPAddress, DeviceId'
                     '| top 30 by DeviceId') #Only returns 30 devices
