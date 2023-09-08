@@ -4,10 +4,12 @@ import json, openai, os, logging
 
 def execute_gpt_module (req_body):
 
-    #Inputs BaseModuleBody, AddIncidentComments, AddIncidentTask, AIRequest, InputModule
+    #Inputs BaseModuleBody, AddIncidentComments, AddIncidentTask, AIRequest, InputModule, ExcludeBaseModuleData, MaxTokens
 
     base_object = BaseModule()
     base_object.load_from_input(req_body['BaseModuleBody'])
+    include_base = not(req_body.get('ExcludeBaseModuleData', False))
+    max_tokens = req_body.get('MaxTokens', 1000)
 
     gpt_object = GPTModule()
 
@@ -27,7 +29,8 @@ def execute_gpt_module (req_body):
 
     add_message(gpt_object, 'system', 'You are a helpful security analysis bot that utilizes Microsoft Security tools that will help respond to this security incident. You will be provided with information related to a specific incident in Microsoft Sentinel. When asked, respond exclusively in the following JSON format {"Summary": "", "Actions": [{"ActionName": "", "ActionDescription": ""}]}')
 
-    base_module_messages(gpt_object, base_object)
+    if include_base:
+        base_module_messages(gpt_object, base_object)
 
     for input_module in req_body['ModuleData']:
         module_body = input_module['ModuleBody']
@@ -50,7 +53,7 @@ def execute_gpt_module (req_body):
 
     add_message(gpt_object, 'user', ai_request)
 
-    response = openai.ChatCompletion.create(engine=deploy_name, messages=gpt_object.Messages, temperature=0.1)
+    response = openai.ChatCompletion.create(engine=deploy_name, messages=gpt_object.Messages, temperature=0.1, max_tokens=max_tokens)
     gpt_object.Response = response['choices'][0]['message']['content'] 
 
     logging.info(f"Usage: Completion {response['usage']['completion_tokens']}, Prompt {response['usage']['prompt_tokens']}, Total {response['usage']['total_tokens']}, Response Time {response.response_ms}")
@@ -124,6 +127,8 @@ def kql_messages(gpt_object:GPTModule, module_body, ai_context):
     kql.load_from_input(module_body)
     if kql.DetailedResults:
         add_message(gpt_object, 'data', ai_context, kql.DetailedResults)
+    else:
+        add_message(gpt_object, 'assistant', f'{ai_context}: there were no results found to this query.')
 
 def related_alerts_messages(gpt_object:GPTModule, module_body):
     alerts = RelatedAlertsModule()
