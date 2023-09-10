@@ -475,6 +475,9 @@ class MDCAModule:
         self.AnalyzedEntities = 0
         self.DetailedResults = []
         self.MaximumScore = 0
+        self.HighestScorePercentile = 0
+        self.TopUserThresholdCount = 0
+        self.AnyThreatScoreTrendingUp = False
         self.ModuleName = 'MDCAModule'
 
     def load_from_input(self, body):
@@ -482,6 +485,9 @@ class MDCAModule:
         self.AnalyzedEntities = body['AnalyzedEntities']
         self.DetailedResults = body['DetailedResults']
         self.MaximumScore = body['MaximumScore']
+        self.HighestScorePercentile = body['HighestScorePercentile']
+        self.TopUserThresholdCount = body['TopUserThresholdCount']
+        self.AnyThreatScoreTrendingUp = body['AnyThreatScoreTrendingUp']
 
 class RunPlaybook:
     '''A RunPlaybook module object'''

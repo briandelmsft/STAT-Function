@@ -1,5 +1,6 @@
 import pandas as pd
 import copy
+from scipy.stats import linregress
 
 def list_to_html_table(input_list:list, max_rows=20, max_cols=10, nan_str='N/A', escape_html=True):
     '''Convert a list of dictionaries into an HTML table'''
@@ -102,3 +103,7 @@ def return_property_as_list(input_list:list, property_name:str):
     for item in input_list:
         return_list.append(item[property_name])
     return return_list
+
+def return_slope(input_list:list):
+    slope, _, _, _, _ = linregress(range(len(input_list)), input_list)
+    return slope
