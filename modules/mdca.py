@@ -15,7 +15,7 @@ def execute_mdca_module (req_body):
 
     mdac_object = MDCAModule()
     ScoreThreshold =  req_body.get('ScoreThreshold', -1)
-    TopUserThreshold =  req_body.get('TopUserThreshold', 2)
+    TopUserThreshold =  req_body.get('TopUserThreshold', 10)
 
     #Check if there is any account before doing the stats
     if any(account.get('id') is not None for account in base_object.Accounts):
