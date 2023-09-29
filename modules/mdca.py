@@ -51,7 +51,7 @@ def execute_mdca_module (req_body):
                 current_account['ThreatScoreHistory'] = mdcaresults['threatScoreHistory']
                 if len(current_account['ThreatScoreHistory']) > 0:
                     ordered_history = sorted(current_account['ThreatScoreHistory'], key=lambda x: x['dateUtc'])
-                    history_dates = [item['dateFormatted'] for item in ordered_history]
+                    history_dates = [item['dateUtc'] for item in ordered_history]
                     history_scores = [item['score'] for item in ordered_history]
                     current_account['ThreatScoreTrendingUp'] = False if data.return_slope(history_dates,history_scores) <= 0 else True
                     current_account['LastThreatScorePercentile'] = [item['percentile'] for item in ordered_history][-1]
