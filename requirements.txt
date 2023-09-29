@@ -7,4 +7,3 @@ azure-identity
 azure-keyvault-secrets
 requests
 pandas
-scipy
