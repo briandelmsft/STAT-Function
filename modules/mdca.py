@@ -22,7 +22,7 @@ def execute_mdca_module (req_body):
         path = f'/api/v1/entities/'
         body=f'{{"limit":{TopUserThreshold},"filters":{{"score":{{"isset":true}}}},"sortField":"score","sortDirection":"desc","performAsyncTotal":true}}'
         
-        #TO DO! ERror mgmt
+        #If the following fails, the module fails
         mdcastat = json.loads(rest.rest_call_post(base_object, api='mdca', path=path, body=json.loads(body), headers={"Content-Type":"application/json"}).content)
             
     for account in base_object.Accounts:
