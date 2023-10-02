@@ -102,3 +102,7 @@ def return_property_as_list(input_list:list, property_name:str):
     for item in input_list:
         return_list.append(item[property_name])
     return return_list
+
+def return_slope(input_list_x:list, input_list_y:list):
+    slope = ( ( len(input_list_y) * sum([a * b for a, b in zip(input_list_x, input_list_y)]) ) - ( sum(input_list_x) * sum(input_list_y)) ) / ( ( len(input_list_y) * sum([sq ** 2 for sq in input_list_x])) - (sum(input_list_x) ** 2))
+    return slope

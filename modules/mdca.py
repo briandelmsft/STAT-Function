@@ -4,6 +4,8 @@ import json,os,base64
 
 def execute_mdca_module (req_body):
 
+    #Inputs AddIncidentComments, AddIncidentTask, ScoreThreshold, TopUserThreshold
+
     base_object = BaseModule()
     base_object.load_from_input(req_body['BaseModuleBody'])
 
@@ -13,16 +15,28 @@ def execute_mdca_module (req_body):
 
     mdac_object = MDCAModule()
     ScoreThreshold =  req_body.get('ScoreThreshold', -1)
+    TopUserThreshold =  req_body.get('TopUserThreshold', 10)
 
+    #Check if there is any account before doing the stats
+    if any(account.get('id') is not None for account in base_object.Accounts):
+        path = f'/api/v1/entities/'
+        body=f'{{"limit":{TopUserThreshold},"filters":{{"score":{{"isset":true}}}},"sortField":"score","sortDirection":"desc","performAsyncTotal":true}}'
+        
+        #If the following fails, the module fails
+        mdcastat = json.loads(rest.rest_call_post(base_object, api='mdca', path=path, body=json.loads(body), headers={"Content-Type":"application/json"}).content)
+            
     for account in base_object.Accounts:
         userid = account.get('id')
         if userid:
             upn = account.get('userPrincipalName')
             current_account = {
+                'IsTopThreatScore': None,
                 'ThreatScore': 0,
                 'UserId': f'{userid}',
                 'UserPrincipalName': f'{upn}',
-                'ThreatScoreHistory': []
+                'ThreatScoreHistory': [],
+                'ThreatScoreTrendingUp':False,
+                'LastThreatScorePercentile':0
             }
             pkuser = f'{{"id":"{userid}","inst":0,"saas":11161}}'
             pkuser64 = base64.b64encode(pkuser.encode('ascii')).decode('ascii')
@@ -32,8 +46,15 @@ def execute_mdca_module (req_body):
             except STATNotFound:
                 pass
             else:
+                current_account['IsTopThreatScore'] = any(list.get('id') == userid for list in mdcastat.get('data'))
                 current_account['ThreatScore'] = 0 if mdcaresults['threatScore'] is None else mdcaresults['threatScore']
                 current_account['ThreatScoreHistory'] = mdcaresults['threatScoreHistory']
+                if len(current_account['ThreatScoreHistory']) > 0:
+                    ordered_history = sorted(current_account['ThreatScoreHistory'], key=lambda x: x['dateUtc'])
+                    history_dates = [item['dateUtc'] for item in ordered_history]
+                    history_scores = [item['score'] for item in ordered_history]
+                    current_account['ThreatScoreTrendingUp'] = False if data.return_slope(history_dates,history_scores) <= 0 else True
+                    current_account['LastThreatScorePercentile'] = [item['percentile'] for item in ordered_history][-1]
             mdac_object.DetailedResults.append(current_account)
 
     entities_nb = len(mdac_object.DetailedResults)
@@ -41,6 +62,9 @@ def execute_mdca_module (req_body):
         mdac_object.AnalyzedEntities = entities_nb
         mdac_object.AboveThresholdCount = sum(1 for score in mdac_object.DetailedResults if score['ThreatScore'] > ScoreThreshold)
         mdac_object.MaximumScore = max(maximum['ThreatScore'] for maximum in mdac_object.DetailedResults)
+        mdac_object.HighestScorePercentile = max(maximum['LastThreatScorePercentile'] for maximum in mdac_object.DetailedResults)
+        mdac_object.TopUserThresholdCount = sum(1 for top in mdac_object.DetailedResults if top['IsTopThreatScore'] == True)
+        mdac_object.AnyThreatScoreTrendingUp = any(trend.get('ThreatScoreTrendingUp') == True for trend in mdac_object.DetailedResults)
 
     if req_body.get('AddIncidentComments', True):
         link_template = f'<a href="https://security.microsoft.com/user/?aad=[col_value]&tid={base_object.TenantId}" target="_blank">[col_value]</a>'
