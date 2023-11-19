@@ -47,7 +47,7 @@ def token_cache(base_module:BaseModule, api:str):
             token_expiration_check(api, stat_token.get(tenant,{}).get('mdetoken'), tenant)
             return stat_token[tenant]['mdetoken']
         case 'mdca':
-            tenant = base_module.MultiTenantConfig.get('MDCAUrl', base_module.MultiTenantConfig.get('TenantId', default_tenant))
+            tenant = base_module.MultiTenantConfig.get('M365DTenantId', base_module.MultiTenantConfig.get('TenantId', default_tenant))
             token_expiration_check(api, stat_token.get(tenant,{}).get('mdcatoken'), tenant)
             return stat_token[tenant]['mdcatoken']
 
