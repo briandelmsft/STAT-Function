@@ -101,7 +101,7 @@ def execute_mde_module (req_body):
         comment = f'<h3>Microsoft Defender for Endpoint Module</h3>'
         comment += f'A total of {mde_object.AnalyzedEntities} entities were analyzed (Accounts: {nb_accounts} - Hosts: {nb_hosts} - IPs: {nb_ips}).<br />'
         account_link = f'<a href="https://security.microsoft.com/user?aad=[col_value]&tid={base_object.TenantId}" target="_blank">[col_value]</a>'
-        host_link = f'<a href="https://security.microsoft.com/machines?aad=[col_value]?tid={base_object.TenantId}" target="_blank">[col_value]</a>'
+        host_link = f'<a href="https://security.microsoft.com/machines/[col_value]?tid={base_object.TenantId}" target="_blank">[col_value]</a>'
 
         if nb_accounts > 0:
             linked_accounts_list = data.update_column_value_in_list([{k: v for k, v in DetailedResults.items() if k != 'UserDevices'} for DetailedResults in mde_object.DetailedResults['Accounts']], 'UserId', account_link)
