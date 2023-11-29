@@ -100,7 +100,7 @@ def execute_mde_module (req_body):
     if req_body.get('AddIncidentComments', True):
         comment = f'<h3>Microsoft Defender for Endpoint Module</h3>'
         comment += f'A total of {mde_object.AnalyzedEntities} entities were analyzed (Accounts: {nb_accounts} - Hosts: {nb_hosts} - IPs: {nb_ips}).<br />'
-        account_link = f'<a href="https://security.microsoft.com/user/?aad=[col_value]&tid={base_object.TenantId}" target="_blank">[col_value]</a>'
+        account_link = f'<a href="https://security.microsoft.com/user?aad=[col_value]&tid={base_object.TenantId}" target="_blank">[col_value]</a>'
         host_link = f'<a href="https://security.microsoft.com/machines/[col_value]?tid={base_object.TenantId}" target="_blank">[col_value]</a>'
 
         if nb_accounts > 0:
