@@ -206,8 +206,16 @@ def score_mdca(score:ScoringModule, module_body, per_item, multiplier, label):
     
     if per_item:
         score.append_score((mdca.AboveThresholdCount * 10 * multiplier), label)
+        if mdca.TopUserThresholdCount > 0:
+            score.append_score((mdca.TopUserThresholdCount * 10 * multiplier), f"MDCA - {mdca.TopUserThresholdCount} user(s) in top MDCA risk scores")
+        if mdca.AnyThreatScoreTrendingUp:
+            score.append_score((5 * multiplier), f"MDCA - User risk scores are trending up")
     elif mdca.AboveThresholdCount > 0:
         score.append_score((10 * multiplier), label)
+        if mdca.TopUserThresholdCount > 0:
+            score.append_score((10 * multiplier), f"MDCA - {mdca.TopUserThresholdCount} user(s) in top MDCA risk scores")
+        if mdca.AnyThreatScoreTrendingUp:
+            score.append_score((5 * multiplier), f"MDCA - User risk scores are trending up")
     else:
         score.append_score(0, label)
 
