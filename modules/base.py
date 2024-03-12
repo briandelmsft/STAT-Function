@@ -240,10 +240,12 @@ def get_account_by_mail(account, attributes, properties):
 
 def get_account_by_dn(account, attributes, properties):
 
-    query = f'''IdentityInfo
+    query = f'''union isfuzzy=true
+(datatable(test:string)[]),
+(IdentityInfo
 | where OnPremisesDistinguishedName =~ '{account}'
 | summarize arg_max(TimeGenerated, *) by OnPremisesDistinguishedName
-| project AccountUPN'''
+| project AccountUPN)'''
 
     results = rest.execute_la_query(base_object, query, 14)
     if results:
@@ -263,10 +265,12 @@ def get_account_by_sid(account, attributes, properties):
             base_object.add_account_entity({'RawEntity': properties})
 
 def get_account_by_samaccountname(account, attributes, properties):
-    query = f'''IdentityInfo
+    query = f'''union isfuzzy=true
+(datatable(test:string)[]),
+(IdentityInfo
 | where AccountName =~ '{account}'
 | summarize arg_max(TimeGenerated, *) by AccountName
-| project AccountUPN'''
+| project AccountUPN)'''
 
     results = rest.execute_la_query(base_object, query, 14)
     if results:
