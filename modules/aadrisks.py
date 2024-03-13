@@ -88,8 +88,8 @@ def execute_aadrisks_module (req_body):
         aadrisks_object.HighestRiskLevel = data.return_highest_value(aadrisks_object.DetailedResults,'UserRiskLevel')
 
     if req_body.get('AddIncidentComments', True):
-        html_table = data.list_to_html_table(aadrisks_object.DetailedResults, index=False, columns=['UserPrincipalName','UserRiskLevel','UserFailedMFACount','UserMFAFraudCount','SuspiciousActivityReportCount','UserRiskDetectionCount'])
-        risks_table = data.list_to_html_table(all_risk_detections, index=False, columns=['userPrincipalName','activityDateTime','ipAddress','riskLevel','riskEventType','riskState','riskDetail','detectionTimingType','RiskReasons'])
+        html_table = data.list_to_html_table(aadrisks_object.DetailedResults, index=False, columns=['UserPrincipalName','UserRiskLevel','UserFailedMFACount','UserMFAFraudCount','SuspiciousActivityReportCount','UserRiskDetectionCount']) if aadrisks_object.DetailedResults else 'No user details available<br />'
+        risks_table = data.list_to_html_table(all_risk_detections, index=False, columns=['userPrincipalName','activityDateTime','ipAddress','riskLevel','riskEventType','riskState','riskDetail','detectionTimingType','RiskReasons']) if all_risk_detections else 'No risk detections found<br />'
         comment = f'<h3>Azure AD Risks Module</h3>'
         comment += f'A total of {aadrisks_object.AnalyzedEntities} entities were analyzed.<br />'
         comment += f'<ul><li>Highest risk detected: {aadrisks_object.HighestRiskLevel}</li>'
