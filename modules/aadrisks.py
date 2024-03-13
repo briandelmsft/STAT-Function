@@ -10,6 +10,7 @@ def execute_aadrisks_module (req_body):
     base_object.load_from_input(req_body['BaseModuleBody'])
 
     aadrisks_object = AADModule()
+    all_risk_detections = []
 
     for account in base_object.Accounts:
         userid = account.get('id')
@@ -32,8 +33,6 @@ def execute_aadrisks_module (req_body):
                 pass
             else:
                 current_account['UserRiskLevel'] = user_risk_level
-
-            all_risk_detections = []
 
             #Get related risk detections
             start_time = (datetime.datetime.now(datetime.UTC) - datetime.timedelta(days=req_body.get('LookbackInDays', 30))).strftime("%Y-%m-%dT%H:%M:%SZ")
