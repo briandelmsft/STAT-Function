@@ -428,6 +428,7 @@ class AADModule:
         self.SuspiciousActivityReportTotalCount = None
         self.ModuleName = 'AADRisksModule'
         self.DetailedResults = []
+        self.RiskDetectionTotalCount = None
 
     def load_from_input(self, body):
         self.AnalyzedEntities = body['AnalyzedEntities']
@@ -436,6 +437,7 @@ class AADModule:
         self.MFAFraudTotalCount = body['MFAFraudTotalCount']
         self.SuspiciousActivityReportTotalCount = body['SuspiciousActivityReportTotalCount']
         self.DetailedResults = body['DetailedResults']
+        self.RiskDetectionTotalCount = body.get('RiskDetectionTotalCount')
 
 class FileModule:
     '''A File Module object'''
