@@ -289,15 +289,15 @@ def append_account_details(account, user_info, raw_entity):
         pass
     
     try:
-        security_info = get_security_info(user_info['userPrincipalName'])
+        security_info = json.loads(rest.rest_call_get(base_object, api='msgraph', path=f"/v1.0/reports/authenticationMethods/userRegistrationDetails/{user_info['id']}").content)
     except:
         pass
 
     user_info['AssignedRoles'] = assigned_roles
     user_info['isAADPrivileged'] = bool(list(filter(lambda x: x != 'Unknown', assigned_roles)))
     user_info['isMfaRegistered'] = security_info.get('isMfaRegistered', 'Unknown')
-    user_info['isSSPREnabled'] = security_info.get('isEnabled', 'Unknown')
-    user_info['isSSPRRegistered'] = security_info.get('isRegistered', 'Unknown')
+    user_info['isSSPREnabled'] = security_info.get('isSsprEnabled', 'Unknown')
+    user_info['isSSPRRegistered'] = security_info.get('isSsprRegistered', 'Unknown')
     user_info['RawEntity'] = raw_entity
     
     base_object.add_account_entity(user_info)
@@ -309,12 +309,6 @@ def get_account_roles(id):
     for role in role_info['value']:
         roles.append(role['roleDefinition']['displayName'])
     return roles
-
-def get_security_info(upn):
-    response = json.loads(rest.rest_call_get(base_object, api='msgraph', path="/beta/reports/credentialUserRegistrationDetails?$filter=userPrincipalName%20eq%20'" + upn + "'").content)
-    security_info = response['value'][0]
-    return security_info
-
 
 def enrich_hosts(entities):
     host_entities = list(filter(lambda x: x['kind'].lower() == 'host', entities))
