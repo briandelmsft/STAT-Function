@@ -21,7 +21,7 @@ def execute_playbook_module (req_body):
     if not base_object.IncidentAvailable:
         raise STATError(f'There is no incident associated with this STAT triage.  Unable to execute Incident playbook.')
 
-    path = f'{base_object.IncidentARMId}/runPlaybook?api-version=2023-06-01-preview'
+    path = f'{base_object.IncidentARMId}/runPlaybook?api-version=2024-03-01'
     body = {
         'logicAppsResourceId': playbook.LogicAppArmId,
         'tenantId': playbook.TenantId
