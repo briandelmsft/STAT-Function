@@ -89,7 +89,7 @@ def execute_aadrisks_module (req_body):
     if req_body.get('AddIncidentComments', True):
         html_table = data.list_to_html_table(aadrisks_object.DetailedResults, index=False, columns=['UserPrincipalName','UserRiskLevel','UserFailedMFACount','UserMFAFraudCount','SuspiciousActivityReportCount','UserRiskDetectionCount']) if aadrisks_object.DetailedResults else 'No user details available<br />'
         risks_table = data.list_to_html_table(all_risk_detections, index=False, columns=['userPrincipalName','activityDateTime','ipAddress','riskLevel','riskEventType','riskState','riskDetail','detectionTimingType','RiskReasons']) if all_risk_detections else 'No risk detections found<br />'
-        comment = f'<h3>Azure AD Risks Module</h3>'
+        comment = f'<h3>Entra ID Risks Module</h3>'
         comment += f'A total of {aadrisks_object.AnalyzedEntities} entities were analyzed.<br />'
         comment += f'<ul><li>Highest risk detected: {aadrisks_object.HighestRiskLevel}</li>'
         comment += f'<li>Total MFA failures: {aadrisks_object.FailedMFATotalCount} </li>'
@@ -98,7 +98,7 @@ def execute_aadrisks_module (req_body):
         comment += f'<li>Total Suspicious Activity reports: {aadrisks_object.SuspiciousActivityReportTotalCount} </li></ul><br />'
         comment += f'Details by User<br />'
         comment += f'{html_table}<br />'
-        comment += f'Risk Detections<br />'
+        comment += f'Entra ID Risk Detections<br />'
         comment += f'{risks_table}'
         comment_result = rest.add_incident_comment(base_object, comment)
 
