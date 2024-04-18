@@ -35,7 +35,7 @@ def execute_aadrisks_module (req_body):
                 current_account['UserRiskLevel'] = user_risk_level
 
             #Get related risk detections
-            start_time = (datetime.datetime.now(datetime.UTC) - datetime.timedelta(days=req_body.get('LookbackInDays', 30))).strftime("%Y-%m-%dT%H:%M:%SZ")
+            start_time = (datetime.datetime.now(datetime.timezone.utc) - datetime.timedelta(days=req_body.get('LookbackInDays', 30))).strftime("%Y-%m-%dT%H:%M:%SZ")
             select_attributes = "riskEventType,riskState,riskLevel,riskDetail,detectionTimingType,ipAddress,activityDateTime,userPrincipalName,additionalInfo"
             path = f"/v1.0/identityProtection/riskDetections?$filter=userId eq '{userid}' and activityDateTime ge {start_time}&$select={select_attributes}"
             
