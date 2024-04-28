@@ -22,7 +22,9 @@ def execute_aadrisks_module (req_body):
                 'SuspiciousActivityReportCount' : None,
                 'UserId': f'{userid}',
                 'UserPrincipalName': f'{upn}',
-                'UserRiskLevel': 'unknown'
+                'UserRiskLevel': 'unknown',
+                'RiskDetections': None,
+                'UserRiskDetectionCount':0
             }
 
             #Get User Risk level
@@ -47,8 +49,9 @@ def execute_aadrisks_module (req_body):
                 event:dict
                 for event in user_risk_level.get('value', []):
                     add_info:list = json.loads(event.pop('additionalInfo', None))
-                    risk_reasons = [x.get('Value',[]) for x in add_info if x.get('Key') == 'riskReasons'][0]
-                    event['RiskReasons'] = ', '.join(risk_reasons)
+                    if any(d.get("Key") == "riskReasons" for d in add_info):
+                        risk_reasons = [x.get('Value',[]) for x in add_info if x.get('Key') == 'riskReasons'][0]
+                        event['RiskReasons'] = ', '.join(risk_reasons)
 
                 current_account['RiskDetections'] = user_risk_level.get('value', [])
                 current_account['UserRiskDetectionCount'] = len(current_account['RiskDetections'])
