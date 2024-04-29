@@ -22,7 +22,9 @@ def execute_aadrisks_module (req_body):
                 'SuspiciousActivityReportCount' : None,
                 'UserId': f'{userid}',
                 'UserPrincipalName': f'{upn}',
-                'UserRiskLevel': 'unknown'
+                'UserRiskLevel': 'unknown',
+                'RiskDetections': None,
+                'UserRiskDetectionCount':0
             }
 
             #Get User Risk level
@@ -40,19 +42,22 @@ def execute_aadrisks_module (req_body):
             path = f"/v1.0/identityProtection/riskDetections?$filter=userId eq '{userid}' and activityDateTime ge {start_time}&$select={select_attributes}"
             
             try:
-                user_risk_level:dict = json.loads(rest.rest_call_get(base_object, api='msgraph', path=path).content)
+                user_risk_detections:dict = json.loads(rest.rest_call_get(base_object, api='msgraph', path=path).content)
             except STATError:
                 pass
             else:
                 event:dict
-                for event in user_risk_level.get('value', []):
+                for event in user_risk_detections.get('value', []):
                     add_info:list = json.loads(event.pop('additionalInfo', None))
-                    risk_reasons = [x.get('Value',[]) for x in add_info if x.get('Key') == 'riskReasons'][0]
-                    event['RiskReasons'] = ', '.join(risk_reasons)
+                    if any(d.get("Key") == "riskReasons" for d in add_info):
+                        risk_reasons = [x.get('Value',[]) for x in add_info if x.get('Key') == 'riskReasons'][0]
+                        event['RiskReasons'] = ', '.join(risk_reasons)
+                    else:
+                        event['RiskReasons'] = 'N/A'
 
-                current_account['RiskDetections'] = user_risk_level.get('value', [])
+                current_account['RiskDetections'] = user_risk_detections.get('value', [])
                 current_account['UserRiskDetectionCount'] = len(current_account['RiskDetections'])
-                all_risk_detections = all_risk_detections + user_risk_level.get('value', [])
+                all_risk_detections = all_risk_detections + user_risk_detections.get('value', [])
 
             if req_body.get('MFAFailureLookup', True):
                 MFAFailureLookup_query = f'SigninLogs\n| where ResultType == \"500121\"\n| where UserId== \"{userid}\"\n| summarize Count=count() by UserPrincipalName'
