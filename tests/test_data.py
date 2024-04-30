@@ -71,7 +71,14 @@ def test_version_check():
     assert data.version_check('2.0.0', '1.1.1', 'Build') == {'UpdateAvailable': False, 'UpdateType': 'None'}
     assert data.version_check('1.2.0', '1.1.1', 'Build') == {'UpdateAvailable': False, 'UpdateType': 'None'}
     assert data.version_check('1.1.5', '1.1.1', 'Build') == {'UpdateAvailable': False, 'UpdateType': 'None'}
-    
+
+def test_slope():
+    dates_list = [1713376805000, 1713463205000, 1713549605000, 1713636005000, 1713722405000, 1713808805000, 1713895205000, 1713981605000]
+    trending_up = [1,2,3,4,5,6,7,9]
+    trending_down = trending_up.copy()
+    trending_down.reverse()
+    assert data.return_slope(dates_list,trending_up) > 0
+    assert data.return_slope(dates_list,trending_down) < 0    
 
 def list_data():
     test_data = [
