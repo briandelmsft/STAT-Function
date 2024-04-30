@@ -85,10 +85,10 @@ def execute_aadrisks_module (req_body):
     entities_nb = len(aadrisks_object.DetailedResults)
     if entities_nb != 0:
         aadrisks_object.AnalyzedEntities = entities_nb
-        aadrisks_object.FailedMFATotalCount = sum(total['UserFailedMFACount'] for total in aadrisks_object.DetailedResults)
-        aadrisks_object.MFAFraudTotalCount = sum(total['UserMFAFraudCount'] for total in aadrisks_object.DetailedResults)
+        aadrisks_object.FailedMFATotalCount = sum(total['UserFailedMFACount'] for total in aadrisks_object.DetailedResults) if req_body.get('MFAFailureLookup', True) else None
+        aadrisks_object.MFAFraudTotalCount = sum(total['UserMFAFraudCount'] for total in aadrisks_object.DetailedResults) if req_body.get('MFAFraudLookup', True) else None
         aadrisks_object.RiskDetectionTotalCount = sum(total['UserRiskDetectionCount'] for total in aadrisks_object.DetailedResults)
-        aadrisks_object.SuspiciousActivityReportTotalCount = sum(total['SuspiciousActivityReportCount'] for total in aadrisks_object.DetailedResults)
+        aadrisks_object.SuspiciousActivityReportTotalCount = sum(total['SuspiciousActivityReportCount'] for total in aadrisks_object.DetailedResults) if req_body.get('SuspiciousActivityReportLookup', True) else None
         aadrisks_object.HighestRiskLevel = data.return_highest_value(aadrisks_object.DetailedResults,'UserRiskLevel')
 
     if req_body.get('AddIncidentComments', True):
@@ -97,10 +97,10 @@ def execute_aadrisks_module (req_body):
         comment = f'<h3>Entra ID Risks Module</h3>'
         comment += f'A total of {aadrisks_object.AnalyzedEntities} entities were analyzed.<br />'
         comment += f'<ul><li>Highest risk detected: {aadrisks_object.HighestRiskLevel}</li>'
-        comment += f'<li>Total MFA failures: {aadrisks_object.FailedMFATotalCount} </li>'
-        comment += f'<li>Total MFA frauds: {aadrisks_object.MFAFraudTotalCount} </li>'
+        comment += f'<li>Total MFA failures: {aadrisks_object.FailedMFATotalCount} </li>' if req_body.get('MFAFailureLookup', True) else ''
+        comment += f'<li>Total MFA frauds: {aadrisks_object.MFAFraudTotalCount} </li>' if req_body.get('MFAFraudLookup', True) else ''
         comment += f'<li>Total Risk detections: {aadrisks_object.RiskDetectionTotalCount} </li>'
-        comment += f'<li>Total Suspicious Activity reports: {aadrisks_object.SuspiciousActivityReportTotalCount} </li></ul><br />'
+        comment += f'<li>Total Suspicious Activity reports: {aadrisks_object.SuspiciousActivityReportTotalCount} </li></ul><br />' if req_body.get('SuspiciousActivityReportLookup', True) else '</ul><br />'
         comment += f'Details by User<br />'
         comment += f'{html_table}<br />'
         comment += f'Entra ID Risk Detections<br />'
