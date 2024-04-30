@@ -49,6 +49,24 @@ def test_related_alerts():
     assert alerts_response.body.RelatedAlertsFound == True
     assert alerts_response.body.RelatedAccountAlertsFound == True
 
+def test_related_alerts_custom_options():
+    alerts_input = {
+        'AddIncidentComments': False,
+        'AddIncidentTask': False,
+        'CheckAccountEntityMatches': False,
+        'CheckHostEntityMatches': False,
+        'CheckIPEntityMatches': False,
+        'AlertKQLFilter': '| where 1 == 1',
+        'IncidentTaskInstructions': "",
+        'LookbackInDays': 20,
+        'BaseModuleBody': get_base_module_body(),
+    }
+    alerts_response:Response = relatedalerts.execute_relatedalerts_module(alerts_input)
+
+    assert alerts_response.statuscode == 200
+    assert alerts_response.body.RelatedAlertsFound == False
+    assert alerts_response.body.RelatedAccountAlertsFound == False
+
 def test_threat_intel():
     ti_input = {
         'AddIncidentComments': False,
@@ -61,6 +79,23 @@ def test_threat_intel():
     assert ti_response.statuscode == 200
     assert ti_response.body.AnyTIFound == True
     assert ti_response.body.IPTIFound == True
+
+def test_threat_intel_custom_options():
+    ti_input = {
+        'AddIncidentComments': False,
+        'AddIncidentTask': False,
+        'CheckDomains': False,
+        'CheckFileHashes': False,
+        'CheckIPs': False,
+        'CheckURLs': False,
+        'IncidentTaskInstructions': '',
+        'BaseModuleBody': get_base_module_body(),
+    }
+    ti_response:Response = ti.execute_ti_module(ti_input)
+
+    assert ti_response.statuscode == 200
+    assert ti_response.body.AnyTIFound == False
+    assert ti_response.body.IPTIFound == False
 
 def test_watchlist_upn():
     watchlist_input = {
@@ -186,6 +221,20 @@ def test_aad_risks():
 
     assert aad_response.statuscode == 200
 
+def test_aad_risks_custom_options():
+    aad_input = {
+        'AddIncidentComments': False,
+        'AddIncidentTask': False,
+        'LookbackInDays': 14,
+        'MFAFailureLookup': False,
+        'MFAFraudLookup': False,
+        'SuspiciousActivityReportLookup': False,
+        'BaseModuleBody': get_base_module_body()
+    }
+    aad_response:Response = aadrisks.execute_aadrisks_module(aad_input)
+
+    assert aad_response.statuscode == 200
+
 def test_mde_module():
     aad_input = {
         'AddIncidentComments': False,
@@ -202,6 +251,18 @@ def test_mdca_module():
         'AddIncidentComments': False,
         'AddIncidentTask': False,
         'ScoreThreshold': 1,
+        'BaseModuleBody': get_base_module_body()
+    }
+    mdca_response:Response = mdca.execute_mdca_module(mdca_input)
+
+    assert mdca_response.statuscode == 200
+
+def test_mdca_module_custom_options():
+    mdca_input = {
+        'AddIncidentComments': False,
+        'AddIncidentTask': False,
+        'ScoreThreshold': 1,
+        'TopUserThreshold': 5,
         'BaseModuleBody': get_base_module_body()
     }
     mdca_response:Response = mdca.execute_mdca_module(mdca_input)
