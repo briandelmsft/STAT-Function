@@ -1,6 +1,7 @@
 from modules import base, relatedalerts, watchlist, kql, ti, ueba, oof, scoring, aadrisks, mdca, mde, file
-from classes import Response
+from classes import Response, STATError
 import json, os, requests
+import pytest
 
 
 def test_base_module_incident():
@@ -91,6 +92,22 @@ def test_threat_intel_custom_options():
         'IncidentTaskInstructions': '',
         'BaseModuleBody': get_base_module_body(),
     }
+
+    with pytest.raises(STATError):
+        ti_response:Response = ti.execute_ti_module(ti_input)
+
+def test_threat_intel_custom_options2():
+    ti_input = {
+        'AddIncidentComments': False,
+        'AddIncidentTask': False,
+        'CheckDomains': False,
+        'CheckFileHashes': False,
+        'CheckIPs': False,
+        'CheckURLs': True,
+        'IncidentTaskInstructions': '',
+        'BaseModuleBody': get_base_module_body(),
+    }
+
     ti_response:Response = ti.execute_ti_module(ti_input)
 
     assert ti_response.statuscode == 200

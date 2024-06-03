@@ -1,4 +1,4 @@
-from classes import BaseModule, Response, TIModule
+from classes import BaseModule, Response, TIModule, STATError
 from shared import rest, data
 
 def execute_ti_module (req_body):
@@ -14,6 +14,9 @@ def execute_ti_module (req_body):
     check_filehashes = req_body.get('CheckFileHashes', True)
     check_ips = req_body.get('CheckIPs', True)
     check_urls = req_body.get('CheckURLs', True)
+
+    if all((not(check_domains), not(check_filehashes), not(check_ips), not(check_urls))):
+        raise STATError('The Threat Intelligence module was excuted, but all TI checks were disabled.')
 
     if check_domains and base_object.Domains:
         query = base_object.get_domain_kql_table() + '''domainEntities
