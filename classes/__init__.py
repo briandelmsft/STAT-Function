@@ -422,13 +422,13 @@ class AADModule:
 
     def __init__(self):
         self.AnalyzedEntities = 0
-        self.FailedMFATotalCount = None
+        self.FailedMFATotalCount = 0
         self.HighestRiskLevel = ''
-        self.MFAFraudTotalCount = None
-        self.SuspiciousActivityReportTotalCount = None
+        self.MFAFraudTotalCount = 0
+        self.SuspiciousActivityReportTotalCount = 0
         self.ModuleName = 'AADRisksModule'
         self.DetailedResults = []
-        self.RiskDetectionTotalCount = None
+        self.RiskDetectionTotalCount = 0
 
     def load_from_input(self, body):
         self.AnalyzedEntities = body['AnalyzedEntities']
