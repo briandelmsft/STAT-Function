@@ -104,20 +104,36 @@ def execute_mde_module (req_body):
         host_link = f'<a href="https://security.microsoft.com/machines/[col_value]?tid={base_object.TenantId}" target="_blank">[col_value]</a>'
 
         if nb_accounts > 0:
-            linked_accounts_list = data.update_column_value_in_list([{k: v for k, v in DetailedResults.items() if k != 'UserDevices'} for DetailedResults in mde_object.DetailedResults['Accounts']], 'UserId', account_link)
-            html_table_accounts = data.list_to_html_table(linked_accounts_list, escape_html=False)
+            acct_table = []
+            for acct in mde_object.DetailedResults['Accounts']:
+                
+                device_list = [f"<a href=\"https://security.microsoft.com/machines/{dvc.get('id')}?tid={base_object.TenantId}\" target=\"_blank\">{data.coalesce(dvc.get('computerDnsName'), dvc.get('id'))}</a>" for dvc in acct.get('UserDevices')]
+                
+                acct_table.append({
+                    'UserPrincipalName': acct.get('UserPrincipalName'),
+                    'UserId': acct.get('UserId'),
+                    'UserHighestRiskScore': acct.get('UserHighestRiskScore'),
+                    'UserHighestExposureLevel': acct.get('UserHighestExposureLevel'),
+                    'UserDevices': ', '.join(device_list)
+                })
+
+            acct_table = data.update_column_value_in_list(acct_table, 'UserId', account_link)
+            html_table_accounts = data.list_to_html_table(acct_table, escape_html=False)
+            comment += '<h4>Devices by Account Entity</h4>'
             comment += f'<ul><li>Maximum Risk Score of devices used by the user entities: {mde_object.UsersHighestRiskScore}</li>'
             comment += f'<li>Maximum Exposure Level of devices used by the user entities: {mde_object.UsersHighestExposureLevel}</li></ul>'
             comment += f'{html_table_accounts}'
         if nb_hosts > 0:
             linked_host_list = data.update_column_value_in_list(mde_object.DetailedResults['Hosts'], 'id', host_link)
             html_table_hosts = data.list_to_html_table(linked_host_list, escape_html=False)
+            comment += '<h4>Devices by Host Entities</h4>'
             comment += f'<ul><li>Maximum Risk Score of devices present in the incident: {mde_object.HostsHighestRiskScore}</li>'
             comment += f'<li>Maximum Exposure Level of devices present in the incident: {mde_object.HostsHighestExposureLevel}</li></ul>'
             comment += f'{html_table_hosts}'
         if nb_ips > 0:
             linked_ip_list = data.update_column_value_in_list(mde_object.DetailedResults['IPs'], 'id', host_link)
             html_table_ips = data.list_to_html_table(linked_ip_list, escape_html=False)
+            comment += '<h4>Devices by IP Entities</h4>'
             comment += f'<ul><li>Maximum Risk Score of IPs present in the incident: {mde_object.IPsHighestRiskScore}</li>'
             comment += f'<li>Maximum Exposure Level of IPs present in the incident: {mde_object.IPsHighestExposureLevel}</li></ul>'
             comment += f'{html_table_ips}'
