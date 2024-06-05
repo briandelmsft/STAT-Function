@@ -58,13 +58,13 @@ def execute_base_module (req_body):
     account_comment = ''
     ip_comment = ''
 
-    if req_body.get('AddAccountComment', True) and base_object.AccountsCount > 0:
+    if req_body.get('AddAccountComments', True) and base_object.AccountsCount > 0:
         account_comment = 'Account Info:<br>' + get_account_comment()
 
-    if req_body.get('AddIPComment', True) and base_object.IPsCount > 0:
+    if req_body.get('AddIPComments', True) and base_object.IPsCount > 0:
         ip_comment = 'IP Info:<br>' + get_ip_comment()
 
-    if (req_body.get('AddAccountComment', True) and base_object.AccountsCount > 0) or (req_body.get('AddIPComment', True) and base_object.IPsCount > 0):
+    if (req_body.get('AddAccountComments', True) and base_object.AccountsCount > 0) or (req_body.get('AddIPComments', True) and base_object.IPsCount > 0):
         comment = account_comment + '<br><p>' + ip_comment
         rest.add_incident_comment(base_object, comment)
 
