@@ -1,11 +1,11 @@
 import pandas as pd
 import copy
 
-def list_to_html_table(input_list:list, max_rows:int=20, max_cols:int=10, nan_str:str='N/A', escape_html:bool=True, columns:list=None, index:bool=True):
+def list_to_html_table(input_list:list, max_rows:int=20, max_cols:int=10, nan_str:str='N/A', escape_html:bool=True, columns:list=None, index:bool=False, justify:str='left'):
     '''Convert a list of dictionaries into an HTML table'''
     df = pd.DataFrame(input_list)
     df.index = df.index + 1
-    html_table = df.to_html(max_rows=max_rows, max_cols=max_cols, na_rep=nan_str, escape=escape_html, columns=columns, index=index).replace('\n', '')
+    html_table = df.to_html(max_rows=max_rows, max_cols=max_cols, na_rep=nan_str, escape=escape_html, columns=columns, index=index, justify=justify).replace('\n', '')
 
     return html_table
 
