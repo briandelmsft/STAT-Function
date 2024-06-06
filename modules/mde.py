@@ -71,7 +71,7 @@ def execute_mde_module (req_body):
         ipaddress = ip.get('Address')
         get_devices = ('DeviceNetworkInfo'
                     f'| where Timestamp > ago({lookback}d)'
-                    '| summarize arg_max(Timestamp,*) by DeviceId'
+                    '| summarize arg_max(Timestamp,*) by DeviceId, IPAddresses'
                     '| extend IPs = todynamic(IPAddresses)'
                     '| mv-expand IPs'
                     '| evaluate bag_unpack(IPs)'
@@ -85,7 +85,17 @@ def execute_mde_module (req_body):
             pathwithfilter = f'/api/machines?$filter=id+in+({idlist})&$select=id,computerDnsName,riskScore,exposureLevel'
             devicedata = json.loads(rest.rest_call_get(base_object, 'mde', f'{pathwithfilter}').content)
             if len(devicedata['value']) > 0:
-                detailed_ips += devicedata['value']
+                for val in devicedata['value']:
+                    detailed_ips.append(
+                        {
+                            'IPAddress': ipaddress,
+                            'id': val.get('id'),
+                            'computerDnsName': val.get('computerDnsName'),
+                            'riskScore': val.get('riskScore'),
+                            'exposureLevel': val.get('exposureLevel')
+                        }
+                    )
+
     mde_object.DetailedResults['IPs'] = detailed_ips
     mde_object.IPsHighestExposureLevel = data.return_highest_value(mde_object.DetailedResults['IPs'],'exposureLevel') 
     mde_object.IPsHighestRiskScore = data.return_highest_value(mde_object.DetailedResults['IPs'],'riskScore')
@@ -100,24 +110,54 @@ def execute_mde_module (req_body):
     if req_body.get('AddIncidentComments', True):
         comment = f'<h3>Microsoft Defender for Endpoint Module</h3>'
         comment += f'A total of {mde_object.AnalyzedEntities} entities were analyzed (Accounts: {nb_accounts} - Hosts: {nb_hosts} - IPs: {nb_ips}).<br />'
-        account_link = f'<a href="https://security.microsoft.com/user?aad=[col_value]&tid={base_object.TenantId}" target="_blank">[col_value]</a>'
-        host_link = f'<a href="https://security.microsoft.com/machines/[col_value]?tid={base_object.TenantId}" target="_blank">[col_value]</a>'
 
         if nb_accounts > 0:
-            linked_accounts_list = data.update_column_value_in_list([{k: v for k, v in DetailedResults.items() if k != 'UserDevices'} for DetailedResults in mde_object.DetailedResults['Accounts']], 'UserId', account_link)
-            html_table_accounts = data.list_to_html_table(linked_accounts_list, escape_html=False)
+            acct_table = []
+            for acct in mde_object.DetailedResults['Accounts']:
+                
+                device_list = [f"<a href=\"https://security.microsoft.com/machines/{dvc.get('id')}?tid={base_object.TenantId}\" target=\"_blank\">{data.coalesce(dvc.get('computerDnsName'), dvc.get('id'))}</a>" for dvc in acct.get('UserDevices')]
+                
+                acct_table.append({
+                    'UserPrincipalName': f"<a href=\"https://security.microsoft.com/user?aad={acct.get('UserId')}&tid={base_object.TenantId}\" target=\"_blank\">{acct.get('UserPrincipalName')}</a>",
+                    'UserHighestRiskScore': acct.get('UserHighestRiskScore'),
+                    'UserHighestExposureLevel': acct.get('UserHighestExposureLevel'),
+                    'UserDevices': ', '.join(device_list)
+                })
+
+            html_table_accounts = data.list_to_html_table(acct_table, escape_html=False, index=False)
+            comment += '<h4>Devices by Account Entity</h4>'
             comment += f'<ul><li>Maximum Risk Score of devices used by the user entities: {mde_object.UsersHighestRiskScore}</li>'
             comment += f'<li>Maximum Exposure Level of devices used by the user entities: {mde_object.UsersHighestExposureLevel}</li></ul>'
             comment += f'{html_table_accounts}'
         if nb_hosts > 0:
-            linked_host_list = data.update_column_value_in_list(mde_object.DetailedResults['Hosts'], 'id', host_link)
-            html_table_hosts = data.list_to_html_table(linked_host_list, escape_html=False)
+            host_table = []
+            
+            for host in mde_object.DetailedResults['Hosts']:
+
+                host_table.append({
+                    'ComputerDnsName': f"<a href=\"https://security.microsoft.com/machines/{host.get('id')}?tid={base_object.TenantId}\" target=\"_blank\">{data.coalesce(host.get('computerDnsName'), host.get('id'))}</a>",
+                    'RiskScore': host.get('riskScore'),
+                    'ExposureLevel': host.get('exposureLevel')
+                })
+
+            html_table_hosts = data.list_to_html_table(host_table, escape_html=False, index=False)
+            comment += '<h4>Devices by Host Entities</h4>'
             comment += f'<ul><li>Maximum Risk Score of devices present in the incident: {mde_object.HostsHighestRiskScore}</li>'
             comment += f'<li>Maximum Exposure Level of devices present in the incident: {mde_object.HostsHighestExposureLevel}</li></ul>'
             comment += f'{html_table_hosts}'
         if nb_ips > 0:
-            linked_ip_list = data.update_column_value_in_list(mde_object.DetailedResults['IPs'], 'id', host_link)
-            html_table_ips = data.list_to_html_table(linked_ip_list, escape_html=False)
+
+            ip_table = []
+            for iphost in mde_object.DetailedResults['IPs']:
+                ip_table.append({
+                    'IPAddress': iphost.get('IPAddress'),
+                    'ComputerDnsName': f"<a href=\"https://security.microsoft.com/machines/{iphost.get('id')}?tid={base_object.TenantId}\" target=\"_blank\">{data.coalesce(iphost.get('computerDnsName'), iphost.get('id'))}</a>",
+                    'RiskScore': iphost.get('riskScore'),
+                    'ExposureLevel': iphost.get('exposureLevel')
+                })
+
+            html_table_ips = data.list_to_html_table(ip_table, escape_html=False, index=False)
+            comment += '<h4>Devices by IP Entities</h4>'
             comment += f'<ul><li>Maximum Risk Score of IPs present in the incident: {mde_object.IPsHighestRiskScore}</li>'
             comment += f'<li>Maximum Exposure Level of IPs present in the incident: {mde_object.IPsHighestExposureLevel}</li></ul>'
             comment += f'{html_table_ips}'

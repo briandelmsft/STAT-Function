@@ -28,7 +28,7 @@ def execute_kql_module (req_body):
 
     if req_body.get('AddIncidentComments', True) and base_object.IncidentAvailable:
         
-        html_table = data.list_to_html_table(results)
+        html_table = data.list_to_html_table(results, index=True)
         if req_body.get('QueryDescription'):
             query_description = req_body.get('QueryDescription') + '<p>'
         else:
