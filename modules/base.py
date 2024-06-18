@@ -318,8 +318,31 @@ def enrich_hosts(entities):
         host_name = data.coalesce(host.get('properties',{}).get('hostName'), host.get('HostName'))
         domain_name = data.coalesce(host.get('properties',{}).get('dnsDomain'), host.get('DnsDomain'), '')
         mde_device_id = data.coalesce(host.get('properties',{}).get('additionalData', {}).get('MdatpDeviceId'), host.get('MdatpDeviceId'))
+        fqdn = host_name + '.' + domain_name
+        
+        if not(mde_device_id):
+            query = f'''DeviceInfo
+| where Timestamp > ago(14d)
+| where DeviceName =~ '{fqdn}' or DeviceName has '{host_name}'
+| extend MatchType = iff(DeviceName =~ '{fqdn}', 'FQDN', 'Hostname')
+| summarize arg_max(Timestamp, *) by DeviceId
+| project Timestamp, DeviceId, DeviceName, MatchType, AadDeviceId
+| summarize DeviceIdCount=dcount(DeviceId), DeviceId=max(DeviceId) by MatchType, bin(Timestamp, 12h)
+| sort by Timestamp desc'''
+            results = rest.execute_m365d_query(base_object, query)
+
+            if results:
+                fqdn_matches = list(filter(lambda x: x['MatchType'] == 'FQDN', results))
+                host_matches = list(filter(lambda x: x['MatchType'] == 'Hostname', results))
+                if fqdn_matches:
+                    if fqdn_matches[0]['DeviceIdCount'] == 1:
+                        mde_device_id = fqdn_matches[0]['DeviceId']
+                elif host_matches:
+                    if host_matches[0]['DeviceIdCount'] == 1:
+                        mde_device_id = host_matches[0]['DeviceId']                 
+
         raw_entity = data.coalesce(host.get('properties'), host)
-        base_object.add_host_entity(fqdn=host_name + '.' + domain_name, hostname=host_name, dnsdomain=domain_name, mdedeviceid=mde_device_id, rawentity=raw_entity)
+        base_object.add_host_entity(fqdn=fqdn, hostname=host_name, dnsdomain=domain_name, mdedeviceid=mde_device_id, rawentity=raw_entity) 
 
 def get_account_comment():
     
