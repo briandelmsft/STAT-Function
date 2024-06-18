@@ -543,3 +543,9 @@ class CreateIncident:
         self.Severity = ''
         self.IncidentNumber = 0
         self.IncidentUrl = ''
+
+class CopilotModule:
+    '''A Copilot object'''
+    def __init__(self):
+        self.BaseModuleTemp = ''
+        self.RelatedAlertsTemp = ''

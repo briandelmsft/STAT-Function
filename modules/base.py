@@ -13,12 +13,14 @@ def execute_base_module (req_body):
     
     base_object = BaseModule()
 
-    trigger_type = req_body['Body'].get('objectSchemaType', 'alert')
+    trigger_type = data.coalesce(req_body.get('Body', {}).get('objectSchemaType'), req_body.get('objectSchemaType'), 'alert')
 
     base_object.MultiTenantConfig = req_body.get('MultiTenantConfig', {})
 
     if trigger_type.lower() == 'incident':
         entities = process_incident_trigger(req_body)
+    elif trigger_type.lower() == 'copilot':
+        entities = process_copilot_trigger(req_body)
     else:
         entities = process_alert_trigger(req_body)
 
@@ -119,6 +121,26 @@ def process_alert_trigger (req_body):
         base_object.IncidentAvailable = True
 
     return entities
+
+def process_copilot_trigger (req_body):
+    base_object.IncidentARMId = req_body['IncidentARMId']
+    base_object.WorkspaceId = req_body['WorkspaceId']
+    base_object.IncidentAvailable = True    
+
+    arm_id_split = str(base_object.IncidentARMId).split('/')
+    base_object.SentinelRGARMId = f"/subscriptions/{arm_id_split[2]}/resourceGroups/{arm_id_split[4]}"
+    base_object.WorkspaceARMId = f"{base_object.SentinelRGARMId}/providers/Microsoft.OperationalInsights/workspaces/{arm_id_split[8]}"
+    incident_path = f'{base_object.IncidentARMId}?api-version=2024-03-01'
+    alerts_path = f'{base_object.IncidentARMId}/alerts?api-version=2024-03-01'
+    entities_path = f'{base_object.IncidentARMId}/entities?api-version=2024-03-01'
+
+    incident_data = json.loads(rest.rest_call_get(base_object, 'arm', incident_path).content)
+    alerts_data = json.loads(rest.rest_call_post(base_object, 'arm', alerts_path, None).content)
+    entities_data = json.loads(rest.rest_call_post(base_object, 'arm', entities_path, None).content)
+
+    base_object.RelatedAnalyticRuleIds = incident_data.get('properties', {}).get('relatedAnalyticRuleIds', [])
+    base_object.Alerts = alerts_data['value']
+    return entities_data['entities']
 
 def enrich_ips (entities, get_geo):
     ip_entities = list(filter(lambda x: x['kind'].lower() == 'ip', entities))
