@@ -315,10 +315,10 @@ def enrich_hosts(entities):
     base_object.HostsCount = len(host_entities)
 
     for host in host_entities:
-        host_name = data.coalesce(host.get('properties',{}).get('hostName'), host.get('HostName'))
+        host_name = data.coalesce(host.get('properties',{}).get('hostName'), host.get('HostName'), host.get('properties',{}).get('netBiosName'), host.get('NetBiosName'), host.get('properties',{}).get('friendlyName', ''))
         domain_name = data.coalesce(host.get('properties',{}).get('dnsDomain'), host.get('DnsDomain'), '')
         mde_device_id = data.coalesce(host.get('properties',{}).get('additionalData', {}).get('MdatpDeviceId'), host.get('MdatpDeviceId'))
-        fqdn = host_name + '.' + domain_name
+        fqdn = data.coalesce(host.get('properties',{}).get('additionalData', {}).get('FQDN'), host.get('FQDN'), f'{host_name}.{domain_name}') 
         
         if not(mde_device_id):
             query = f'''DeviceInfo
@@ -329,7 +329,11 @@ def enrich_hosts(entities):
 | project Timestamp, DeviceId, DeviceName, MatchType, AadDeviceId
 | summarize DeviceIdCount=dcount(DeviceId), DeviceId=max(DeviceId) by MatchType, bin(Timestamp, 12h)
 | sort by Timestamp desc'''
-            results = rest.execute_m365d_query(base_object, query)
+            
+            try:
+                results = rest.execute_m365d_query(base_object, query)
+            except:
+                results = []
 
             if results:
                 fqdn_matches = list(filter(lambda x: x['MatchType'] == 'FQDN', results))
