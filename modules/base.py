@@ -82,7 +82,7 @@ def process_alert_trigger (req_body):
              
     #Get Workspace ARM Id
     subscription_id = req_body['Body']['WorkspaceSubscriptionId']
-    workspace_query = json.loads(rest.rest_call_get(base_object, 'arm', f'/subscriptions/{subscription_id}/providers/Microsoft.OperationalInsights/workspaces?api-version=2021-12-01-preview').content)
+    workspace_query = json.loads(rest.rest_call_get(base_object, 'arm', f'/subscriptions/{subscription_id}/providers/Microsoft.OperationalInsights/workspaces?api-version=2023-09-01').content)
     filter_workspace = list(filter(lambda x: x['properties']['customerId'] == req_body['Body']['WorkspaceId'], workspace_query['value']))
     base_object.WorkspaceARMId = filter_workspace[0]['id']
 
