@@ -1,5 +1,7 @@
 import pandas as pd
 import copy
+import pathlib
+import json
 
 def list_to_html_table(input_list:list, max_rows:int=20, max_cols:int=10, nan_str:str='N/A', escape_html:bool=True, columns:list=None, index:bool=False, justify:str='left'):
     '''Convert a list of dictionaries into an HTML table'''
@@ -79,6 +81,10 @@ def coalesce(*args):
             return arg
         
 def version_check(current_version:str, avaialble_version:str, update_check_type:str):
+    
+    if current_version == 'Unknown':
+        return {'UpdateAvailable': False, 'UpdateType': 'None'}
+    
     current = current_version.split('.')
     available = avaialble_version.split('.')
 
@@ -106,3 +112,13 @@ def return_property_as_list(input_list:list, property_name:str):
 def return_slope(input_list_x:list, input_list_y:list):
     slope = ( ( len(input_list_y) * sum([a * b for a, b in zip(input_list_x, input_list_y)]) ) - ( sum(input_list_x) * sum(input_list_y)) ) / ( ( len(input_list_y) * sum([sq ** 2 for sq in input_list_x])) - (sum(input_list_x) ** 2))
     return slope
+
+def get_current_version():
+
+    try:
+        with open(pathlib.Path(__file__).parent.parent / 'modules/version.json') as f:
+            stat_version = json.loads(f.read())['FunctionVersion']
+    except:
+        stat_version = 'Unknown'
+
+    return stat_version

@@ -55,6 +55,7 @@ def test_version_check():
     assert data.version_check('1.0.0', '1.0.0', 'Major') == {'UpdateAvailable': False, 'UpdateType': 'None'}
     assert data.version_check('1.0.0', '1.0.0', 'Minor') == {'UpdateAvailable': False, 'UpdateType': 'None'}
     assert data.version_check('1.0.0', '1.0.0', 'Build') == {'UpdateAvailable': False, 'UpdateType': 'None'}
+    assert data.version_check('Unknown', '1.0.0', 'Build') == {'UpdateAvailable': False, 'UpdateType': 'None'}
 
     assert data.version_check('1.0.0', '1.0.1', 'Major') == {'UpdateAvailable': False, 'UpdateType': 'None'}
     assert data.version_check('1.0.0', '1.0.1', 'Minor') == {'UpdateAvailable': False, 'UpdateType': 'None'}
@@ -71,6 +72,9 @@ def test_version_check():
     assert data.version_check('2.0.0', '1.1.1', 'Build') == {'UpdateAvailable': False, 'UpdateType': 'None'}
     assert data.version_check('1.2.0', '1.1.1', 'Build') == {'UpdateAvailable': False, 'UpdateType': 'None'}
     assert data.version_check('1.1.5', '1.1.1', 'Build') == {'UpdateAvailable': False, 'UpdateType': 'None'}
+
+def test_current_version():
+    assert data.get_current_version().startswith('2.')
 
 def test_slope():
     dates_list = [1713376805000, 1713463205000, 1713549605000, 1713636005000, 1713722405000, 1713808805000, 1713895205000, 1713981605000]

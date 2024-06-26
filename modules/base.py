@@ -4,7 +4,6 @@ import json
 import time
 import logging
 import requests
-import pathlib
 
 stat_version = None
 
@@ -381,12 +380,8 @@ def get_ip_comment():
     return data.list_to_html_table(ip_list)
 
 def get_stat_version(version_check_type):
-    global stat_version
 
-    if stat_version is None:
-        with open(pathlib.Path(__file__).parent / 'version.json') as f:
-            stat_version = json.loads(f.read())['FunctionVersion']
-    
+    stat_version = data.get_current_version() 
     available_version = base_object.ModuleVersions.get('STATFunction', '1.4.9')
     logging.info(f'STAT Version check info. Current Version: {stat_version}, Available Version: {available_version}')
     version_check_result = data.version_check(stat_version, available_version, version_check_type)
