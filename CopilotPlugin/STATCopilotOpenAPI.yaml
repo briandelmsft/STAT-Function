@@ -33,7 +33,8 @@ components:
       properties:
         incidentARMId:
           type: string
-          description: The Sentinel incident ARM Identifier (or incident ARM Id). It is not a number, it is an Azure Ressource Manager unique identifier. 
+          description: |
+            The Sentinel incident ARM Identifier (or incident ARM Id)It is not a number, it is an Azure Ressource Manager unique identifier.
     CopilotModuleResponse:
       type: object
       properties:
@@ -49,6 +50,3 @@ components:
         incidentNumber:
           type: integer
           description: the Sentinel incident number
-      required:
-        - username
-        - riskLevel
