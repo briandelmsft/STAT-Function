@@ -1,10 +1,9 @@
 Descriptor:
   Name: STAT Copilot plug-in
   DisplayName: Sentinel Triage Assistant (STAT) plug-in
-  DescriptionDisplay: Sentinel Triage Assistant (aka STAT) plug-in helps by making incident traige in Sentinel stronger, faster, easier... better.
+  DescriptionDisplay: Sentinel Triage Assistant (aka STAT) plug-in helps by making incident triage in Sentinel stronger, faster, easier... better.
   Description: |-
     Use this skill-set to call the Sentinel Triage Assistant (aka STAT) to enrich incident. This will get more information about all the entities impacted by the incident.
-    - This skill only invoke the test Entra ID risk test using a Sentinel Incident number as input.
   Category: Plugin
   SupportedAuthTypes:
     - ApiKey
