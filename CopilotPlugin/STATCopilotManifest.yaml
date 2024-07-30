@@ -12,6 +12,7 @@ Descriptor:
     Type: APIKey
     Key: code
     Location: QueryParams
+    AuthScheme: ''
   Settings:
     - Name: subscriptionId
       Label: Sentinel Subscription ID
