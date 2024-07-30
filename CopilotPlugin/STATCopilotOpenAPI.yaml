@@ -33,7 +33,7 @@ components:
       properties:
         incidentARMId:
           type: string
-          description: The sentinel incident in the ARM ID (or ARM Identifier) format.
+          description: The Sentinel incident ARM Identifier (or incident ARM Id). It is not a number, it is an Azure Ressource Manager unique identifier. 
     CopilotModuleResponse:
       type: object
       properties:
@@ -43,9 +43,9 @@ components:
         riskLevel:
           type: string
           description: the level of risk in Entra ID Identity Protection of the user impacted by the incident 
-        incidentId:
+        incidentARMId:
           type: string
-          description: the ARM ID of the Sentinel incident, the information is not display unless specifically asked
+          description: the ARM ID of the Sentinel incident, the information is not displayed unless specifically asked
         incidentNumber:
           type: integer
           description: the Sentinel incident number
