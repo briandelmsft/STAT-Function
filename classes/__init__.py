@@ -1,5 +1,6 @@
 import urllib.parse
 import json
+from shared import data
 
 class Response:
     '''A response object'''
@@ -551,3 +552,11 @@ class CreateIncident:
         self.Severity = ''
         self.IncidentNumber = 0
         self.IncidentUrl = ''
+
+class DebugModule:
+    '''A Debug Module Instance'''
+    def __init__(self, req_body):
+        self.ModuleName = 'DebugModule'
+        self.STATVersion = data.get_current_version()
+        self.Test = req_body.get('Test', 'Default')
+        self.Params = req_body.get('Params', {})
