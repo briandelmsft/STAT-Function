@@ -24,14 +24,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/CopilotModuleResponse'
-      security:
-        - FunctionCode: []
 components:
-  securitySchemes:
-    FunctionCode:
-      type: apiKey
-      in: query
-      name: code
   schemas:
     CopilotModuleRequest:
       type: object
