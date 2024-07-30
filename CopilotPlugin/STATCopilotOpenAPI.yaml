@@ -1,14 +1,14 @@
 openapi: 3.0.1
 info:
-  title: STAT Copliot Module
-  description: his module is used to get enrich Sentinel incident using the Sentinel Triage Assistant (or STAT) version 2.
+  title: STAT Copilot for Security Module
+  description: This module is used to get enrich Sentinel incident using the Sentinel Triage Assistant (or STAT) version 2.
   version: 1.0.0
 paths:
   /copilot:
     post:
       summary: Copilot endpoint
       description: |
-        This module is used to get enrich and get information about the entitites from a Sentinel incident.
+        This module is used to enrich Sentinel incident and get information about the entitites from a Sentinel incident using the incident ARM ID as an input.
         # ExamplePrompts Can you enrich this incident using STAT?
         # ExamplePrompts Can you get more information about incident 1234 with STAT?
       requestBody:
@@ -24,8 +24,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/CopilotModuleResponse'
-        '400':
-          description: Invalid function app code
 components:
   schemas:
     CopilotModuleRequest:
