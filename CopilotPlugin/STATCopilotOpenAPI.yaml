@@ -32,9 +32,11 @@ components:
         subscriptionId:
           type: string
           description: The subscription ID specified in the Sentinel Triage Assistant (STAT) plug-in configuration.
+          default: ${subscriptionId}
         workspaceName:
           type: string
           description: The sentinel workspace name specified in the Sentinel Triage Assistant (STAT) plug-in configuration.
+          default: ${workspaceName}
         incidentNumber:
           type: integer
           description: The sentinel incident number from the current prompt session.
