@@ -31,10 +31,13 @@ components:
       properties:
         subscriptionId:
           type: string
+          description: The subscription ID specified in the Sentinel Triage Assistant (STAT) plug-in configuration.
         workspaceName:
           type: string
+          description: The sentinel workspace name specified in the Sentinel Triage Assistant (STAT) plug-in configuration.
         incidentNumber:
           type: integer
+          description: The sentinel incident number from the current prompt session.
     CopilotModuleResponse:
       type: object
       properties:
