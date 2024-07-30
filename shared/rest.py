@@ -1,11 +1,13 @@
 from azure.identity import DefaultAzureCredential, ClientSecretCredential
 from azure.keyvault.secrets import SecretClient
 import requests
+from requests import Response, ConnectionError
 import datetime as dt
 import json
 import os
 import uuid
-from classes import STATError, STATNotFound, BaseModule
+import time
+from classes import STATError, STATNotFound, BaseModule, STATTooManyRequests
 
 stat_token = {}
 graph_endpoint = os.getenv('GRAPH_ENDPOINT')
@@ -98,56 +100,76 @@ def get_kv_secret():
 
 def rest_call_get(base_module:BaseModule, api:str, path:str, headers:dict={}):
     '''Perform a GET HTTP call to a REST API.  Accepted API values are arm, msgraph, la, m365 and mde'''
-    token = token_cache(base_module, api)
-    url = get_endpoint(api) + path
-    headers['Authorization'] = 'Bearer ' + token.token
-    response = requests.get(url=url, headers=headers)
 
-    if response.status_code == 404:
-        raise STATNotFound(f'The API call to {api} with path {path} failed with status {response.status_code}', source_error={'status_code': int(response.status_code), 'reason': str(response.reason)})
-    elif response.status_code >= 300:
-        raise STATError(f'The API call to {api} with path {path} failed with status {response.status_code}', source_error={'status_code': int(response.status_code), 'reason': str(response.reason)})
+    response = execute_rest_call(base_module, 'get', api, path, None, headers)
     
     return response
 
 def rest_call_post(base_module:BaseModule, api:str, path:str, body, headers:dict={}):
     '''Perform a POST HTTP call to a REST API.  Accepted API values are arm, msgraph, la, m365 and mde'''
-    token = token_cache(base_module, api)
-    url = get_endpoint(api) + path
-    headers['Authorization'] = 'Bearer ' + token.token
-    response = requests.post(url=url, json=body, headers=headers)
 
-    if response.status_code == 404:
-        raise STATNotFound(f'The API call to {api} with path {path} failed with status {response.status_code}', source_error={'status_code': int(response.status_code), 'reason': str(response.reason)})
-    elif response.status_code >= 300:
-        raise STATError(f'The API call to {api} with path {path} failed with status {response.status_code}', source_error={'status_code': int(response.status_code), 'reason': str(response.reason)})
+    response = execute_rest_call(base_module, 'post', api, path, body, headers)
     
     return response
 
 def rest_call_put(base_module:BaseModule, api:str, path:str, body, headers:dict={}):
     '''Perform a PUT HTTP call to a REST API.  Accepted API values are arm, msgraph, la, m365 and mde'''
-    token = token_cache(base_module, api)
-    url = get_endpoint(api) + path
-    headers['Authorization'] = 'Bearer ' + token.token
-    response = requests.put(url=url, json=body, headers=headers)
-
-    if response.status_code == 404:
-        raise STATNotFound(f'The API call to {api} with path {path} failed with status {response.status_code}', source_error={'status_code': int(response.status_code), 'reason': str(response.reason)})
-    elif response.status_code >= 300:
-        raise STATError(f'The API call to {api} with path {path} failed with status {response.status_code}', source_error={'status_code': int(response.status_code), 'reason': str(response.reason)})
+    
+    response = execute_rest_call(base_module, 'put', api, path, body, headers)
     
     return response
 
+def execute_rest_call(base_module:BaseModule, method:str, api:str, path:str, body=None, headers:dict={}):
+    token = token_cache(base_module, api)
+    url = get_endpoint(api) + path
+    headers['Authorization'] = 'Bearer ' + token.token
+
+    retry_call = True
+    wait_time = 0
+
+    while retry_call:
+        try:
+            match method:
+                case 'get':
+                    response = requests.get(url=url, headers=headers)
+                case 'post':
+                    response = requests.post(url=url, json=body, headers=headers)
+                case 'put':
+                    response = requests.put(url=url, json=body, headers=headers)
+                case _:
+                    raise STATError(error=f'Invalid rest method: {method}.', status_code=400)
+            check_rest_response(response, api, path)
+        except STATTooManyRequests as e:
+            wait_time += int(e.retry_after)
+            if wait_time >= 40:
+                raise STATTooManyRequests(error=e.error, source_error=e.source_error, status_code=429, retry_after=e.retry_after)
+            time.sleep(int(e.retry_after))
+        except ConnectionError as e:
+            wait_time += 20
+            if wait_time >= 40:
+                raise STATError(error=f'Failed to establish a new connection to {url}', source_error=e, status_code=500)
+            time.sleep(20)
+        else:
+            retry_call = False
+    
+    return response
+   
+
+def check_rest_response(response:Response, api, path):
+    if response.status_code == 404:
+        raise STATNotFound(f'The API call to {api} with path {path} failed with status {response.status_code}', source_error={'status_code': int(response.status_code), 'reason': str(response.reason)})
+    elif response.status_code == 429:
+        raise STATTooManyRequests(f'The API call to {api} with path {path} failed with status {response.status_code}', source_error={'status_code': int(response.status_code), 'reason': str(response.reason)}, retry_after=response.headers.get('Retry-After'), status_code=429)
+    elif response.status_code >= 300:
+        raise STATError(f'The API call to {api} with path {path} failed with status {response.status_code}', source_error={'status_code': int(response.status_code), 'reason': str(response.reason)})
+    return
+
 def execute_la_query(base_module:BaseModule, query:str, lookbackindays:int):
-    token = token_cache(base_module, 'la')
-    url = get_endpoint('la') + '/v1/workspaces/' + base_module.WorkspaceId + '/query'
+    path = '/v1/workspaces/' + base_module.WorkspaceId + '/query'
     duration = 'P' + str(lookbackindays) + 'D'
     body = {'query': query, 'timespan': duration}
-    response = requests.post(url=url, json=body, headers={"Authorization": "Bearer " + token.token})
+    response = rest_call_post(base_module, 'la', path, body)
     data = json.loads(response.content)
-
-    if response.status_code >= 300:
-        raise STATError('Microsoft Sentinel KQL Query failed to execute', data)
  
     columns = data['tables'][0]['columns']
     rows = data['tables'][0]['rows']
@@ -163,26 +185,18 @@ def execute_la_query(base_module:BaseModule, query:str, lookbackindays:int):
     return query_results
 
 def execute_m365d_query(base_module:BaseModule, query:str):
-    token = token_cache(base_module, 'm365')
-    url = get_endpoint('m365') + '/api/advancedhunting/run'
+    path = '/api/advancedhunting/run'
     body = {'Query': query}
-    response = requests.post(url=url, json=body, headers={"Authorization": "Bearer " + token.token})
+    response = rest_call_post(base_module, 'm365', path, body)
     data = json.loads(response.content)
-
-    if response.status_code >= 300:
-        raise STATError('Microsoft 365 Advanced Hunting Query failed to execute', data)
     
     return data['Results']
 
 def execute_mde_query(base_module:BaseModule, query:str):
-    token = token_cache(base_module, 'mde')
-    url = get_endpoint('mde') + '/api/advancedqueries/run'
+    path = '/api/advancedqueries/run'
     body = {'Query': query}
-    response = requests.post(url=url, json=body, headers={"Authorization": "Bearer " + token.token})
+    response = rest_call_post(base_module, 'mde', path, body)
     data = json.loads(response.content)
-
-    if response.status_code >= 300:
-        raise STATError('Microsoft 365 Advanced Hunting Query failed to execute', data)
     
     return data['Results']
 
