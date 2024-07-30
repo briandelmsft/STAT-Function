@@ -1,0 +1,36 @@
+Descriptor:
+  Name: STAT Copilot plug-in
+  DisplayName: Sentinel Triage Assistant (aka STAT) plug-in
+  DescriptionDisplay: Sentinel Triage Assistant (aka STAT) plug-in helps by making incident traige in Sentinel stronger, faster, easier... better.
+  Description: |-
+    Use this skill-set to call the Sentinel Triage Assistant (aka STAT) to enrich incident. This will get more information about all the entities impacted by the incident.
+    - This skill only invoke the test Entra ID risk test using a Sentinel Incident number as input.
+  Category: Other
+  SupportedAuthTypes:
+    - ApiKey
+  Authorization:
+    Type: APIKey
+    Key: code
+    Location: query
+    AuthScheme: ''
+  Settings:
+    - Name: subscriptionId
+      Label: Sentinel Subscription ID
+      Description: The subscription ID of the Azure subscription where the Sentinel workspace is.
+      SettingType: string
+      Required: true
+    - Name: workspaceName
+      Label: Sentinel Workspace Name
+      Description: The log analytic workspace name where Sentinel is deployed.
+      SettingType: string
+      Required: true
+    - Name: statBaseUrl
+      Label: The URL of your STATv2 function app.
+      Description: The URL of your STATv2 function app without the code part.
+      SettingType: string
+      Required: true
+SkillGroups:
+  - Format: API
+    Settings:
+      OpenApiSpecUrl: https://raw.githubusercontent.com/briandelmsft/STAT-Function/copilot_module/CopilotPlugin/STATCopilotOpenAPI.yaml
+      EndpointUrlSettingName: statBaseUrl
