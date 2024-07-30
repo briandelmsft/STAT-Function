@@ -1,7 +1,7 @@
 openapi: 3.0.1
 info:
   title: STAT Copilot for Security Module
-  description: This module is used to get enrich Sentinel incident using the Sentinel Triage Assistant (or STAT) version 2. It uses an ARM ID as an input. When a user types in an incident number, this will need to be converted to an ARM identifier.
+  description: This module is used to get enrich Sentinel incident using the Sentinel Triage Assistant (or STAT) version 2.
   version: 1.0.0
 paths:
   /copilot:
