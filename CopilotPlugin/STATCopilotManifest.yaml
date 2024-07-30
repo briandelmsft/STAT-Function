@@ -32,5 +32,5 @@ Descriptor:
 SkillGroups:
   - Format: API
     Settings:
-      OpenApiSpecUrl: https://raw.githubusercontent.com/briandelmsft/STAT-Function/copilot_module/CopilotPlugin/STATCopilotOpenAPI-temp.yaml
+      OpenApiSpecUrl: https://raw.githubusercontent.com/briandelmsft/STAT-Function/copilot_module/CopilotPlugin/STATCopilotOpenAPI.yaml
       EndpointUrlSettingName: statBaseUrl
