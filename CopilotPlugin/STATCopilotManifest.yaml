@@ -12,7 +12,6 @@ Descriptor:
     Type: APIKey
     Key: code
     Location: QueryParams
-    Label: Function App Code
     AuthScheme: ''
   Settings:
     - Name: subscriptionId
