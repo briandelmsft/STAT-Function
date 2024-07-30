@@ -4,7 +4,7 @@ info:
   description: his module is used to get enrich Sentinel incident using the Sentinel Triage Assistant (or STAT) version 2.
   version: 1.0.0
 paths:
-  /modules/copilot:
+  /copilot:
     post:
       summary: Copilot endpoint
       description: |
