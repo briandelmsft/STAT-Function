@@ -4,11 +4,11 @@ info:
   description: his module is used to get enrich Sentinel incident using the Sentinel Triage Assistant (or STAT) version 2.
   version: 1.0.0
 paths:
-  /modules/copilot:
+  /copilot:
     post:
       summary: Copilot endpoint
       description: |
-        This module is used to enrich Sentinel incidents and get information about the entitites from a Sentinel incident from an incident number.
+        This module is used to get enrich and get information about the entitites from a Sentinel incident.
         # ExamplePrompts Can you enrich this incident using STAT?
         # ExamplePrompts Can you get more information about incident 1234 with STAT?
       requestBody:
@@ -24,7 +24,14 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/CopilotModuleResponse'
+      security:
+        - FunctionCode: []
 components:
+  securitySchemes:
+    FunctionCode:
+      type: apiKey
+      in: query
+      name: code
   schemas:
     CopilotModuleRequest:
       type: object
@@ -35,10 +42,6 @@ components:
           type: string
         incidentNumber:
           type: integer
-      required:
-        - subscriptionId
-        - workspaceName
-        - incidentNumber
     CopilotModuleResponse:
       type: object
       properties:
