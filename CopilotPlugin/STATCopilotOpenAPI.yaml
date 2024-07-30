@@ -43,6 +43,12 @@ components:
         riskLevel:
           type: string
           description: the level of risk in Entra ID Identity Protection of the user impacted by the incident 
+        incidentId:
+          type: string
+          description: the ARM ID of the Sentinel incident, the information is not display unless specifically asked
+        incidentNumber:
+          type: integer
+          description: the Sentinel incident number
       required:
         - username
         - riskLevel
