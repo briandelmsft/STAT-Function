@@ -10,8 +10,8 @@ Descriptor:
     - ApiKey
   Authorization:
     Type: APIKey
-    Key: x-functions-key
-    Location: Header
+    Key: code
+    Location: QueryParams
     AuthScheme: ''
   Settings:
     - Name: subscriptionId
