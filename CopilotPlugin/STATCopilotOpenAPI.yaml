@@ -38,6 +38,10 @@ components:
         incidentNumber:
           type: integer
           description: The sentinel incident number from the current prompt session.
+      required:
+        - subscriptionId
+        - workspaceName
+        - incidentNumber
     CopilotModuleResponse:
       type: object
       properties:
