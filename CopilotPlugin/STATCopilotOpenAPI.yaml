@@ -1,14 +1,14 @@
 openapi: 3.0.1
 info:
   title: STAT Copilot for Security Module
-  description: This module is used to get enrich Sentinel incident using the Sentinel Triage Assistant (or STAT) version 2.
+  description: This module is used to get enrich Sentinel incident using the Sentinel Triage Assistant (or STAT) version 2. It uses an ARM ID as an input. When a user types in an incident number, this will need to be converted to an ARM identifier.
   version: 1.0.0
 paths:
   /copilot:
     post:
       summary: Copilot endpoint
       description: |
-        This module is used to enrich Sentinel incident and get information about the entitites from a Sentinel incident using the incident ARM ID as an input.
+        This module is used to enrich Sentinel incident and get information about the entitites from a Sentinel incident using the incident ARM ID as an input. When an incident number is provided, it needs to be converted into an incident ARM ID before.
         # ExamplePrompts Can you enrich this incident using STAT?
         # ExamplePrompts Can you get more information about incident 1234 with STAT?
       requestBody:
@@ -32,7 +32,7 @@ components:
         incidentARMId:
           type: string
           description: |
-            The Sentinel incident ARM Identifier (or incident ARM Id)It is not a number, it is an Azure Ressource Manager unique identifier.
+            The Sentinel incident ARM Identifier (or incident ARM Id) it is not a number, it is an Azure Ressource Manager unique identifier. The format is /subscriptions/<subscription id>/resourceGroups/<rg name>/providers/Microsoft.OperationalInsights/workspaces/<workspace name>/providers/Microsoft.SecurityInsights/Incidents/<incident GUI>
     CopilotModuleResponse:
       type: object
       properties:
