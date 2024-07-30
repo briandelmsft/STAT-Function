@@ -3,7 +3,7 @@ Descriptor:
   DisplayName: Sentinel Triage Assistant (STAT) plug-in
   DescriptionDisplay: Sentinel Triage Assistant (aka STAT) plug-in helps by making incident triage in Sentinel stronger, faster, easier... better.
   Description: |-
-    Use this skill-set to call the Sentinel Triage Assistant (aka STAT) to enrich incident. This will get more information about all the entities impacted by the incident.
+    Use this skill-set to call the Sentinel Triage Assistant (aka STAT) to enrich incident. This will get more information about all the entities impacted by on Sentinel incident using the full ARM ID of a Sentinel incident.
   Category: Plugin
   SupportedAuthTypes:
     - ApiKey
