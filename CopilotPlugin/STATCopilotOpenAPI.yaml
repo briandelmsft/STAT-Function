@@ -8,7 +8,7 @@ paths:
     post:
       summary: Copilot endpoint
       description: |
-        This module is used to get enrich and get information about the entitites from a Sentinel incident.
+        This module is used to enrich Sentinel incidents and get information about the entitites from a Sentinel incident from an incident number.
         # ExamplePrompts Can you enrich this incident using STAT?
         # ExamplePrompts Can you get more information about incident 1234 with STAT?
       requestBody:
