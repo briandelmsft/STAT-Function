@@ -24,6 +24,8 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/CopilotModuleResponse'
+        '401':
+          description: Invalid function app code
 components:
   schemas:
     CopilotModuleRequest:
