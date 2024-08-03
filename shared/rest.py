@@ -221,18 +221,25 @@ def get_endpoint(api:str):
                         '(ARM_ENDPOINT, GRAPH_ENDPOINT, LOGANALYTICS_ENDPOINT, M365_ENDPOINT, MDE_ENDPOINT, and MDCA_ENDPOINT).')
     
 def add_incident_comment(base_module:BaseModule, comment:str):
-    token = token_cache(base_module, 'arm')
-    endpoint = get_endpoint('arm')
-    url = endpoint + base_module.IncidentARMId + '/comments/' + str(uuid.uuid4()) + '?api-version=2023-02-01'
-    return requests.put(url=url, json={'properties': {'message': comment[:30000]}}, headers={"Authorization": "Bearer " + token.token})
+    path = base_module.IncidentARMId + '/comments/' + str(uuid.uuid4()) + '?api-version=2023-02-01'
+    try:
+        response = rest_call_put(base_module, 'arm', path, {'properties': {'message': comment[:30000]}})
+    except:
+        response = 'Comment failed'
+    return response
 
 def add_incident_task(base_module:BaseModule, title:str, description:str, status:str='New'):
-    token = token_cache(base_module, 'arm')
-    endpoint = get_endpoint('arm')
-    url = endpoint + base_module.IncidentARMId + '/tasks/' + str(uuid.uuid4()) + '?api-version=2024-03-01'
+    path = base_module.IncidentARMId + '/tasks/' + str(uuid.uuid4()) + '?api-version=2024-03-01'
 
     if description is None or description == '':
-        return requests.put(url=url, json={'properties': {'title': title, 'status': status}}, headers={"Authorization": "Bearer " + token.token})
+        try:
+            response = rest_call_put(base_module, 'arm', path, {'properties': {'title': title, 'status': status}})
+        except:
+            response = 'Task addition failed'
     else:
-        return requests.put(url=url, json={'properties': {'title': title, 'description': description[:3000], 'status': status}}, headers={"Authorization": "Bearer " + token.token})
+        try:
+            response = rest_call_put(base_module, 'arm', path, {'properties': {'title': title, 'description': description[:3000], 'status': status}})
+        except:
+            response = 'Task addition failed'
+    return response
     
