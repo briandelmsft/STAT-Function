@@ -1,5 +1,6 @@
 import urllib.parse
 import json
+from shared import data
 
 class Response:
     '''A response object'''
@@ -20,6 +21,14 @@ class STATError(Exception):
 class STATNotFound(STATError):
     '''A handled STAT exception where the API call returned a 404 error'''
     pass
+
+class STATTooManyRequests(STATError):
+    '''A handled STAT exception where the API call returned a 429 error'''
+    def __init__(self, error:str, source_error:dict={}, status_code:int=400, retry_after:int=10):
+        self.error = error
+        self.source_error = source_error
+        self.status_code = status_code
+        self.retry_after = str(retry_after)
 
 class BaseModule:
     '''A base module object'''
@@ -543,3 +552,11 @@ class CreateIncident:
         self.Severity = ''
         self.IncidentNumber = 0
         self.IncidentUrl = ''
+
+class DebugModule:
+    '''A Debug Module Instance'''
+    def __init__(self, req_body):
+        self.ModuleName = 'DebugModule'
+        self.STATVersion = data.get_current_version()
+        self.Test = req_body.get('Test', 'Default')
+        self.Params = req_body.get('Params', {})
