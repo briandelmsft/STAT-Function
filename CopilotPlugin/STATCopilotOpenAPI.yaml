@@ -33,6 +33,10 @@ components:
           type: string
           description: |
             The incidentUrl of the incident in Sentinel.
+        config1:
+          type: string
+          description: |
+            Custom config parameter
     CopilotModuleResponse:
       type: object
       properties:
