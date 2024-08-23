@@ -18,6 +18,11 @@ Descriptor:
       Description: The URL of your STATv2 function app without the code part.
       SettingType: string
       Required: true
+    - Name: config1
+      Label: Config1
+      Description: custom config parameter
+      SettingType: string
+      Required: true
 SkillGroups:
   - Format: API
     Settings:
