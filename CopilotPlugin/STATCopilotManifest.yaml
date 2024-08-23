@@ -9,7 +9,6 @@ Descriptor:
     - ApiKey
   Authorization:
     Type: APIKey
-    Label: SuperValue
     Key: code
     Location: QueryParams
     AuthScheme: ''
