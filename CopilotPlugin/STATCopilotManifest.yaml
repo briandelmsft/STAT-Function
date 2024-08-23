@@ -18,9 +18,9 @@ Descriptor:
       Description: The URL of your STATv2 function app without the code part.
       SettingType: string
       Required: true
-    - Name: config1
-      Label: Config1
-      Description: custom config parameter
+    - Name: configworkspacename
+      Label: configworkspacename
+      Description: the workspace name for sentinel
       SettingType: string
       Required: true
 SkillGroups:
