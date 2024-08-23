@@ -29,10 +29,10 @@ components:
     CopilotModuleRequest:
       type: object
       properties:
-        incidentARMId:
+        incidentUrl:
           type: string
           description: |
-            The Sentinel incident ARM Identifier (or incident ARM Id) it is not a number, it is an Azure Ressource Manager unique identifier. The format is /subscriptions/<subscription id>/resourceGroups/<rg name>/providers/Microsoft.OperationalInsights/workspaces/<workspace name>/providers/Microsoft.SecurityInsights/Incidents/<incident GUI>
+            The incidentUrl of the incident in Sentinel.
     CopilotModuleResponse:
       type: object
       properties:
