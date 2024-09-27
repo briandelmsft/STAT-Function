@@ -12,11 +12,21 @@ def list_to_html_table(input_list:list, max_rows:int=20, max_cols:int=10, nan_st
     return html_table
 
 def update_column_value_in_list(input_list:list, col_name:str, update_str:str):
-    '''Updates the value of a column in each dict in the list, to include the column value in your replacement use [col_value]'''
+    '''Updates the value of a column in each dict in the list with a value from another column, to include the column value in your replacement use [col_value]'''
     updated_list = []
     for row in input_list:
         current_row = copy.copy(row)
         current_row[col_name] = update_str.replace('[col_value]', current_row[col_name])
+        updated_list.append(current_row)
+
+    return updated_list
+
+def replace_column_value_in_list(input_list:list, col_name:str, original_value:str, replacement_value:str):
+    '''Updates the value of a column in each dict in the list, with a static value'''
+    updated_list = []
+    for row in input_list:
+        current_row = copy.copy(row)
+        current_row[col_name] = current_row[col_name].replace(original_value, replacement_value)
         updated_list.append(current_row)
 
     return updated_list

@@ -9,12 +9,18 @@ stat_version = None
 
 def execute_base_module (req_body):
     global base_object
+    global enrich_mfa
+    global enrich_roles
+    global enrich_mde_device
     
     base_object = BaseModule()
 
     trigger_type = req_body['Body'].get('objectSchemaType', 'alert')
 
     base_object.MultiTenantConfig = req_body.get('MultiTenantConfig', {})
+    enrich_mfa = req_body.get('EnrichAccountsWithMFA', True)
+    enrich_roles = req_body.get('EnrichAccountsWithRoles', True)
+    enrich_mde_device = req_body.get('EnrichHostsWithMDE', True)
 
     if trigger_type.lower() == 'incident':
         entities = process_incident_trigger(req_body)
@@ -150,6 +156,7 @@ def enrich_accounts(entities):
         friendly_name = data.coalesce(account.get('properties',{}).get('friendlyName'), account.get('DisplayName'), account.get('Name'))
         sid = data.coalesce(account.get('properties',{}).get('sid'), account.get('Sid'))
         nt_domain = data.coalesce(account.get('properties',{}).get('ntDomain'), account.get('NTDomain'))
+        object_guid = data.coalesce(account.get('properties',{}).get('objectGuid'), account.get('ObjectGuid'))
         properties = data.coalesce(account.get('properties'), account)
 
         if aad_id:
@@ -160,8 +167,12 @@ def enrich_accounts(entities):
             get_account_by_sid(sid, attributes, properties)
         elif nt_domain and account_name:
             get_account_by_samaccountname(account_name, attributes, properties)
+        elif object_guid:
+            get_account_by_upn_or_id(object_guid, attributes, properties)
         else:
-            if friendly_name.__contains__('@'):
+            if friendly_name is None:
+                base_object.add_account_entity({'RawEntity': properties})
+            elif friendly_name.__contains__('@'):
                 get_account_by_upn_or_id(friendly_name, attributes, properties)
             elif friendly_name.__contains__('S-1-'):
                 get_account_by_sid(friendly_name, attributes, properties)
@@ -283,12 +294,14 @@ def append_account_details(account, user_info, raw_entity):
     security_info = {}
     
     try: 
-        assigned_roles = get_account_roles(user_info['id'])
+        if enrich_roles:
+            assigned_roles = get_account_roles(user_info['id'])
     except:
         pass
     
     try:
-        security_info = json.loads(rest.rest_call_get(base_object, api='msgraph', path=f"/v1.0/reports/authenticationMethods/userRegistrationDetails/{user_info['id']}").content)
+        if enrich_mfa:
+            security_info = json.loads(rest.rest_call_get(base_object, api='msgraph', path=f"/v1.0/reports/authenticationMethods/userRegistrationDetails/{user_info['id']}").content)
     except:
         pass
 
@@ -319,7 +332,7 @@ def enrich_hosts(entities):
         mde_device_id = data.coalesce(host.get('properties',{}).get('additionalData', {}).get('MdatpDeviceId'), host.get('MdatpDeviceId'))
         fqdn = data.coalesce(host.get('properties',{}).get('additionalData', {}).get('FQDN'), host.get('FQDN'), f'{host_name}.{domain_name}') 
         
-        if not(mde_device_id):
+        if not(mde_device_id) and enrich_mde_device:
             query = f'''DeviceInfo
 | where Timestamp > ago(14d)
 | where DeviceName =~ '{fqdn}' or DeviceName has '{host_name}'
