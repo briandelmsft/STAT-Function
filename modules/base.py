@@ -156,6 +156,7 @@ def enrich_accounts(entities):
         friendly_name = data.coalesce(account.get('properties',{}).get('friendlyName'), account.get('DisplayName'), account.get('Name'))
         sid = data.coalesce(account.get('properties',{}).get('sid'), account.get('Sid'))
         nt_domain = data.coalesce(account.get('properties',{}).get('ntDomain'), account.get('NTDomain'))
+        object_guid = data.coalesce(account.get('properties',{}).get('objectGuid'), account.get('ObjectGuid'))
         properties = data.coalesce(account.get('properties'), account)
 
         if aad_id:
@@ -166,8 +167,12 @@ def enrich_accounts(entities):
             get_account_by_sid(sid, attributes, properties)
         elif nt_domain and account_name:
             get_account_by_samaccountname(account_name, attributes, properties)
+        elif object_guid:
+            get_account_by_upn_or_id(object_guid, attributes, properties)
         else:
-            if friendly_name.__contains__('@'):
+            if friendly_name is None:
+                base_object.add_account_entity({'RawEntity': properties})
+            elif friendly_name.__contains__('@'):
                 get_account_by_upn_or_id(friendly_name, attributes, properties)
             elif friendly_name.__contains__('S-1-'):
                 get_account_by_sid(friendly_name, attributes, properties)
