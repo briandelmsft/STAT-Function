@@ -82,6 +82,13 @@ def execute_ti_module (req_body):
     ti_object.AnyTIFound = bool(ti_object.DetailedResults)
     ti_object.TotalTIMatchCount = len(ti_object.DetailedResults)
 
+    if ti_object.DetailedResults:
+        try:
+            ti_object.DetailedResults = data.replace_column_value_in_list(ti_object.DetailedResults, 'Description', '[', '(')
+            ti_object.DetailedResults = data.replace_column_value_in_list(ti_object.DetailedResults, 'Description', ']', ')')
+        except:
+            pass
+
     if req_body.get('AddIncidentComments', True) and base_object.IncidentAvailable:
         
         html_table = data.list_to_html_table(ti_object.DetailedResults)
