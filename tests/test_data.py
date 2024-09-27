@@ -36,6 +36,12 @@ def test_update_column_values_in_list():
 
     assert updated_list[0]['Description'] == 'New Value 4 data'
 
+def test_replace_column_values_in_list():
+
+    updated_list = data.replace_column_value_in_list(list_data(), 'Description', '4', '7')
+
+    assert updated_list[0]['Description'] == 'Value 7'
+
 def test_join_lists():
 
     merged_data = data.join_lists(list_data(), list_data2(), 'left', 'Description', 'Description', fill_nan=0)
