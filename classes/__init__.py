@@ -518,6 +518,7 @@ class OOFModule:
         self.UsersInOffice = 0
         self.UsersOutOfOffice = 0
         self.UsersUnknown = 0
+        self.ModuleName = 'OOFModule'
 
 class MDEModule:
     '''An MDE module object'''
