@@ -63,6 +63,7 @@ class BaseModule:
         self.URLsCount = 0
         self.WorkspaceARMId = ""
         self.WorkspaceId = ""
+        self.ModuleName = 'BaseModule'
 
     def load_incident_trigger(self, req_body):
         
@@ -420,6 +421,7 @@ class ScoringModule:
     def __init__(self):
         self.DetailedResults = []
         self.TotalScore = 0
+        self.ModuleName = 'ScoringModule'
 
     def append_score(self, score, label):
         '''Adds to the TotalScore and DetailedResults list'''
@@ -508,6 +510,7 @@ class RunPlaybook:
         self.TenantId = ''
         self.PlaybookName = ''
         self.IncidentArmId = ''
+        self.ModuleName = 'RunPlaybook'
         
 class OOFModule:
     '''An Out of Office module object'''
@@ -518,6 +521,7 @@ class OOFModule:
         self.UsersInOffice = 0
         self.UsersOutOfOffice = 0
         self.UsersUnknown = 0
+        self.ModuleName = 'OOFModule'
 
 class MDEModule:
     '''An MDE module object'''
@@ -552,6 +556,7 @@ class CreateIncident:
         self.Severity = ''
         self.IncidentNumber = 0
         self.IncidentUrl = ''
+        self.ModuleName = 'CreateIncident'
 
 class DebugModule:
     '''A Debug Module Instance'''
