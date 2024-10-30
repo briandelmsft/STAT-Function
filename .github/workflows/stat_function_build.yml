@@ -9,6 +9,7 @@ on:
       - 'classes/**'
       - 'modules/**'
       - 'shared/**'
+      - 'debug/**'
       - 'requirements.txt'
       - 'host.json'
 
@@ -42,7 +43,7 @@ jobs:
       shell: bash
       run: |
         cd './${{ env.AZURE_FUNCTIONAPP_PACKAGE_PATH }}'
-        zip -r stat.zip classes/ modules/ shared/ .python_packages/ host.json requirements.txt -x '*__pycache__*'
+        zip -r stat.zip classes/ modules/ shared/ debug/ .python_packages/ host.json requirements.txt -x '*__pycache__*'
         
     #When updating SAS token the secret must be double quoted    
     - name: 'Upload to Blob Storage'
