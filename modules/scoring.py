@@ -14,7 +14,7 @@ def execute_scoring_module (req_body):
         module_body = input_module['ModuleBody']
         module = module_body.get('ModuleName')
         label = input_module.get('ScoreLabel', module)
-        multiplier = input_module.get('ScoreMultiplier', 1)
+        multiplier = float(input_module.get('ScoreMultiplier', 1))
         per_item = input_module.get('ScorePerItem', True)
 
         try:
