@@ -1,5 +1,5 @@
 from classes import Response, STATError, DebugModule, BaseModule
-from shared import rest, data
+from shared import rest
 import os, sys, json, base64
 import datetime as dt
 
