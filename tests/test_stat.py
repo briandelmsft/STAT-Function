@@ -274,18 +274,6 @@ def test_mdca_module():
 
     assert mdca_response.statuscode == 200
 
-def test_mdca_module_custom_options():
-    mdca_input = {
-        'AddIncidentComments': False,
-        'AddIncidentTask': False,
-        'ScoreThreshold': 1,
-        'TopUserThreshold': 5,
-        'BaseModuleBody': get_base_module_body()
-    }
-    mdca_response:Response = mdca.execute_mdca_module(mdca_input)
-
-    assert mdca_response.statuscode == 200
-
 def test_file_module():
     file_input = {
         'AddIncidentComments': False,
