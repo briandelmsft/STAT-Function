@@ -103,6 +103,15 @@ def rbac_debug(debug_out:DebugModule):
         debug_out.RBACAssignedRoles.append(result['properties']['roleName'])
         debug_out.RBACAssignedRoleIds.append(result['name'])
 
+    expected_roles = [
+        'b24988ac-6180-42a0-ab88-20f7382dd24c', # Contributor
+        '8e3af657-a8ff-443c-a75c-2fe8c4bcb635', # Owner
+        'ab8e14d6-4a74-4a29-9ba8-549422addade', # Sentinel Contributor
+        '3e150937-b8fe-4cfb-8069-0eaf05ecd056' # Sentinel Responder
+        ]
+    
+    role_matched = any(item in expected_roles for item in debug_out.RBACAssignedRoleIds)
+    debug_out.RBACMessage = 'A required RBAC Role assignment was found.' if role_matched else 'No required RBAC Role assignment was found.'
 
 def exception_debug(debug_out:DebugModule):
     exception_type = debug_out.Params.get('ExceptionType', 'STATError')
