@@ -19,6 +19,10 @@ def debug_module (req_body):
         case 'rest':
             default_debug(debug_out)
             rest_debug(debug_out)
+        case 'rbac':
+            default_debug(debug_out)
+            token_debug(debug_out)
+            rbac_debug(debug_out)
         case 'exception':
             exception_debug(debug_out)
         case _:
@@ -55,6 +59,7 @@ def token_debug(debug_out:DebugModule):
     debug_out.Expiration = dt.datetime.fromtimestamp(token.expires_on).isoformat()
     debug_out.AppDisplayName = decoded_token.get('app_displayname')
     debug_out.AppId = decoded_token.get('appid')
+    debug_out.ObjectId = decoded_token.get('oid')
     debug_out.Idp = decoded_token.get('idp')
     debug_out.AppRoles = decoded_token.get('roles')
     debug_out.TenantId = decoded_token.get('tid')
@@ -79,7 +84,34 @@ def rest_debug(debug_out:DebugModule):
             parse_response(debug_out, response)
         case _:
             raise STATError(error=f'Invalid Method sent to debug module: {rest_call_method}.', status_code=400)
+        
+def rbac_debug(debug_out:DebugModule):
+    base_module = BaseModule()
+    base_module.MultiTenantConfig = debug_out.Params.get('MultiTenantConfig', {})
+    token_type = 'arm'
+    sub_id = debug_out.Params.get('SubscriptionId')
+    rg_name = debug_out.Params.get('RGName')
+    scope = f'/subscriptions/{sub_id}/resourceGroups/{rg_name}'
+    rbac_info = json.loads(rest.rest_call_get(base_module, token_type, f"{scope}/providers/Microsoft.Authorization/roleAssignments?api-version=2022-04-01&$filter=atScope()+and+assignedTo('{debug_out.ObjectId}')").content)
 
+    debug_out.RBACAssignedRoles = []
+    debug_out.RBACAssignedRoleIds = []
+
+    for role in rbac_info.get('value'):
+        role_id = role['properties']['roleDefinitionId']
+        result = json.loads(rest.rest_call_get(base_module, token_type, f"{role_id}?api-version=2022-04-01").content)
+        debug_out.RBACAssignedRoles.append(result['properties']['roleName'])
+        debug_out.RBACAssignedRoleIds.append(result['name'])
+
+    expected_roles = [
+        'b24988ac-6180-42a0-ab88-20f7382dd24c', # Contributor
+        '8e3af657-a8ff-443c-a75c-2fe8c4bcb635', # Owner
+        'ab8e14d6-4a74-4a29-9ba8-549422addade', # Sentinel Contributor
+        '3e150937-b8fe-4cfb-8069-0eaf05ecd056' # Sentinel Responder
+        ]
+    
+    role_matched = any(item in expected_roles for item in debug_out.RBACAssignedRoleIds)
+    debug_out.RBACMessage = 'A required RBAC Role assignment was found.' if role_matched else 'No required RBAC Role assignment was found.'
 
 def exception_debug(debug_out:DebugModule):
     exception_type = debug_out.Params.get('ExceptionType', 'STATError')

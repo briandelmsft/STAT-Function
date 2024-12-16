@@ -7,6 +7,7 @@ def execute_kql_module (req_body):
 
     base_object = BaseModule()
     base_object.load_from_input(req_body['BaseModuleBody'])
+    endpoint = req_body.get('Endpoint', 'query').lower()
 
     kql_object = KQLModule()
 
@@ -20,7 +21,7 @@ def execute_kql_module (req_body):
     if req_body.get('RunQueryAgainst') == 'M365':
         results = rest.execute_m365d_query(base_object, query)
     else:
-        results = rest.execute_la_query(base_object, query, req_body['LookbackInDays'])
+        results = rest.execute_la_query(base_object, query, req_body['LookbackInDays'], endpoint)
 
     kql_object.DetailedResults = results
     kql_object.ResultsCount = len(results)

@@ -115,11 +115,11 @@ class BaseModule:
     def add_ip_entity(self, address, geo_data, rawentity):
         self.IPs.append({'Address': address, 'GeoData': geo_data, 'RawEntity': rawentity })
 
-    def add_host_entity(self, fqdn, hostname, dnsdomain, mdedeviceid, rawentity):
+    def add_host_entity(self, fqdn, hostname, dnsdomain, mdedeviceid, rawentity, mde_enrichment:str='Unknown'):
         if mdedeviceid:
-            self.Hosts.append({'DnsDomain': dnsdomain, 'FQDN': fqdn, 'Hostname': hostname, 'MdatpDeviceId': mdedeviceid, 'RawEntity': rawentity })
+            self.Hosts.append({'DnsDomain': dnsdomain, 'FQDN': fqdn, 'Hostname': hostname, 'MdatpDeviceId': mdedeviceid, 'MDEEnrichment': mde_enrichment, 'RawEntity': rawentity })
         else:
-            self.Hosts.append({'DnsDomain': dnsdomain, 'FQDN': fqdn, 'Hostname': hostname, 'RawEntity': rawentity })
+            self.Hosts.append({'DnsDomain': dnsdomain, 'FQDN': fqdn, 'Hostname': hostname, 'MDEEnrichment': mde_enrichment, 'RawEntity': rawentity })
 
     def add_account_entity(self, data):
         self.Accounts.append(data)
@@ -492,15 +492,6 @@ class MDCAModule:
         self.TopUserThresholdCount = 0
         self.AnyThreatScoreTrendingUp = False
         self.ModuleName = 'MDCAModule'
-
-    def load_from_input(self, body):
-        self.AboveThresholdCount = body['AboveThresholdCount']
-        self.AnalyzedEntities = body['AnalyzedEntities']
-        self.DetailedResults = body['DetailedResults']
-        self.MaximumScore = body['MaximumScore']
-        self.HighestScorePercentile = body['HighestScorePercentile']
-        self.TopUserThresholdCount = body['TopUserThresholdCount']
-        self.AnyThreatScoreTrendingUp = body['AnyThreatScoreTrendingUp']
 
 class RunPlaybook:
     '''A RunPlaybook module object'''
