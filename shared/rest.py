@@ -164,10 +164,16 @@ def check_rest_response(response:Response, api, path):
         raise STATError(f'The API call to {api} with path {path} failed with status {response.status_code}', source_error={'status_code': int(response.status_code), 'reason': str(response.reason)})
     return
 
-def execute_la_query(base_module:BaseModule, query:str, lookbackindays:int):
-    path = '/v1/workspaces/' + base_module.WorkspaceId + '/query'
+def execute_la_query(base_module:BaseModule, query:str, lookbackindays:int, endpoint:str='query'):
     duration = 'P' + str(lookbackindays) + 'D'
-    body = {'query': query, 'timespan': duration}
+
+    if endpoint == 'search':
+        path = '/v1/workspaces/' + base_module.WorkspaceId + f'/search?timespan={duration}'
+        body = {'query': query}
+    else:
+        path = '/v1/workspaces/' + base_module.WorkspaceId + '/query'
+        body = {'query': query, 'timespan': duration}
+    
     response = rest_call_post(base_module, 'la', path, body)
     data = json.loads(response.content)
  

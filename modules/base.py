@@ -160,26 +160,26 @@ def enrich_accounts(entities):
         properties = data.coalesce(account.get('properties'), account)
 
         if aad_id:
-            get_account_by_upn_or_id(aad_id, attributes, properties)
+            get_account_by_upn_or_id(aad_id, attributes, properties, 'Id')
         elif upn_suffix:
-            get_account_by_upn_or_id(account_name + '@' + upn_suffix, attributes, properties)
+            get_account_by_upn_or_id(account_name + '@' + upn_suffix, attributes, properties, 'UPN')
         elif sid:
-            get_account_by_sid(sid, attributes, properties)
+            get_account_by_sid(sid, attributes, properties, 'SID')
         elif nt_domain and account_name:
-            get_account_by_samaccountname(account_name, attributes, properties)
+            get_account_by_samaccountname(account_name, attributes, properties, 'SAMAccountName')
         elif object_guid:
-            get_account_by_upn_or_id(object_guid, attributes, properties)
+            get_account_by_upn_or_id(object_guid, attributes, properties, 'ObjectGuid')
         else:
             if friendly_name is None:
-                base_object.add_account_entity({'RawEntity': properties})
+                base_object.add_account_entity({'EnrichmentMethod': 'FriendlyName - No Match', 'RawEntity': properties})
             elif friendly_name.__contains__('@'):
-                get_account_by_upn_or_id(friendly_name, attributes, properties)
+                get_account_by_upn_or_id(friendly_name, attributes, properties, 'FriendlyName - UPN')
             elif friendly_name.__contains__('S-1-'):
-                get_account_by_sid(friendly_name, attributes, properties)
+                get_account_by_sid(friendly_name, attributes, properties, 'FriendlyName - SID')
             elif friendly_name.__contains__('CN='):
-                get_account_by_dn(friendly_name, attributes, properties)
+                get_account_by_dn(friendly_name, attributes, properties, 'FriendlyName - DN')
             else:
-                get_account_by_samaccountname(friendly_name, attributes, properties)
+                get_account_by_samaccountname(friendly_name, attributes, properties, 'FriendlyName - SAMAccountName')
 
 
 def enrich_domains(entities):
@@ -226,29 +226,29 @@ def append_other_entities(entities):
         raw_entity = data.coalesce(entity.get('properties'), entity)
         base_object.OtherEntities.append({'RawEntity': raw_entity})
 
-def get_account_by_upn_or_id(account, attributes, properties):
+def get_account_by_upn_or_id(account, attributes, properties, enrich_method:str='UPN, Mail or Id'):
     try:
         user_info = json.loads(rest.rest_call_get(base_object, api='msgraph', path='/v1.0/users/' + account + '?$select=' + attributes).content)
     except STATError:
         if account.__contains__('@'):
             get_account_by_mail(account, attributes, properties)
         else:
-            base_object.add_account_entity({'RawEntity': properties})
+            base_object.add_account_entity({'EnrichmentMethod': f'{enrich_method} - No Match', 'RawEntity': properties})
     else:
-        append_account_details(account, user_info, properties)
+        append_account_details(account, user_info, properties, enrich_method)
 
-def get_account_by_mail(account, attributes, properties):
+def get_account_by_mail(account, attributes, properties, enrich_method:str='Mail'):
     try:
         user_info = json.loads(rest.rest_call_get(base_object, api='msgraph', path=f'''/v1.0/users?$filter=(mail%20eq%20'{account}')&$select={attributes}''').content)
     except STATError:
-        base_object.add_account_entity({'RawEntity': properties})
+        base_object.add_account_entity({'EnrichmentMethod': f'{enrich_method} - No Match', 'RawEntity': properties})
     else:
         if user_info['value']:
-            append_account_details(account, user_info['value'][0], properties)
+            append_account_details(account, user_info['value'][0], properties, enrich_method)
         else:
-            base_object.add_account_entity({'RawEntity': properties})
+            base_object.add_account_entity({'EnrichmentMethod': f'{enrich_method} - No Match', 'RawEntity': properties})
 
-def get_account_by_dn(account, attributes, properties):
+def get_account_by_dn(account, attributes, properties, enrich_method:str='DN'):
 
     query = f'''union isfuzzy=true
 (datatable(test:string)[]),
@@ -259,22 +259,22 @@ def get_account_by_dn(account, attributes, properties):
 
     results = rest.execute_la_query(base_object, query, 14)
     if results:
-        get_account_by_upn_or_id(results[0]['AccountUPN'], attributes, properties)
+        get_account_by_upn_or_id(results[0]['AccountUPN'], attributes, properties, enrich_method)
     else:
-        base_object.add_account_entity({'RawEntity': properties})
+        base_object.add_account_entity({'EnrichmentMethod': f'{enrich_method} - No Match', 'RawEntity': properties})
 
-def get_account_by_sid(account, attributes, properties):
+def get_account_by_sid(account, attributes, properties, enrich_method:str='SID'):
     try:
         user_info = json.loads(rest.rest_call_get(base_object, api='msgraph', path=f'''/v1.0/users?$filter=(onPremisesSecurityIdentifier%20eq%20'{account}')&$select={attributes}''').content)
     except STATError:
-        base_object.add_account_entity({'RawEntity': properties})
+        base_object.add_account_entity({'EnrichmentMethod': f'{enrich_method} - No Match', 'RawEntity': properties})
     else:
         if user_info['value']:
-            append_account_details(account, user_info['value'][0], properties)
+            append_account_details(account, user_info['value'][0], properties, enrich_method)
         else:
-            base_object.add_account_entity({'RawEntity': properties})
+            base_object.add_account_entity({'EnrichmentMethod': f'{enrich_method} - No Match', 'RawEntity': properties})
 
-def get_account_by_samaccountname(account, attributes, properties):
+def get_account_by_samaccountname(account, attributes, properties, enrich_method:str='SAMAccountName'):
     query = f'''union isfuzzy=true
 (datatable(test:string)[]),
 (IdentityInfo
@@ -284,11 +284,11 @@ def get_account_by_samaccountname(account, attributes, properties):
 
     results = rest.execute_la_query(base_object, query, 14)
     if results:
-        get_account_by_upn_or_id(results[0]['AccountUPN'], attributes, properties)
+        get_account_by_upn_or_id(results[0]['AccountUPN'], attributes, properties, enrich_method)
     else:
-        base_object.add_account_entity({'RawEntity': properties})
+        base_object.add_account_entity({'EnrichmentMethod': f'{enrich_method} - No Match', 'RawEntity': properties})
 
-def append_account_details(account, user_info, raw_entity):
+def append_account_details(account, user_info, raw_entity, enrich_method:str='Unknown'):
 
     assigned_roles = ['Unavailable']
     security_info = {}
@@ -310,6 +310,7 @@ def append_account_details(account, user_info, raw_entity):
     user_info['isMfaRegistered'] = security_info.get('isMfaRegistered', 'Unknown')
     user_info['isSSPREnabled'] = security_info.get('isSsprEnabled', 'Unknown')
     user_info['isSSPRRegistered'] = security_info.get('isSsprRegistered', 'Unknown')
+    user_info['EnrichmentMethod'] = enrich_method
     user_info['RawEntity'] = raw_entity
     
     base_object.add_account_entity(user_info)
@@ -331,6 +332,12 @@ def enrich_hosts(entities):
         domain_name = data.coalesce(host.get('properties',{}).get('dnsDomain'), host.get('DnsDomain'), '')
         mde_device_id = data.coalesce(host.get('properties',{}).get('additionalData', {}).get('MdatpDeviceId'), host.get('MdatpDeviceId'))
         fqdn = data.coalesce(host.get('properties',{}).get('additionalData', {}).get('FQDN'), host.get('FQDN'), f'{host_name}.{domain_name}') 
+        mde_enrichment = 'Unknown'
+
+        if mde_device_id:
+            mde_enrichment = 'Entity Data'
+        elif not(enrich_mde_device):
+            mde_enrichment = 'Enrichment Disabled'
         
         if not(mde_device_id) and enrich_mde_device:
             query = f'''DeviceInfo
@@ -353,12 +360,20 @@ def enrich_hosts(entities):
                 if fqdn_matches:
                     if fqdn_matches[0]['DeviceIdCount'] == 1:
                         mde_device_id = fqdn_matches[0]['DeviceId']
+                        mde_enrichment = 'FQDN'
+                    else:
+                        mde_enrichment = 'FQDN - Too many matching devices'
                 elif host_matches:
                     if host_matches[0]['DeviceIdCount'] == 1:
-                        mde_device_id = host_matches[0]['DeviceId']                 
+                        mde_device_id = host_matches[0]['DeviceId']
+                        mde_enrichment = 'Hostname'
+                    else:
+                        mde_enrichment = 'Hostname - Too many matching devices'
+            else:
+                mde_enrichment = 'No FQDN or Hostname matches found'
 
         raw_entity = data.coalesce(host.get('properties'), host)
-        base_object.add_host_entity(fqdn=fqdn, hostname=host_name, dnsdomain=domain_name, mdedeviceid=mde_device_id, rawentity=raw_entity) 
+        base_object.add_host_entity(fqdn=fqdn, hostname=host_name, dnsdomain=domain_name, mdedeviceid=mde_device_id, rawentity=raw_entity, mde_enrichment=mde_enrichment) 
 
 def get_account_comment():
     
