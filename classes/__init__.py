@@ -63,6 +63,7 @@ class BaseModule:
         self.URLsCount = 0
         self.WorkspaceARMId = ""
         self.WorkspaceId = ""
+        self.CurrentVersion = ""
         self.ModuleName = 'BaseModule'
 
     def load_incident_trigger(self, req_body):
@@ -111,6 +112,8 @@ class BaseModule:
         self.URLsCount = basebody['URLsCount']
         self.WorkspaceARMId = basebody['WorkspaceARMId']
         self.WorkspaceId = basebody['WorkspaceId']
+        self.CurrentVersion = basebody.get('CurrentVersion')
+        self.ModuleName = basebody.get('ModuleName')
 
     def add_ip_entity(self, address, geo_data, rawentity):
         self.IPs.append({'Address': address, 'GeoData': geo_data, 'RawEntity': rawentity })
