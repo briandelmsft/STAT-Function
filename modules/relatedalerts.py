@@ -63,7 +63,7 @@ SecurityAlert
 | extend AccountEntityMatch = iff(Entities has_any (accounts), true, false), HostEntityMatch = iff(Entities has_any (hosts), true, false), IPEntityMatch = iff(Entities has_any (ips) , true, false) 
 | summarize AccountEntityMatch = max(AccountEntityMatch), IPEntityMatch=max(IPEntityMatch),HostEntityMatch=max(HostEntityMatch) by StartTime, DisplayName, AlertSeverity, SystemAlertId, ProviderName, Tactics
 | join kind=leftouter severityOrder on AlertSeverity
-| sort by Order desc
+| sort by Order desc, StartTime desc
 | project-away Order, AlertSeverity1'''
 
     results = rest.execute_la_query(base_object, query, lookback)
