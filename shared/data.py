@@ -12,27 +12,25 @@ def list_to_html_table(input_list:list, max_rows:int=20, max_cols:int=10, nan_st
     df = pd.DataFrame(input_list)
     df.index = df.index + 1
 
-    try:
-        time_columns = ['StartTime','TimeGenerated']
-        if date_format or tz_info:
+    time_columns = ['TimeGenerated','Timestamp','StartTime','EndTime','activityDateTime','FirstSeen','LastSeen']
+    if date_format or tz_info:
+        try:
             df_time = df.copy(deep=True)
             for time_col in time_columns:
                 if time_col in df.columns:
                     df_time[time_col] = pd.to_datetime(df_time[time_col])
 
-        if tz_info:
-            for time_col in time_columns:
-                if time_col in df.columns:
-                    df_time[time_col] = df_time[time_col].dt.tz_convert(tz_info)
+                if tz_info:
+                    if time_col in df.columns:
+                        df_time[time_col] = df_time[time_col].dt.tz_convert(tz_info)
 
-        if date_format:
-            for time_col in time_columns:
-                if time_col in df.columns:
-                    df_time[time_col] = df_time[time_col].dt.strftime(date_format)
-    except:
-        html_table = df.to_html(max_rows=max_rows, max_cols=max_cols, na_rep=nan_str, escape=escape_html, columns=columns, index=index, justify=justify).replace('\n', '')
-    else:
-        html_table = df_time.to_html(max_rows=max_rows, max_cols=max_cols, na_rep=nan_str, escape=escape_html, columns=columns, index=index, justify=justify).replace('\n', '')
+                if date_format:
+                    if time_col in df.columns:
+                        df_time[time_col] = df_time[time_col].dt.strftime(date_format)
+        except:
+            html_table = df.to_html(max_rows=max_rows, max_cols=max_cols, na_rep=nan_str, escape=escape_html, columns=columns, index=index, justify=justify).replace('\n', '')
+        else:
+            html_table = df_time.to_html(max_rows=max_rows, max_cols=max_cols, na_rep=nan_str, escape=escape_html, columns=columns, index=index, justify=justify).replace('\n', '')
 
     return html_table
 
