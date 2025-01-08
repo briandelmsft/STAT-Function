@@ -42,6 +42,8 @@ def default_debug(debug_out:DebugModule):
     debug_out.KVSecretName = os.getenv('KEYVAULT_SECRET_NAME')
     debug_out.KVClientId = os.getenv('KEYVAULT_CLIENT_ID')
     debug_out.PackageUrl = os.getenv('WEBSITE_RUN_FROM_PACKAGE')
+    debug_out.DateFormat = os.getenv('DATE_FORMAT')
+    debug_out.TZ = os.getenv('TIME_ZONE')
     debug_out.PythonVersion = sys.version
 
 def token_debug(debug_out:DebugModule):
