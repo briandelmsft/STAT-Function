@@ -12,9 +12,9 @@ def list_to_html_table(input_list:list, max_rows:int=20, max_cols:int=10, nan_st
     df = pd.DataFrame(input_list)
     df.index = df.index + 1
 
-    time_columns = ['TimeGenerated','Timestamp','StartTime','EndTime','activityDateTime','FirstSeen','LastSeen']
     if date_format or tz_info:
         try:
+            time_columns = ['TimeGenerated','Timestamp','StartTime','EndTime','activityDateTime','FirstSeen','LastSeen']
             df_time = df.copy(deep=True)
             for time_col in time_columns:
                 if time_col in df.columns:
@@ -31,6 +31,8 @@ def list_to_html_table(input_list:list, max_rows:int=20, max_cols:int=10, nan_st
             html_table = df.to_html(max_rows=max_rows, max_cols=max_cols, na_rep=nan_str, escape=escape_html, columns=columns, index=index, justify=justify).replace('\n', '')
         else:
             html_table = df_time.to_html(max_rows=max_rows, max_cols=max_cols, na_rep=nan_str, escape=escape_html, columns=columns, index=index, justify=justify).replace('\n', '')
+    else:
+        html_table = df.to_html(max_rows=max_rows, max_cols=max_cols, na_rep=nan_str, escape=escape_html, columns=columns, index=index, justify=justify).replace('\n', '')
 
     return html_table
 
