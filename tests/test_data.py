@@ -88,26 +88,35 @@ def test_slope():
     trending_down = trending_up.copy()
     trending_down.reverse()
     assert data.return_slope(dates_list,trending_up) > 0
-    assert data.return_slope(dates_list,trending_down) < 0    
+    assert data.return_slope(dates_list,trending_down) < 0
+
+def test_html_table():
+    table = data.list_to_html_table(list_data()).replace(' ', '')
+    expected_output = '<table border="1" class="dataframe"><thead><tr style="text-align: left;"><th>TimeGenerated</th><th>Description</th><th>Severity</th><th>Value</th></tr></thead><tbody><tr><td>2025-01-05 15:57:33 EST</td><td>Value 4</td><td>low</td><td>4</td></tr><tr><td>2025-01-06 15:57:33 EST</td><td>Highest</td><td>MEDIUM</td><td>10</td></tr><tr><td>2025-01-07 15:57:33 EST</td><td>Value 5</td><td>informational</td><td>5</td></tr><tr><td>2025-01-08 15:57:33 EST</td><td>Lowest</td><td>low</td><td>1</td></tr></tbody></table>'.replace(' ', '')
+    assert table == expected_output
 
 def list_data():
     test_data = [
         {
+            'TimeGenerated': '2025-01-05T20:57:33.2151737Z',
             'Description': 'Value 4',
             'Severity': 'low',
             'Value': 4
         },
         {
+            'TimeGenerated': '2025-01-06T20:57:33.2151737Z',
             'Description': 'Highest',
             'Severity': 'MEDIUM',
             'Value': 10
         },
         {
+            'TimeGenerated': '2025-01-07T20:57:33.2151737Z',
             'Description': 'Value 5',
             'Severity': 'informational',
             'Value': 5
         },
         {
+            'TimeGenerated': '2025-01-08T20:57:33.2151737Z',
             'Description': 'Lowest',
             'Severity': 'low',
             'Value': 1
