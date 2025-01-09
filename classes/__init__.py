@@ -506,16 +506,22 @@ class RunPlaybook:
         self.IncidentArmId = ''
         self.ModuleName = 'RunPlaybook'
         
-class OOFModule:
-    '''An Out of Office module object'''
+class ExchangeModule:
+    '''An Exchange module object'''
     def __init__(self):
         self.AllUsersInOffice = True
         self.AllUsersOutOfOffice = False
-        self.DetailedResults = []
+        self.Rules = []
+        self.AuditEvents = []
+        self.OOF = []
         self.UsersInOffice = 0
         self.UsersOutOfOffice = 0
         self.UsersUnknown = 0
-        self.ModuleName = 'OOFModule'
+        self.RulesDelete = 0
+        self.RulesMove = 0
+        self.RulesForward = 0
+        self.DelegationsFound = 0
+        self.ModuleName = 'ExchangeModule'
 
 class MDEModule:
     '''An MDE module object'''

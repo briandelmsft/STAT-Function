@@ -7,10 +7,22 @@ import os
 date_format = os.getenv('DATE_FORMAT')
 tz_info = os.getenv('TIME_ZONE')
 
-def list_to_html_table(input_list:list, max_rows:int=20, max_cols:int=10, nan_str:str='N/A', escape_html:bool=True, columns:list=None, index:bool=False, justify:str='left'):
+def list_to_html_table(input_list:list, max_rows:int=20, max_cols:int=10, nan_str:str='N/A', escape_html:bool=True, columns:list=None, index:bool=False, justify:str='left', drop_empty_cols:bool=False):
     '''Convert a list of dictionaries into an HTML table'''
     df = pd.DataFrame(input_list)
     df.index = df.index + 1
+
+    if drop_empty_cols:
+        all_cols = df.columns.values.tolist()
+        to_drop = []
+
+        for col in all_cols:
+            if all(df[col] == ''):
+                to_drop.append(col)
+            
+        if to_drop:
+            df.drop(labels=to_drop, axis=1, inplace=True)
+        df.dropna(axis=1, how='all', inplace=True)
 
     if date_format or tz_info:
         try:

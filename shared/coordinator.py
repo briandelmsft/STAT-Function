@@ -1,4 +1,4 @@
-from modules import base, kql, watchlist, ti, relatedalerts, scoring, ueba, playbook, oof, aadrisks, file, createincident, mdca, mde
+from modules import base, kql, watchlist, ti, relatedalerts, scoring, ueba, playbook, exchange, aadrisks, file, createincident, mdca, mde
 from classes import STATError
 
 def initiate_module(module_name, req_body):
@@ -27,8 +27,8 @@ def initiate_module(module_name, req_body):
             return_data = aadrisks.execute_aadrisks_module(req_body)
         case 'ueba':
             return_data = ueba.execute_ueba_module(req_body)
-        case 'oofmodule':
-            return_data = oof.execute_oof_module(req_body)
+        case 'oofmodule' | 'exchangemodule':
+            return_data = exchange.execute_exchange_module(req_body)
         case 'runplaybook':
             return_data = playbook.execute_playbook_module(req_body)
         case 'createincident':
