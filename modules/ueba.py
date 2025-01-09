@@ -67,8 +67,9 @@ userDetails
     if req_body.get('AddIncidentComments', True) and base_object.IncidentAvailable:
         
         html_table = data.list_to_html_table(results)
-
-        comment = f'A total of {ueba_object.AllEntityEventCount} matching UEBA events, {ueba_object.ThreatIntelMatchCount} \
+        
+        comment = f'<h3>User Entity Behavior Analytics Module (Last {lookback} days)</h3>'
+        comment += f'A total of {ueba_object.AllEntityEventCount} matching UEBA events, {ueba_object.ThreatIntelMatchCount} \
             UEBA Threat Intellgience matches and {ueba_object.AnomalyCount} anomalies were found.<br>{html_table}'
         
         comment_result = rest.add_incident_comment(base_object, comment)

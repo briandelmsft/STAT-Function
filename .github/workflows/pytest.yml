@@ -49,5 +49,5 @@ jobs:
         M365_ENDPOINT: api.security.microsoft.com
         MDE_ENDPOINT: api.securitycenter.microsoft.com
         MDCA_ENDPOINT: ${{ secrets.MDCA_ENDPOINT }}
-        DATE_FORMAT: ${{ env.DATE_FORMAT }}
-        TIME_ZONE: ${{ env.TIME_ZONE }}
+        DATE_FORMAT: ${{ secrets.DATE_FORMAT }}
+        TIME_ZONE: ${{ secrets.TIME_ZONE }}

@@ -108,7 +108,7 @@ def execute_mde_module (req_body):
         mde_object.AnalyzedEntities = entities_nb
 
     if req_body.get('AddIncidentComments', True):
-        comment = f'<h3>Microsoft Defender for Endpoint Module</h3>'
+        comment = f'<h3>Microsoft Defender for Endpoint Module (Last {lookback} days)</h3>'
         comment += f'A total of {mde_object.AnalyzedEntities} entities were analyzed (Accounts: {nb_accounts} - Hosts: {nb_hosts} - IPs: {nb_ips}).<br />'
 
         if nb_accounts > 0:

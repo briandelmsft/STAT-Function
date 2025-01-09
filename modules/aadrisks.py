@@ -11,6 +11,7 @@ def execute_aadrisks_module (req_body):
 
     aadrisks_object = AADModule()
     all_risk_detections = []
+    lookback = req_body.get('LookbackInDays', 30)
 
     for account in base_object.Accounts:
         userid = account.get('id')
@@ -37,7 +38,7 @@ def execute_aadrisks_module (req_body):
                 current_account['UserRiskLevel'] = user_risk_level
 
             #Get related risk detections
-            start_time = (datetime.datetime.now(datetime.timezone.utc) - datetime.timedelta(days=req_body.get('LookbackInDays', 30))).strftime("%Y-%m-%dT%H:%M:%SZ")
+            start_time = (datetime.datetime.now(datetime.timezone.utc) - datetime.timedelta(days=lookback)).strftime("%Y-%m-%dT%H:%M:%SZ")
             select_attributes = "riskEventType,riskState,riskLevel,riskDetail,detectionTimingType,ipAddress,activityDateTime,userPrincipalName,additionalInfo"
             path = f"/v1.0/identityProtection/riskDetections?$filter=userId eq '{userid}' and activityDateTime ge {start_time}&$select={select_attributes}"
             
@@ -61,21 +62,21 @@ def execute_aadrisks_module (req_body):
 
             if req_body.get('MFAFailureLookup', True):
                 MFAFailureLookup_query = f'SigninLogs\n| where ResultType == \"500121\"\n| where UserId== \"{userid}\"\n| summarize Count=count() by UserPrincipalName'
-                MFAFailureLookup_results = rest.execute_la_query(base_object, MFAFailureLookup_query, req_body.get('LookbackInDays'))
+                MFAFailureLookup_results = rest.execute_la_query(base_object, MFAFailureLookup_query, lookback)
                 if MFAFailureLookup_results:
                     current_account['UserFailedMFACount'] = MFAFailureLookup_results[0]['Count']
                 else:
                     current_account['UserFailedMFACount'] = 0
             if req_body.get('MFAFraudLookup', True):
                 MFAFraudLookup_query = f'AuditLogs \n| where OperationName in (\"Fraud reported - user is blocked for MFA\",\"Fraud reported - no action taken\")\n| where ResultDescription == \"Successfully reported fraud\"\n| extend Id= tostring(parse_json(tostring(InitiatedBy.user)).id)\n| where Id == \"{userid}\"\n| summarize Count=count() by Id'
-                MFAFraudLookup_results = rest.execute_la_query(base_object, MFAFraudLookup_query, req_body.get('LookbackInDays'))
+                MFAFraudLookup_results = rest.execute_la_query(base_object, MFAFraudLookup_query, lookback)
                 if MFAFraudLookup_results:
                     current_account['UserMFAFraudCount'] = MFAFraudLookup_results[0]['Count']
                 else:
                     current_account['UserMFAFraudCount'] = 0
             if req_body.get('SuspiciousActivityReportLookup', True):
                 SuspiciousActivityReportLookup_query = f'AuditLogs \n| where OperationName == \"Suspicious activity reported\"\n| where ResultDescription == \"Successfully reported suspicious activity\"\n| extend Id= tostring(parse_json(tostring(InitiatedBy.user)).id)\n| where Id == \"{userid}\"\n| summarize Count=count() by Id'
-                SuspiciousActivityReportLookup_results = rest.execute_la_query(base_object, SuspiciousActivityReportLookup_query, req_body.get('LookbackInDays'))
+                SuspiciousActivityReportLookup_results = rest.execute_la_query(base_object, SuspiciousActivityReportLookup_query, lookback)
                 if SuspiciousActivityReportLookup_results:
                     current_account['SuspiciousActivityReportCount'] = SuspiciousActivityReportLookup_results[0]['Count']
                 else:
@@ -94,7 +95,7 @@ def execute_aadrisks_module (req_body):
     if req_body.get('AddIncidentComments', True):
         html_table = data.list_to_html_table(aadrisks_object.DetailedResults, index=False, columns=['UserPrincipalName','UserRiskLevel','UserFailedMFACount','UserMFAFraudCount','SuspiciousActivityReportCount','UserRiskDetectionCount']) if aadrisks_object.DetailedResults else 'No user details available<br />'
         risks_table = data.list_to_html_table(all_risk_detections, index=False, columns=['userPrincipalName','activityDateTime','ipAddress','riskLevel','riskEventType','riskState','riskDetail','detectionTimingType','RiskReasons']) if all_risk_detections else 'No risk detections found<br />'
-        comment = f'<h3>Entra ID Risks Module</h3>'
+        comment = f'<h3>Entra ID Risks Module - (Last {lookback} days)</h3>'
         comment += f'A total of {aadrisks_object.AnalyzedEntities} entities were analyzed.<br />'
         comment += f'<ul><li>Highest risk detected: {aadrisks_object.HighestRiskLevel}</li>'
         comment += f'<li>Total MFA failures: {aadrisks_object.FailedMFATotalCount} </li>' if req_body.get('MFAFailureLookup', True) else ''
