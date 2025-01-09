@@ -76,6 +76,8 @@ def score_module(score:ScoringModule, module:str, module_body:dict, per_item:boo
             score_ti(score, module_body, per_item, multiplier, label)
         case 'UEBAModule':
             score_ueba(score, module_body, per_item, multiplier, label, mitre_list)
+        case 'ExchangeModule':
+            score_exchange(score, module_body, per_item, multiplier)
         case 'Custom':
             score_custom(score, module_body, multiplier)
         case _:
@@ -178,6 +180,43 @@ def score_aad(score:ScoringModule, module_body, per_item, multiplier, label):
         'medium': 5,
         'low': 3
     }
+
+    event_types = {
+        'adminConfirmedUserCompromised': 25,
+        'anomalousToken': 10,
+        'anomalousUserActivity': 10,
+        'anonymizedIPAddress': 5,
+        'attackerinTheMiddle': 50,
+        'generic': 5,
+        'impossibleTravel': 5,
+        'investigationsThreatIntelligence': 20,
+        'suspiciousSendingPatterns': 10,
+        'leakedCredentials': 100,
+        'maliciousIPAddress': 20,
+        'malwareInfectedIPAddress': 20,
+        'mcasSuspiciousInboxManipulationRules': 10,
+        'nationStateIP': 100,
+        'newCountry': 5,
+        'passwordSpray': 20,
+        'riskyIPAddress': 10,
+        'suspiciousAPITraffic': 15,
+        'suspiciousBrowser': 10,
+        'suspiciousInboxForwarding': 10,
+        'suspiciousIPAddress': 10,
+        'tokenIssuerAnomaly': 20,
+        'unfamiliarFeatures': 3,
+        'unlikelyTravel': 5
+    }
+
+    event_scores = []
+    for user in aad.DetailedResults:
+        for event in user.get('RiskDetections', []):
+            event_scores.append(event_types.get(event['riskEventType'], 10))
+
+    if per_item and event_scores:
+        score.append_score(sum(event_scores) * multiplier, f'{label} - Risk Events Score')
+    elif event_scores:
+        score.append_score(max(event_scores) * multiplier, f'{label} - Risk Events Score')
          
     if per_item and aad.DetailedResults:
         for user in aad.DetailedResults:
@@ -202,6 +241,28 @@ def score_file(score:ScoringModule, module_body, multiplier, label):
 
 def score_mdca(score:ScoringModule, module_body, per_item, multiplier, label):
     score.append_score(0, 'WARNING: MDCA Module was included in scoring, however this module has been deprecated.')
+
+def score_exchange(score:ScoringModule, module_body, per_item, multiplier):
+    exch = ExchangeModule()
+    exch.load_from_input(module_body)
+
+    recent_rules = len(list(filter(lambda x: x.get('Operation') in ('New-InboxRulens', 'Set-InboxRule'), exch.AuditEvents)))
+    if per_item:
+        score.append_score(2 * (exch.RulesDelete + exch.RulesMove) * multiplier, 'Exchange Module - Deletion and/or move rules found')
+        score.append_score(25 * exch.RulesForward * multiplier, 'Exchange Module - Mail forwarding configuration found')
+        score.append_score(25 * exch.DelegationsFound * multiplier, 'Exchange Module - Recent mailbox or folder delegations added')
+        score.append_score(10 * recent_rules * multiplier, 'Exchange Module - Recent modification to delete/move/forward mailbox rules')
+
+    else:
+        if exch.RulesDelete + exch.RulesMove > 0:
+            score.append_score(2 * multiplier, 'Exchange Module - Deletion and/or move rules found')
+        if exch.RulesForward > 0:
+            score.append_score(25 * multiplier, 'Exchange Module - Mail forwarding configuration found')
+        if exch.DelegationsFound > 0:
+            score.append_score(25 * multiplier, 'Exchange Module - Recent mailbox or folder delegations added')
+        if recent_rules > 0:
+            score.append_score(10 * multiplier, 'Exchange Module - Recent modification to delete/move/forward mailbox rules')
+    
     
 def score_mde(score:ScoringModule, module_body, per_item, multiplier, label):
     mde = MDEModule()
