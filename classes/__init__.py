@@ -523,6 +523,20 @@ class ExchangeModule:
         self.DelegationsFound = 0
         self.ModuleName = 'ExchangeModule'
 
+    def load_from_input(self, body):
+        self.AllUsersInOffice = body['AllUsersInOffice']
+        self.AllUsersOutOfOffice = body['AllUsersOutOfOffice']
+        self.Rules = body['Rules']
+        self.AuditEvents = body['AuditEvents']
+        self.OOF = body['OOF']
+        self.UsersInOffice = body['UsersInOffice']
+        self.UsersOutOfOffice = body['UsersOutOfOffice']
+        self.UsersUnknown = body['UsersUnknown']
+        self.RulesDelete = body['RulesDelete']
+        self.RulesMove = body['RulesMove']
+        self.RulesForward = body['RulesForward']
+        self.DelegationsFound = body['DelegationsFound']
+
 class MDEModule:
     '''An MDE module object'''
     def __init__(self):
