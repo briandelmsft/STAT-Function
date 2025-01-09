@@ -62,7 +62,7 @@ def execute_exchange_module (req_body):
         if exch.AuditEvents:
             audit_table = data.list_to_html_table(exch.AuditEvents, max_rows=50, max_cols=15, drop_empty_cols=True)
 
-            a_comment = '<h3>Exchange Online Module - Audit Events</h3>'
+            a_comment = f'<h3>Exchange Online Module - Audit Events (Last {module_lookback} days)</h3>'
             a_comment += f'A total of {len(exch.AuditEvents)} forwarding, delegation and rule audits have been found.<br />'
             a_comment += audit_table
             a_comment_result = rest.add_incident_comment(base_object, a_comment)
