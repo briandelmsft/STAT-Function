@@ -7,6 +7,7 @@ import json
 import os
 import uuid
 import time
+import base64
 from classes import STATError, STATNotFound, BaseModule, STATTooManyRequests
 
 stat_token = {}
@@ -248,4 +249,17 @@ def add_incident_task(base_module:BaseModule, title:str, description:str, status
         except:
             response = 'Task addition failed'
     return response
+
+def check_app_role(base_module:BaseModule, token_type:str, app_roles:list):
+    token = token_cache(base_module, token_type)
+
+    content = token.token.split('.')[1] + '=='
+    b64_decoded = base64.urlsafe_b64decode(content)
+    decoded_token = json.loads(b64_decoded) 
+    token_roles = decoded_token.get('roles')
+
+    matched_roles = [item for item in app_roles if item in token_roles]
+    if matched_roles:
+        return True
+    return False
     

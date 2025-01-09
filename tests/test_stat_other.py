@@ -1,4 +1,4 @@
-from modules import ueba, oof, scoring, mdca, mde, file
+from modules import ueba, exchange, scoring, mdca, mde, file
 from classes import Response
 import json, os, requests
 
@@ -15,15 +15,15 @@ def test_ueba():
     assert ueba_response.statuscode == 200
     assert ueba_response.body.InvestigationPrioritiesFound in (True, False)
 
-def test_oof():
-    oof_input = {
+def test_exchange():
+    exch_input = {
         'AddIncidentComments': False,
         'AddIncidentTask': False,
         'BaseModuleBody': get_base_module_body()
     }
-    oof_response:Response = oof.execute_oof_module(oof_input)
+    exch_response:Response = exchange.execute_exchange_module(exch_input)
 
-    assert oof_response.statuscode == 200
+    assert exch_response.statuscode == 200
 
 def test_mde_module():
     aad_input = {
