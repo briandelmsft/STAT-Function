@@ -171,7 +171,7 @@ def rule_check(base_object:BaseModule, exch:ExchangeModule, upn):
     for rule in results.get('value'):
         rule_out = {
             'upn': upn,
-            'dipslayName': rule.get('displayName')
+            'displayName': rule.get('displayName')
         }
 
         rule_out['conditions'] = ', '.join([f"{k}: {v}" for k, v in rule.get('conditions',{}).items()])
