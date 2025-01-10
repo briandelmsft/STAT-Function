@@ -246,7 +246,7 @@ def score_exchange(score:ScoringModule, module_body, per_item, multiplier):
     exch = ExchangeModule()
     exch.load_from_input(module_body)
 
-    recent_rules = len(list(filter(lambda x: x.get('Operation') in ('New-InboxRulens', 'Set-InboxRule'), exch.AuditEvents)))
+    recent_rules = len(list(filter(lambda x: x.get('Operation') in ('New-InboxRule', 'Set-InboxRule'), exch.AuditEvents)))
     if per_item:
         score.append_score(2 * (exch.RulesDelete + exch.RulesMove) * multiplier, 'Exchange Module - Deletion and/or move rules found')
         score.append_score(25 * exch.RulesForward * multiplier, 'Exchange Module - Mail forwarding configuration found')
