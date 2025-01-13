@@ -1,0 +1,32 @@
+{account_table}
+let UPNs = accountEntities | project UserPrincipalName;
+let IDs = accountEntities | project AADUserId;
+union (OfficeActivity
+| where Operation == "Set-Mailbox"
+| where UserId in~ (UPNs)
+| where Parameters has 'ForwardingSmtpAddress'
+| mv-expand todynamic(Parameters)
+| where Parameters.Name =~ 'ForwardingSmtpAddress'
+| extend ForwardingAddress = tostring(Parameters.Value)
+| where isnotempty( ForwardingAddress)
+| project TimeGenerated, Operation='AddForwardingAddress', Actor=UserId, MailboxUser=OfficeObjectId, ForwardTo=ForwardingAddress),
+(OfficeActivity
+| where Operation =~ "AddFolderPermissions"
+| where MailboxOwnerUPN in~ (UPNs) or UserId in~ (UPNs)
+| project TimeGenerated, Actor=UserId, MailboxUser=MailboxOwnerUPN, Operation, DelegateTo = tostring(parse_json(tostring(parse_json(Item).ParentFolder)).MemberUpn), DelegateRights = tostring(parse_json(tostring(parse_json(Item).ParentFolder)).MemberRights), Folder = tostring(parse_json(tostring(parse_json(Item).ParentFolder)).Path)),
+(OfficeActivity
+| where Operation in~ ("New-InboxRule","Set-InboxRule")
+| where UserId in~ (UPNs)
+| project TimeGenerated, UPN=UserId, Operation, todynamic(Parameters), SourceRecordId
+| mv-apply Parameters on ( extend Props = bag_pack(tostring(Parameters.Name), tostring(Parameters.Value)))
+| summarize p=make_bag(Props) by TimeGenerated, Actor=UPN, Operation, SourceRecordId
+| extend RuleName=p.Name, DeleteMessage = p.DeleteMessage, ForwardTo=tostring(p.ForwardTo), ForwardAsAttachmentTo=tostring(p.ForwardAsAttachmentTo), RedirectTo=tostring(p.RedirectTo), MoveToFolder=tostring(p.MoveToFolder)
+| project-away p, SourceRecordId),
+(OfficeActivity
+| where Operation =~ "Add-MailboxPermission"
+| where Parameters has_any (IDs) or UserId in~ (UPNs)
+| mv-apply todynamic(Parameters) on ( extend Props = bag_pack(tostring(Parameters.Name), tostring(Parameters.Value)))
+| summarize p=make_bag(Props) by TimeGenerated, Actor=UserId, OfficeObjectId, Operation, SourceRecordId
+| extend DelegateRights=tostring(p.AccessRights), DelegateTo=tostring(p.User)
+| project TimeGenerated, Actor, MailboxUser=OfficeObjectId, Operation, DelegateRights, DelegateTo)
+| sort by TimeGenerated desc

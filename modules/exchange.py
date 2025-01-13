@@ -1,4 +1,4 @@
-from classes import BaseModule, Response, ExchangeModule, STATError
+from classes import BaseModule, Response, ExchangeModule, STATError, STATNotFound
 from shared import rest, data
 import json
 import re
@@ -22,7 +22,7 @@ def execute_exchange_module (req_body):
         upn = account.get('userPrincipalName')
         if upn:      
             if check_rules:
-                rule_check(base_object, exch, upn)
+                rule_check(base_object, exch, account)
             if check_oof:
                 oof_check(base_object, exch, upn)
     
@@ -55,7 +55,8 @@ def execute_exchange_module (req_body):
             comment += f'A total of {len(exch.Rules)} mailbox rules have been found.<br />'
             comment += f'<ul><li>Rules with forwarding settings: {exch.RulesForward}</li>'
             comment += f'<li>Rules that delete message: {exch.RulesDelete} </li>'
-            comment += f'<li>Rules that move messages: {exch.RulesMove} </li></ul><br />'
+            comment += f'<li>Rules that move messages: {exch.RulesMove} </li>'
+            comment += f'<li>Privileged Users with Mailbox: {exch.PrivilegedUsersWithMailbox} </li></ul><br />'
             comment += rules_table
             comment_result = rest.add_incident_comment(base_object, comment)
 
@@ -92,40 +93,9 @@ def append_enabled(exch:ExchangeModule, upn, internal, external):
     exch.OOF.append({'ExternalMessage': ext_msg, 'InternalMessage': int_msg, 'exchStatus': 'enabled', 'UPN': upn})
 
 def audit_check(base_object:BaseModule, exch:ExchangeModule, module_lookback:int):
-#Retrieve OfficeActivity Audits
-    query = f'''{base_object.get_account_kql_table()}
-let UPNs = accountEntities | project UserPrincipalName;
-let IDs = accountEntities | project AADUserId;
-union (OfficeActivity
-| where Operation == "Set-Mailbox"
-| where UserId in~ (UPNs)
-| where Parameters has 'ForwardingSmtpAddress'
-| mv-expand todynamic(Parameters)
-| where Parameters.Name =~ 'ForwardingSmtpAddress'
-| extend ForwardingAddress = tostring(Parameters.Value)
-| where isnotempty( ForwardingAddress)
-| project TimeGenerated, Operation='AddForwardingAddress', Actor=UserId, MailboxUser=OfficeObjectId, ForwardTo=ForwardingAddress),
-(OfficeActivity
-| where Operation =~ "AddFolderPermissions"
-| where MailboxOwnerUPN in~ (UPNs) or UserId in~ (UPNs)
-| project TimeGenerated, Actor=UserId, MailboxUser=MailboxOwnerUPN, Operation, DelegateTo = tostring(parse_json(tostring(parse_json(Item).ParentFolder)).MemberUpn), DelegateRights = tostring(parse_json(tostring(parse_json(Item).ParentFolder)).MemberRights), Folder = tostring(parse_json(tostring(parse_json(Item).ParentFolder)).Path)),
-(OfficeActivity
-| where Operation in~ ("New-InboxRule","Set-InboxRule")
-| where UserId in~ (UPNs)
-| project TimeGenerated, UPN=UserId, Operation, todynamic(Parameters), SourceRecordId
-| mv-apply Parameters on ( extend Props = bag_pack(tostring(Parameters.Name), tostring(Parameters.Value)))
-| summarize p=make_bag(Props) by TimeGenerated, Actor=UPN, Operation, SourceRecordId
-| extend RuleName=p.Name, DeleteMessage = p.DeleteMessage, ForwardTo=tostring(p.ForwardTo), ForwardAsAttachmentTo=tostring(p.ForwardAsAttachmentTo), RedirectTo=tostring(p.RedirectTo), MoveToFolder=tostring(p.MoveToFolder)
-| project-away p, SourceRecordId),
-(OfficeActivity
-| where Operation =~ "Add-MailboxPermission"
-| where Parameters has_any (IDs) or UserId in~ (UPNs)
-| mv-apply todynamic(Parameters) on ( extend Props = bag_pack(tostring(Parameters.Name), tostring(Parameters.Value)))
-| summarize p=make_bag(Props) by TimeGenerated, Actor=UserId, OfficeObjectId, Operation, SourceRecordId
-| extend DelegateRights=tostring(p.AccessRights), DelegateTo=tostring(p.User)
-| project TimeGenerated, Actor, MailboxUser=OfficeObjectId, Operation, DelegateRights, DelegateTo)
-| sort by TimeGenerated desc'''        
-    
+    #Retrieve OfficeActivity Audits
+    query = data.load_text_from_file('exchange-audit.kql', account_table=base_object.get_account_kql_table())
+
     try:
         exch.AuditEvents = rest.execute_la_query(base_object, query, module_lookback)
     except STATError as e:
@@ -157,16 +127,21 @@ def oof_check(base_object:BaseModule, exch:ExchangeModule, upn):
             exch.UsersInOffice += 1
             append_disabled(exch, upn)
 
-def rule_check(base_object:BaseModule, exch:ExchangeModule, upn):
+def rule_check(base_object:BaseModule, exch:ExchangeModule, account):
     #Retrieve Mailbox rules
+    upn = account.get('userPrincipalName')
+    account_roles = account.get('AssignedRoles', [])
     mail_role = rest.check_app_role(base_object, 'msgraph', ['Mail.ReadBasic.All','Mail.ReadWrite','Mail.Read'])
     path = f'/v1.0/users/{upn}/mailFolders/inbox/messageRules'
     try:
         results = json.loads(rest.rest_call_get(base_object, api='msgraph', path=path).content)
-    except STATError as e:
-        if e.source_error['status_code'] == 403:
-            raise STATError(e.error, e.source_error, e.status_code)
+    except STATNotFound:
         exch.UsersUnknown += 1
+        return   
+
+    privileged_roles = data.load_json_from_file('privileged-roles.json')
+    if set(account_roles).intersection(privileged_roles):
+        exch.PrivilegedUsersWithMailbox += 1
 
     for rule in results.get('value'):
         rule_out = {

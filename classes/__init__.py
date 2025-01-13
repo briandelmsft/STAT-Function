@@ -516,6 +516,7 @@ class ExchangeModule:
         self.OOF = []
         self.UsersInOffice = 0
         self.UsersOutOfOffice = 0
+        self.PrivilegedUsersWithMailbox = 0
         self.UsersUnknown = 0
         self.RulesDelete = 0
         self.RulesMove = 0
@@ -531,6 +532,7 @@ class ExchangeModule:
         self.OOF = body['OOF']
         self.UsersInOffice = body['UsersInOffice']
         self.UsersOutOfOffice = body['UsersOutOfOffice']
+        self.PrivilegedUsersWithMailbox = body['PrivilegedUsersWithMailbox']
         self.UsersUnknown = body['UsersUnknown']
         self.RulesDelete = body['RulesDelete']
         self.RulesMove = body['RulesMove']
