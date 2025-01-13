@@ -38,24 +38,7 @@ def execute_scoring_module (req_body):
 
 def score_module(score:ScoringModule, module:str, module_body:dict, per_item:bool, multiplier:int, label:str):
 
-    mitre_list = [
-        {'Tactic': 'Reconnaissance', 'Score': 2},
-        {'Tactic': 'ResourceDevelopment', 'Score': 3},
-        {'Tactic': 'InitialAccess', 'Score': 5},
-        {'Tactic': 'Execution', 'Score': 5},
-        {'Tactic': 'Persistence', 'Score': 6},
-        {'Tactic': 'PrivilegeEscalation', 'Score': 8},
-        {'Tactic': 'DefenseEvasion', 'Score': 8},
-        {'Tactic': 'CredentialAccess', 'Score': 8},
-        {'Tactic': 'Discovery', 'Score': 8},
-        {'Tactic': 'LateralMovement', 'Score': 9},
-        {'Tactic': 'Collection', 'Score': 9},
-        {'Tactic': 'CommandAndControl', 'Score': 10},
-        {'Tactic': 'Exfiltration', 'Score': 12},
-        {'Tactic': 'Impact', 'Score': 12},
-        {'Tactic': 'InhibitResponseFunction', 'Score': 12},
-        {'Tactic': 'ImpairProcessControl', 'Score': 12}
-    ]
+    mitre_list = data.load_json_from_file('mitre-tactics.json')
 
     match module:
         case 'WatchlistModule':
@@ -181,32 +164,7 @@ def score_aad(score:ScoringModule, module_body, per_item, multiplier, label):
         'low': 3
     }
 
-    event_types = {
-        'adminConfirmedUserCompromised': 100,
-        'anomalousToken': 10,
-        'anomalousUserActivity': 10,
-        'anonymizedIPAddress': 5,
-        'attackerinTheMiddle': 75,
-        'generic': 5,
-        'impossibleTravel': 5,
-        'investigationsThreatIntelligence': 20,
-        'suspiciousSendingPatterns': 10,
-        'leakedCredentials': 100,
-        'maliciousIPAddress': 25,
-        'malwareInfectedIPAddress': 25,
-        'mcasSuspiciousInboxManipulationRules': 50,
-        'nationStateIP': 100,
-        'newCountry': 5,
-        'passwordSpray': 25,
-        'riskyIPAddress': 10,
-        'suspiciousAPITraffic': 15,
-        'suspiciousBrowser': 10,
-        'suspiciousInboxForwarding': 50,
-        'suspiciousIPAddress': 10,
-        'tokenIssuerAnomaly': 25,
-        'unfamiliarFeatures': 3,
-        'unlikelyTravel': 5
-    }
+    event_types = data.load_json_from_file('entra-risk-events.json')
 
     event_scores = []
     for user in aad.DetailedResults:
@@ -248,10 +206,16 @@ def score_exchange(score:ScoringModule, module_body, per_item, multiplier):
 
     recent_rules = len(list(filter(lambda x: x.get('Operation') in ('New-InboxRule', 'Set-InboxRule'), exch.AuditEvents)))
     if per_item:
-        score.append_score(2 * (exch.RulesDelete + exch.RulesMove) * multiplier, 'Exchange Module - Deletion and/or move rules found')
-        score.append_score(25 * exch.RulesForward * multiplier, 'Exchange Module - Mail forwarding configuration found')
-        score.append_score(25 * exch.DelegationsFound * multiplier, 'Exchange Module - Recent mailbox or folder delegations added')
-        score.append_score(10 * recent_rules * multiplier, 'Exchange Module - Recent modification to delete/move/forward mailbox rules')
+        if (exch.RulesDelete + exch.RulesMove) > 0:
+            score.append_score(2 * (exch.RulesDelete + exch.RulesMove) * multiplier, 'Exchange Module - Deletion and/or move rules found')
+        if exch.RulesForward > 0:
+            score.append_score(25 * exch.RulesForward * multiplier, 'Exchange Module - Mail forwarding configuration found')
+        if exch.DelegationsFound > 0:
+            score.append_score(25 * exch.DelegationsFound * multiplier, 'Exchange Module - Recent mailbox or folder delegations added')
+        if recent_rules > 0:
+            score.append_score(10 * recent_rules * multiplier, 'Exchange Module - Recent modification to delete/move/forward mailbox rules')
+        if exch.PrivilegedUsersWithMailbox > 0:
+            score.append_score(25 * exch.PrivilegedUsersWithMailbox * multiplier, 'Exchange Module - Privileged Users with Mailbox')
 
     else:
         if exch.RulesDelete + exch.RulesMove > 0:
@@ -262,6 +226,8 @@ def score_exchange(score:ScoringModule, module_body, per_item, multiplier):
             score.append_score(25 * multiplier, 'Exchange Module - Recent mailbox or folder delegations added')
         if recent_rules > 0:
             score.append_score(10 * multiplier, 'Exchange Module - Recent modification to delete/move/forward mailbox rules')
+        if exch.PrivilegedUsersWithMailbox > 0:
+            score.append_score(25 * multiplier, 'Exchange Module - Privileged Users with Mailbox')
     
     
 def score_mde(score:ScoringModule, module_body, per_item, multiplier, label):

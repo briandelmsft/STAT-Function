@@ -169,3 +169,11 @@ def get_current_version():
         stat_version = 'Unknown'
 
     return stat_version
+
+def load_json_from_file(file_name:str):
+    with open(pathlib.Path(__file__).parent.parent / f'files/{file_name}') as f:
+        return json.loads(f.read())
+    
+def load_text_from_file(file_name:str, **kwargs):
+    with open(pathlib.Path(__file__).parent.parent / f'files/{file_name}') as f:
+        return f.read().format(**kwargs)
