@@ -10,6 +10,8 @@ def execute_scoring_module (req_body):
 
     score = ScoringModule()
 
+    score_base_module(score, base_object)
+
     for input_module in req_body['ScoringData']:
         module_body = input_module['ModuleBody']
         module = module_body.get('ModuleName')
@@ -35,6 +37,19 @@ def execute_scoring_module (req_body):
         task_result = rest.add_incident_task(base_object, 'Review Incident Risk Score', req_body.get('IncidentTaskInstructions')) 
 
     return Response(score)
+
+def score_base_module(score:ScoringModule, base_object:BaseModule):
+    #Priv User Check
+    high_priv = data.load_json_from_file('privileged-roles.json')
+    for acct in base_object.Accounts:
+        upn = acct.get('userPrincipalName')
+        assigned_roles = acct.get('AssignedRoles', [])
+        if set(assigned_roles).intersection(high_priv):
+            score.append_score(25, f'Base Module - User {upn} is assigned to sensitive privileged role')
+        elif 'Unavailable' in assigned_roles and len(assigned_roles) == 1:
+            score.append_score(5, f'Base Module - Role assignments for {upn} are unavailable')
+        elif assigned_roles:
+            score.append_score(10, f'Base Module - User {upn} is assigned to a privileged role')
 
 def score_module(score:ScoringModule, module:str, module_body:dict, per_item:bool, multiplier:int, label:str):
 
