@@ -80,17 +80,17 @@ def process_action(action_list:list):
     return ','.join(out)
 
 def append_disabled(exch:ExchangeModule, upn):
-    exch.OOF.append({'ExternalMessage': '', 'InternalMessage': '', 'exchStatus': 'disabled', 'UPN': upn})
+    exch.OOF.append({'ExternalMessage': '', 'InternalMessage': '', 'OOFStatus': 'disabled', 'UPN': upn})
 
 def append_unknown(exch:ExchangeModule, upn):
-    exch.OOF.append({'ExternalMessage': '', 'InternalMessage': '', 'exchStatus': 'unknown', 'UPN': upn})
+    exch.OOF.append({'ExternalMessage': '', 'InternalMessage': '', 'OOFStatus': 'unknown', 'UPN': upn})
 
 def append_enabled(exch:ExchangeModule, upn, internal, external):
     clean_html = re.compile('<.*?>')
     replace_nbsp = re.compile('&nbsp;|\\n')
     int_msg = re.sub(replace_nbsp, ' ', re.sub(clean_html, '', internal))
     ext_msg = re.sub(replace_nbsp, ' ', re.sub(clean_html, '', external))
-    exch.OOF.append({'ExternalMessage': ext_msg, 'InternalMessage': int_msg, 'exchStatus': 'enabled', 'UPN': upn})
+    exch.OOF.append({'ExternalMessage': ext_msg, 'InternalMessage': int_msg, 'OOFStatus': 'enabled', 'UPN': upn})
 
 def audit_check(base_object:BaseModule, exch:ExchangeModule, module_lookback:int):
     #Retrieve OfficeActivity Audits
