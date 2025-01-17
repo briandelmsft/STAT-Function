@@ -63,7 +63,7 @@ SecurityAlert
 | extend AccountEntityMatch = iff(Entities has_any (accounts), true, false), HostEntityMatch = iff(Entities has_any (hosts), true, false), IPEntityMatch = iff(Entities has_any (ips) , true, false) 
 | summarize AccountEntityMatch = max(AccountEntityMatch), IPEntityMatch=max(IPEntityMatch),HostEntityMatch=max(HostEntityMatch) by StartTime, DisplayName, AlertSeverity, SystemAlertId, ProviderName, Tactics
 | join kind=leftouter severityOrder on AlertSeverity
-| sort by Order desc
+| sort by Order desc, StartTime desc
 | project-away Order, AlertSeverity1'''
 
     results = rest.execute_la_query(base_object, query, lookback)
@@ -107,7 +107,8 @@ SecurityAlert
 
         #html_table = data.list_to_html_table(results)
         
-        comment = f'''A total of {related_alerts.RelatedAlertsCount} related alerts were found.<br>{html_table}'''
+        comment = f'<h3>Related Alerts Module (Last {lookback} days)</h3>'
+        comment += f'''A total of {related_alerts.RelatedAlertsCount} related alerts were found.<br>{html_table}'''
         comment_result = rest.add_incident_comment(base_object, comment)
 
     if req_body.get('AddIncidentTask', False) and related_alerts.RelatedAlertsFound and base_object.IncidentAvailable:

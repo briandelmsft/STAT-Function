@@ -63,6 +63,7 @@ class BaseModule:
         self.URLsCount = 0
         self.WorkspaceARMId = ""
         self.WorkspaceId = ""
+        self.CurrentVersion = ""
         self.ModuleName = 'BaseModule'
 
     def load_incident_trigger(self, req_body):
@@ -111,6 +112,8 @@ class BaseModule:
         self.URLsCount = basebody['URLsCount']
         self.WorkspaceARMId = basebody['WorkspaceARMId']
         self.WorkspaceId = basebody['WorkspaceId']
+        self.CurrentVersion = basebody.get('CurrentVersion')
+        self.ModuleName = basebody.get('ModuleName')
 
     def add_ip_entity(self, address, geo_data, rawentity):
         self.IPs.append({'Address': address, 'GeoData': geo_data, 'RawEntity': rawentity })
@@ -503,16 +506,38 @@ class RunPlaybook:
         self.IncidentArmId = ''
         self.ModuleName = 'RunPlaybook'
         
-class OOFModule:
-    '''An Out of Office module object'''
+class ExchangeModule:
+    '''An Exchange module object'''
     def __init__(self):
         self.AllUsersInOffice = True
         self.AllUsersOutOfOffice = False
-        self.DetailedResults = []
+        self.Rules = []
+        self.AuditEvents = []
+        self.OOF = []
         self.UsersInOffice = 0
         self.UsersOutOfOffice = 0
+        self.PrivilegedUsersWithMailbox = 0
         self.UsersUnknown = 0
-        self.ModuleName = 'OOFModule'
+        self.RulesDelete = 0
+        self.RulesMove = 0
+        self.RulesForward = 0
+        self.DelegationsFound = 0
+        self.ModuleName = 'ExchangeModule'
+
+    def load_from_input(self, body):
+        self.AllUsersInOffice = body['AllUsersInOffice']
+        self.AllUsersOutOfOffice = body['AllUsersOutOfOffice']
+        self.Rules = body['Rules']
+        self.AuditEvents = body['AuditEvents']
+        self.OOF = body['OOF']
+        self.UsersInOffice = body['UsersInOffice']
+        self.UsersOutOfOffice = body['UsersOutOfOffice']
+        self.PrivilegedUsersWithMailbox = body['PrivilegedUsersWithMailbox']
+        self.UsersUnknown = body['UsersUnknown']
+        self.RulesDelete = body['RulesDelete']
+        self.RulesMove = body['RulesMove']
+        self.RulesForward = body['RulesForward']
+        self.DelegationsFound = body['DelegationsFound']
 
 class MDEModule:
     '''An MDE module object'''

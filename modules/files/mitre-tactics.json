@@ -1,0 +1,66 @@
+[
+    {
+        "Tactic": "Reconnaissance",
+        "Score": 2
+    },
+    {
+        "Tactic": "ResourceDevelopment",
+        "Score": 3
+    },
+    {
+        "Tactic": "InitialAccess",
+        "Score": 5
+    },
+    {
+        "Tactic": "Execution",
+        "Score": 5
+    },
+    {
+        "Tactic": "Persistence",
+        "Score": 6
+    },
+    {
+        "Tactic": "PrivilegeEscalation",
+        "Score": 8
+    },
+    {
+        "Tactic": "DefenseEvasion",
+        "Score": 8
+    },
+    {
+        "Tactic": "CredentialAccess",
+        "Score": 8
+    },
+    {
+        "Tactic": "Discovery",
+        "Score": 8
+    },
+    {
+        "Tactic": "LateralMovement",
+        "Score": 9
+    },
+    {
+        "Tactic": "Collection",
+        "Score": 9
+    },
+    {
+        "Tactic": "CommandAndControl",
+        "Score": 10
+    },
+    {
+        "Tactic": "Exfiltration",
+        "Score": 12
+    },
+    {
+        "Tactic": "Impact",
+        "Score": 12
+    },
+    {
+        "Tactic": "InhibitResponseFunction",
+        "Score": 12
+    },
+    {
+        "Tactic": "ImpairProcessControl",
+        "Score": 12
+    }
+]

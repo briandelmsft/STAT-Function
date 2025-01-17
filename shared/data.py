@@ -2,12 +2,49 @@ import pandas as pd
 import copy
 import pathlib
 import json
+import os
 
-def list_to_html_table(input_list:list, max_rows:int=20, max_cols:int=10, nan_str:str='N/A', escape_html:bool=True, columns:list=None, index:bool=False, justify:str='left'):
+date_format = os.getenv('DATE_FORMAT')
+tz_info = os.getenv('TIME_ZONE')
+
+def list_to_html_table(input_list:list, max_rows:int=20, max_cols:int=10, nan_str:str='N/A', escape_html:bool=True, columns:list=None, index:bool=False, justify:str='left', drop_empty_cols:bool=False):
     '''Convert a list of dictionaries into an HTML table'''
     df = pd.DataFrame(input_list)
     df.index = df.index + 1
-    html_table = df.to_html(max_rows=max_rows, max_cols=max_cols, na_rep=nan_str, escape=escape_html, columns=columns, index=index, justify=justify).replace('\n', '')
+
+    if drop_empty_cols:
+        all_cols = df.columns.values.tolist()
+        to_drop = []
+
+        for col in all_cols:
+            if all(df[col] == ''):
+                to_drop.append(col)
+            
+        if to_drop:
+            df.drop(labels=to_drop, axis=1, inplace=True)
+        df.dropna(axis=1, how='all', inplace=True)
+
+    if date_format or tz_info:
+        try:
+            time_columns = ['TimeGenerated','Timestamp','StartTime','EndTime','activityDateTime','FirstSeen','LastSeen']
+            df_time = df.copy(deep=True)
+            for time_col in time_columns:
+                if time_col in df.columns:
+                    df_time[time_col] = pd.to_datetime(df_time[time_col])
+
+                if tz_info:
+                    if time_col in df.columns:
+                        df_time[time_col] = df_time[time_col].dt.tz_convert(tz_info)
+
+                if date_format:
+                    if time_col in df.columns:
+                        df_time[time_col] = df_time[time_col].dt.strftime(date_format)
+        except:
+            html_table = df.to_html(max_rows=max_rows, max_cols=max_cols, na_rep=nan_str, escape=escape_html, columns=columns, index=index, justify=justify).replace('\n', '')
+        else:
+            html_table = df_time.to_html(max_rows=max_rows, max_cols=max_cols, na_rep=nan_str, escape=escape_html, columns=columns, index=index, justify=justify).replace('\n', '')
+    else:
+        html_table = df.to_html(max_rows=max_rows, max_cols=max_cols, na_rep=nan_str, escape=escape_html, columns=columns, index=index, justify=justify).replace('\n', '')
 
     return html_table
 
@@ -132,3 +169,11 @@ def get_current_version():
         stat_version = 'Unknown'
 
     return stat_version
+
+def load_json_from_file(file_name:str):
+    with open(pathlib.Path(__file__).parent.parent / f'modules/files/{file_name}') as f:
+        return json.loads(f.read())
+    
+def load_text_from_file(file_name:str, **kwargs):
+    with open(pathlib.Path(__file__).parent.parent / f'modules/files/{file_name}') as f:
+        return f.read().format(**kwargs)

@@ -10,6 +10,8 @@ def execute_scoring_module (req_body):
 
     score = ScoringModule()
 
+    score_base_module(score, base_object)
+
     for input_module in req_body['ScoringData']:
         module_body = input_module['ModuleBody']
         module = module_body.get('ModuleName')
@@ -36,26 +38,22 @@ def execute_scoring_module (req_body):
 
     return Response(score)
 
+def score_base_module(score:ScoringModule, base_object:BaseModule):
+    #Priv User Check
+    high_priv = data.load_json_from_file('privileged-roles.json')
+    for acct in base_object.Accounts:
+        upn = acct.get('userPrincipalName')
+        assigned_roles = acct.get('AssignedRoles', [])
+        if set(assigned_roles).intersection(high_priv):
+            score.append_score(25, f'Base Module - User {upn} is assigned to sensitive privileged role')
+        elif 'Unavailable' in assigned_roles and len(assigned_roles) == 1:
+            score.append_score(5, f'Base Module - Role assignments for {upn} are unavailable')
+        elif assigned_roles:
+            score.append_score(10, f'Base Module - User {upn} is assigned to a privileged role')
+
 def score_module(score:ScoringModule, module:str, module_body:dict, per_item:bool, multiplier:int, label:str):
 
-    mitre_list = [
-        {'Tactic': 'Reconnaissance', 'Score': 2},
-        {'Tactic': 'ResourceDevelopment', 'Score': 3},
-        {'Tactic': 'InitialAccess', 'Score': 5},
-        {'Tactic': 'Execution', 'Score': 5},
-        {'Tactic': 'Persistence', 'Score': 6},
-        {'Tactic': 'PrivilegeEscalation', 'Score': 8},
-        {'Tactic': 'DefenseEvasion', 'Score': 8},
-        {'Tactic': 'CredentialAccess', 'Score': 8},
-        {'Tactic': 'Discovery', 'Score': 8},
-        {'Tactic': 'LateralMovement', 'Score': 9},
-        {'Tactic': 'Collection', 'Score': 9},
-        {'Tactic': 'CommandAndControl', 'Score': 10},
-        {'Tactic': 'Exfiltration', 'Score': 12},
-        {'Tactic': 'Impact', 'Score': 12},
-        {'Tactic': 'InhibitResponseFunction', 'Score': 12},
-        {'Tactic': 'ImpairProcessControl', 'Score': 12}
-    ]
+    mitre_list = data.load_json_from_file('mitre-tactics.json')
 
     match module:
         case 'WatchlistModule':
@@ -76,6 +74,8 @@ def score_module(score:ScoringModule, module:str, module_body:dict, per_item:boo
             score_ti(score, module_body, per_item, multiplier, label)
         case 'UEBAModule':
             score_ueba(score, module_body, per_item, multiplier, label, mitre_list)
+        case 'ExchangeModule':
+            score_exchange(score, module_body, per_item, multiplier)
         case 'Custom':
             score_custom(score, module_body, multiplier)
         case _:
@@ -178,6 +178,18 @@ def score_aad(score:ScoringModule, module_body, per_item, multiplier, label):
         'medium': 5,
         'low': 3
     }
+
+    event_types = data.load_json_from_file('entra-risk-events.json')
+
+    event_scores = []
+    for user in aad.DetailedResults:
+        for event in user.get('RiskDetections', []):
+            event_scores.append(event_types.get(event['riskEventType'], 10))
+
+    if per_item and event_scores:
+        score.append_score(sum(event_scores) * multiplier, f'{label} - Risk Events Score')
+    elif event_scores:
+        score.append_score(max(event_scores) * multiplier, f'{label} - Risk Events Score')
          
     if per_item and aad.DetailedResults:
         for user in aad.DetailedResults:
@@ -202,6 +214,36 @@ def score_file(score:ScoringModule, module_body, multiplier, label):
 
 def score_mdca(score:ScoringModule, module_body, per_item, multiplier, label):
     score.append_score(0, 'WARNING: MDCA Module was included in scoring, however this module has been deprecated.')
+
+def score_exchange(score:ScoringModule, module_body, per_item, multiplier):
+    exch = ExchangeModule()
+    exch.load_from_input(module_body)
+
+    recent_rules = len(list(filter(lambda x: x.get('Operation') in ('New-InboxRule', 'Set-InboxRule'), exch.AuditEvents)))
+    if per_item:
+        if (exch.RulesDelete + exch.RulesMove) > 0:
+            score.append_score(2 * (exch.RulesDelete + exch.RulesMove) * multiplier, 'Exchange Module - Deletion and/or move rules found')
+        if exch.RulesForward > 0:
+            score.append_score(25 * exch.RulesForward * multiplier, 'Exchange Module - Mail forwarding configuration found')
+        if exch.DelegationsFound > 0:
+            score.append_score(25 * exch.DelegationsFound * multiplier, 'Exchange Module - Recent mailbox or folder delegations added')
+        if recent_rules > 0:
+            score.append_score(10 * recent_rules * multiplier, 'Exchange Module - Recent modification to delete/move/forward mailbox rules')
+        if exch.PrivilegedUsersWithMailbox > 0:
+            score.append_score(25 * exch.PrivilegedUsersWithMailbox * multiplier, 'Exchange Module - Privileged Users with Mailbox')
+
+    else:
+        if exch.RulesDelete + exch.RulesMove > 0:
+            score.append_score(2 * multiplier, 'Exchange Module - Deletion and/or move rules found')
+        if exch.RulesForward > 0:
+            score.append_score(25 * multiplier, 'Exchange Module - Mail forwarding configuration found')
+        if exch.DelegationsFound > 0:
+            score.append_score(25 * multiplier, 'Exchange Module - Recent mailbox or folder delegations added')
+        if recent_rules > 0:
+            score.append_score(10 * multiplier, 'Exchange Module - Recent modification to delete/move/forward mailbox rules')
+        if exch.PrivilegedUsersWithMailbox > 0:
+            score.append_score(25 * multiplier, 'Exchange Module - Privileged Users with Mailbox')
+    
     
 def score_mde(score:ScoringModule, module_body, per_item, multiplier, label):
     mde = MDEModule()

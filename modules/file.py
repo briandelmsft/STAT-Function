@@ -127,7 +127,7 @@ union
         
         html_table = data.list_to_html_table(file_object.DetailedResults)
 
-        comment = f'''<h3>File Module</h3>A total of {file_object.AnalyzedEntities} entities were analyzed.<br>{html_table}'''
+        comment = f'''<h3>File Module</h3>A total of {file_object.AnalyzedEntities} entities were analyzed with data from the last 30 days.<br>{html_table}'''
         comment_result = rest.add_incident_comment(base_object, comment)
 
     if req_body.get('AddIncidentTask', False) and file_object.AnalyzedEntities > 0 and base_object.IncidentAvailable:
