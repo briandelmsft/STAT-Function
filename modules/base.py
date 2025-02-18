@@ -15,7 +15,10 @@ def execute_base_module (req_body):
     
     base_object = BaseModule()
 
-    trigger_type = req_body['Body'].get('objectSchemaType', 'alert')
+    try:
+        trigger_type = req_body['Body'].get('objectSchemaType', 'alert')
+    except:
+        raise STATError('The Base Module Incident or Alert body is missing or invalid. This may be caused by a missing or incorrect input to the module, or by running the logic app manually with no incident context.')
 
     base_object.MultiTenantConfig = req_body.get('MultiTenantConfig', {})
     enrich_mfa = req_body.get('EnrichAccountsWithMFA', True)
