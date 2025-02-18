@@ -119,6 +119,15 @@ class BaseModule:
         '''Adds an IP entity, types 1=global, 2=private, 3=link-local, 9=unknown'''
         self.IPs.append({'Address': address, 'IPType': ip_type, 'GeoData': geo_data, 'RawEntity': rawentity })
 
+    def check_global_and_local_ips(self):
+        '''Checks if any private or global IPs are in the IPs array for IP comment'''
+        found = False
+        for ip in self.IPs:
+            if ip.get('IPType') != 3:
+                found = True
+                break
+        return found
+
     def add_host_entity(self, fqdn, hostname, dnsdomain, mdedeviceid, rawentity, mde_enrichment:str='Unknown'):
         if mdedeviceid:
             self.Hosts.append({'DnsDomain': dnsdomain, 'FQDN': fqdn, 'Hostname': hostname, 'MdatpDeviceId': mdedeviceid, 'MDEEnrichment': mde_enrichment, 'RawEntity': rawentity })
