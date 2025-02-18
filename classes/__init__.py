@@ -115,8 +115,9 @@ class BaseModule:
         self.CurrentVersion = basebody.get('CurrentVersion')
         self.ModuleName = basebody.get('ModuleName')
 
-    def add_ip_entity(self, address, geo_data, rawentity):
-        self.IPs.append({'Address': address, 'GeoData': geo_data, 'RawEntity': rawentity })
+    def add_ip_entity(self, address, geo_data, rawentity, ip_type:int=9):
+        '''Adds an IP entity, types 1=global, 2=private, 3=link-local, 9=unknown'''
+        self.IPs.append({'Address': address, 'IPType': ip_type, 'GeoData': geo_data, 'RawEntity': rawentity })
 
     def add_host_entity(self, fqdn, hostname, dnsdomain, mdedeviceid, rawentity, mde_enrichment:str='Unknown'):
         if mdedeviceid:

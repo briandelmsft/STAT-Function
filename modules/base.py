@@ -4,6 +4,7 @@ import json
 import time
 import logging
 import requests
+import ipaddress
 
 stat_version = None
 
@@ -134,18 +135,33 @@ def enrich_ips (entities, get_geo):
     base_object.IPsCount = len(ip_entities)
 
     for ip in ip_entities:
-        current_ip = data.coalesce(ip.get('properties', {}).get('address'), ip.get('Address'))
-        raw_entity = data.coalesce(ip.get('properties'), ip)
-        if get_geo:
-            path = base_object.SentinelRGARMId + "/providers/Microsoft.SecurityInsights/enrichment/ip/geodata/?api-version=2023-04-01-preview&ipAddress=" + current_ip
-            try:
-                response = rest.rest_call_get(base_object, api='arm', path=path)
-            except STATError:
-                base_object.add_ip_entity(address=current_ip, geo_data={}, rawentity=raw_entity)
+        try:
+            ip_data = ipaddress.ip_address(data.coalesce(ip.get('properties', {}).get('address'), ip.get('Address')))
+            raw_entity = data.coalesce(ip.get('properties'), ip)
+        except:
+            #Skip any IPs that cannot be parsed
+            continue
+        
+        if ip_data.is_loopback:
+            #Skip any loopback IPs
+            continue
+        elif ip_data.is_link_local:
+            base_object.add_ip_entity(address=ip_data.compressed, ip_type=3, geo_data={}, rawentity=raw_entity)
+        elif ip_data.is_private:
+            base_object.add_ip_entity(address=ip_data.compressed, ip_type=2, geo_data={}, rawentity=raw_entity)
+        elif ip_data.is_global:
+            if get_geo:
+                path = base_object.SentinelRGARMId + "/providers/Microsoft.SecurityInsights/enrichment/ip/geodata/?api-version=2023-04-01-preview&ipAddress=" + ip_data.compressed
+                try:
+                    response = rest.rest_call_get(base_object, api='arm', path=path)
+                except STATError:
+                    base_object.add_ip_entity(address=ip_data.compressed, ip_type=1, geo_data={}, rawentity=raw_entity)
+                else:
+                    base_object.add_ip_entity(address=ip_data.compressed, ip_type=1, geo_data=json.loads(response.content), rawentity=raw_entity)
             else:
-                base_object.add_ip_entity(address=current_ip, geo_data=json.loads(response.content), rawentity=raw_entity)
+                base_object.add_ip_entity(address=ip_data.compressed, ip_type=1, geo_data={}, rawentity=raw_entity)
         else:
-            base_object.add_ip_entity(address=current_ip, geo_data={}, rawentity=raw_entity)
+            base_object.add_ip_entity(address=ip_data.compressed, ip_type=8, geo_data={}, rawentity=raw_entity)
 
 def enrich_accounts(entities):
     account_entities = list(filter(lambda x: x['kind'].lower() == 'account', entities))
@@ -405,9 +421,13 @@ def get_ip_comment():
     
     ip_list = []
     for ip in base_object.IPs:
-        geo = ip.get('GeoData')
-        ip_list.append({'IP': ip.get('Address'), 'City': geo.get('city'), 'State': geo.get('state'), 'Country': geo.get('country'), \
-                        'Organization': geo.get('organization'), 'OrganizationType': geo.get('organizationType'), 'ASN': geo.get('asn') })
+        if ip.get('IPType') != 3:
+            #Excludes link local addresses from the IP comment
+            geo = ip.get('GeoData')
+            ip_list.append({'IP': ip.get('Address'), 'City': geo.get('city'), 'State': geo.get('state'), 'Country': geo.get('country'), \
+                        'Organization': geo.get('organization'), 'OrganizationType': geo.get('organizationType'), 'ASN': geo.get('asn'), 'IPType': ip.get('IPType')})
+            
+    ip_list = data.sort_list_by_key(ip_list, 'IPType', ascending=True, drop_columns=['IPType'])
         
     return data.list_to_html_table(ip_list)
 
