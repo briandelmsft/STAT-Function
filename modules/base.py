@@ -71,10 +71,10 @@ def execute_base_module (req_body):
     if req_body.get('AddAccountComments', True) and base_object.AccountsCount > 0:
         account_comment = 'Account Info:<br>' + get_account_comment()
 
-    if req_body.get('AddIPComments', True) and base_object.IPsCount > 0:
+    if req_body.get('AddIPComments', True) and base_object.check_global_and_local_ips():
         ip_comment = 'IP Info:<br>' + get_ip_comment()
 
-    if (req_body.get('AddAccountComments', True) and base_object.AccountsCount > 0) or (req_body.get('AddIPComments', True) and base_object.IPsCount > 0):
+    if (req_body.get('AddAccountComments', True) and base_object.AccountsCount > 0) or (req_body.get('AddIPComments', True) and base_object.check_global_and_local_ips()):
         comment = account_comment + '<br><p>' + ip_comment
         rest.add_incident_comment(base_object, comment)
 
@@ -132,7 +132,6 @@ def process_alert_trigger (req_body):
 
 def enrich_ips (entities, get_geo):
     ip_entities = list(filter(lambda x: x['kind'].lower() == 'ip', entities))
-    base_object.IPsCount = len(ip_entities)
 
     for ip in ip_entities:
         try:
@@ -162,6 +161,8 @@ def enrich_ips (entities, get_geo):
                 base_object.add_ip_entity(address=ip_data.compressed, ip_type=1, geo_data={}, rawentity=raw_entity)
         else:
             base_object.add_ip_entity(address=ip_data.compressed, ip_type=8, geo_data={}, rawentity=raw_entity)
+
+    base_object.IPsCount = len(base_object.IPs)
 
 def enrich_accounts(entities):
     account_entities = list(filter(lambda x: x['kind'].lower() == 'account', entities))
