@@ -22,10 +22,10 @@ def test_kql_sentinel_search():
         'AddIncidentComments': False,
         'AddIncidentTask': False,
         'Endpoint': 'search',
-        'KQLQuery': 'FirewallAUX_CL | take 5',
+        'KQLQuery': 'CommonSecurityLogAux_CL | take 5',
         'RunQueryAgainst': 'Sentinel',
         'QueryDescription': 'Test Query',
-        'LookbackInDays': 3,
+        'LookbackInDays': 1,
         'BaseModuleBody': get_base_module_body()
     }
     kql_response:Response = kql.execute_kql_module(kql_input)

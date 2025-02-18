@@ -117,9 +117,11 @@ def min_column_by_key(input_list, key):
         val = int(0)
     return val
 
-def sort_list_by_key(input_list, key, ascending=False):
+def sort_list_by_key(input_list, key, ascending=False, drop_columns:list=[]):
     df = pd.DataFrame(input_list)
     df = df.sort_values(by=[key], ascending=ascending)
+    if drop_columns:
+        df.drop(columns=drop_columns, inplace=True)
     return df.to_dict('records')
 
 def coalesce(*args):
