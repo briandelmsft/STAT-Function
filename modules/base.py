@@ -46,7 +46,7 @@ def execute_base_module (req_body):
     append_other_entities(entities)
 
     base_object.CurrentVersion = data.get_current_version()
-    base_object.EntitiesCount = base_object.AccountsCount + base_object.DomainsCount + base_object.FileHashesCount + base_object.FilesCount + base_object.HostsCount + base_object.OtherEntitiesCount + base_object.URLsCount
+    base_object.EntitiesCount = base_object.AccountsCount + base_object.IPsCount + base_object.DomainsCount + base_object.FileHashesCount + base_object.FilesCount + base_object.HostsCount + base_object.OtherEntitiesCount + base_object.URLsCount
 
     org_info = json.loads(rest.rest_call_get(base_object, api='msgraph', path='/v1.0/organization').content)
     base_object.TenantDisplayName = org_info['value'][0]['displayName']
