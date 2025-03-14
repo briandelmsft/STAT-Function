@@ -276,6 +276,14 @@ class BaseModule:
 
         return account_list
     
+    def get_host_mdeid_list(self):
+        host_list = []
+        for host in self.Hosts:
+            if host.get('MdatpDeviceId'):
+                host_list.append(host.get('MdatpDeviceId'))
+        
+        return host_list
+    
     def get_alert_ids(self):
         alert_list = []
         for alert in self.Alerts:
@@ -570,6 +578,28 @@ class MDEModule:
         self.UsersHighestRiskScore = body['UsersHighestRiskScore']
         self.HostsHighestExposureLevel = body['HostsHighestExposureLevel']
         self.HostsHighestRiskScore = body['HostsHighestRiskScore']
+        self.DetailedResults = body['DetailedResults']
+
+class DeviceExposureModule:
+    '''An Device Exposure module object'''
+    def __init__(self):
+        self.AnalyzedEntities = 0
+        self.ModuleName = 'DeviceExposureModule'
+        self.DetailedResults = []
+
+    def load_from_input(self, body):
+        self.AnalyzedEntities = body['AnalyzedEntities']
+        self.DetailedResults = body['DetailedResults']
+
+class UserExposureModule:
+    '''An User Exposure module object'''
+    def __init__(self):
+        self.AnalyzedEntities = 0
+        self.ModuleName = 'UserExposureModule'
+        self.DetailedResults = []
+
+    def load_from_input(self, body):
+        self.AnalyzedEntities = body['AnalyzedEntities']
         self.DetailedResults = body['DetailedResults']
 
 class CreateIncident:
