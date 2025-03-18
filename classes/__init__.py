@@ -258,21 +258,30 @@ class BaseModule:
     def get_account_id_list(self):
         account_list = []
         for account in self.Accounts:
-            account_list.append(account['id'])
+            try:
+                account_list.append(account['id'])
+            except KeyError:
+                pass
         
         return account_list
 
     def get_account_upn_list(self):
         account_list = []
         for account in self.Accounts:
-            account_list.append(account['userPrincipalName'])
+            try:
+                account_list.append(account['userPrincipalName'])
+            except KeyError:
+                pass
         
         return account_list
     
     def get_account_sam_list(self):
         account_list = []
         for account in self.Accounts:
-            account_list.append(account['onPremisesSamAccountName'])
+            try:
+                account_list.append(account['onPremisesSamAccountName'])
+            except:
+                pass
 
         return account_list
     
