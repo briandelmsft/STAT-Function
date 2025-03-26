@@ -255,13 +255,16 @@ class BaseModule:
 '''
         return kql
         
-    def get_account_id_list(self):
+    def get_account_id_and_sid_list(self):
         account_list = []
         for account in self.Accounts:
             try:
                 account_list.append(account['id'])
             except KeyError:
-                pass
+                raw_entity = account.get('RawEntity', {})
+                sid = data.coalesce(raw_entity.get('properties',{}).get('sid'), raw_entity.get('sid'), raw_entity.get('Sid'))
+                if sid:
+                    account_list.append(sid)
         
         return account_list
 

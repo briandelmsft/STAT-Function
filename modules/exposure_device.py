@@ -19,10 +19,30 @@ def execute_device_exposure_module (req_body):
 
         exp_object.DetailedResults = response
 
-    if req_body.get('AddIncidentComments', True):
-        html_table = data.list_to_html_table(exp_object.DetailedResults, index=False, max_cols=20)
+    crit_level = {
+        0: 'Very High - 0',
+        1: 'High - 1',
+        2: 'Medium - 2',
+        3: 'Low - 3'
+    }
 
-        comment = f'{html_table}<br />'
+    if req_body.get('AddIncidentComments', True):
+
+        out = []
+
+        for x in exp_object.DetailedResults:
+            out.append({
+                'Computer': x['Computer'],
+                'ComputerCriticality': f"{crit_level[x['ComputerCrit']]}<br /><b>Rules:</b> {x['ComputerCriticalityRules']}",
+                'ComputerInfo': f"<b>Risk Level:</b> {x['ComputerRiskScore']}<br /><b>Exposure Level:</b> {x['ComputerExposureScore']}<br /><b>Max CVSS Score:</b> {x['ComputerMaxCVSSScore']}<br /><b>Onboarding:</b> {x['ComputerOnboarding']}<br /><b>Sensor:</b> {x['ComputerSensorHealth']}",
+                'Tags': x['ComputerTags'],
+                'UsersOnDevice': x['UsersOnDevice'],
+                'UserCriticality': f"{crit_level[x['UserCrit']]}<br /><b>Rules:</b> {x['UserCriticalityRules']}"
+            })
+
+        html_table = data.list_to_html_table(out, index=False, max_cols=20, escape_html=False)
+
+        comment = f'<h3>Device Exposure Module</h3>{html_table}<br />'
         comment_result = rest.add_incident_comment(base_object, comment)
 
     return Response(exp_object)
