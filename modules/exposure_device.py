@@ -20,10 +20,10 @@ def execute_device_exposure_module (req_body):
         exp_object.DetailedResults = response
 
     crit_level = {
-        0: 'Very High - 0',
-        1: 'High - 1',
-        2: 'Medium - 2',
-        3: 'Low - 3'
+        0: 'Very High<br />🟥🟥🟥🟥',
+        1: 'High<br />🟥🟥🟥⬜ ',
+        2: 'Medium<br />🟥🟥⬜⬜',
+        3: 'Low<br />🟥⬜⬜⬜'
     }
 
     if req_body.get('AddIncidentComments', True):
@@ -33,11 +33,12 @@ def execute_device_exposure_module (req_body):
         for x in exp_object.DetailedResults:
             out.append({
                 'Computer': x['Computer'],
-                'ComputerCriticality': f"{crit_level[x['ComputerCrit']]}<br /><b>Rules:</b> {x['ComputerCriticalityRules']}",
+                'ComputerCriticality': f"{crit_level[x['ComputerCrit']]}<br /><p><b>Rules:</b> {data.list_to_string(x['ComputerCriticalityRules'])}",
                 'ComputerInfo': f"<b>Risk Level:</b> {x['ComputerRiskScore']}<br /><b>Exposure Level:</b> {x['ComputerExposureScore']}<br /><b>Max CVSS Score:</b> {x['ComputerMaxCVSSScore']}<br /><b>Onboarding:</b> {x['ComputerOnboarding']}<br /><b>Sensor:</b> {x['ComputerSensorHealth']}",
-                'Tags': x['ComputerTags'],
+                'ComputerTags': data.list_to_string(x['ComputerTags']),
                 'UsersOnDevice': x['UsersOnDevice'],
-                'UserCriticality': f"{crit_level[x['UserCrit']]}<br /><b>Rules:</b> {x['UserCriticalityRules']}"
+                'UserCriticality': f"{crit_level[x['UserCrit']]}<br /><p><b>Rules:</b> {data.list_to_string(x['UserCriticalityRules'])}",
+                'UserTags': data.list_to_string(x['UserTags']),
             })
 
         html_table = data.list_to_html_table(out, index=False, max_cols=20, escape_html=False)
