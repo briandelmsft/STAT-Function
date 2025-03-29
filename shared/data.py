@@ -179,3 +179,11 @@ def load_json_from_file(file_name:str):
 def load_text_from_file(file_name:str, **kwargs):
     with open(pathlib.Path(__file__).parent.parent / f'modules/files/{file_name}') as f:
         return f.read().format(**kwargs)
+
+def list_to_string(list_in, delimiter:str=', ', empty_str:str='N/A'):
+    if not list_in:
+        return empty_str
+    try:
+        return delimiter.join(list_in)
+    except:
+        return list_in

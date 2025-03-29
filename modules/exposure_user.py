@@ -20,7 +20,34 @@ def execute_user_exposure_module (req_body):
         exp_object.DetailedResults = response
 
     if req_body.get('AddIncidentComments', True):
-        html_table = data.list_to_html_table(exp_object.DetailedResults, index=False, max_cols=20)
+
+        crit_level = {
+            0: 'Very High<br />🟥🟥🟥🟥',
+            1: 'High<br />🟥🟥🟥⬜ ',
+            2: 'Medium<br />🟥🟥⬜⬜',
+            3: 'Low<br />🟥⬜⬜⬜'
+        }
+
+        out =[]
+
+        for x in exp_object.DetailedResults:
+            out.append({
+                'User': x['User'],
+                'UserCriticality': f"{crit_level[x['UserCriticality']]}<br /><p><b>Rules:</b> {data.list_to_string(x['UserCriticalityRules'])}",
+                'UserTags': data.list_to_string(x['UserTags']),
+                'ElevatedRightsOn (Top 5)': data.list_to_string(x['ElevatedRightsOn']),
+                "HighestComputerCriticality": f"{crit_level[x['HighestComputerCriticality']]}<br /><p><b>Rules: </b> {data.list_to_string(x['ComputerCriticalityRules'])}",
+                "LocalAdminCount": x['LocalAdminCount']
+            })
+
+            try:
+                test = ', '.join(x['UserCriticalityRules'])
+                None
+            except:
+                pass
+
+
+        html_table = data.list_to_html_table(out, index=False, max_cols=20, escape_html=False)
 
         comment = f'<h3>User Exposure Module</h3>{html_table}<br />'
         comment_result = rest.add_incident_comment(base_object, comment)
