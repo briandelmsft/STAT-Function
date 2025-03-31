@@ -31,8 +31,29 @@ def execute_user_exposure_module (req_body):
         out =[]
 
         for x in exp_object.DetailedResults:
+
+            sid = None
+            entra_sid = None
+            aadid = None
+
+            for acct_id in x.get('UserEntityIds', []):
+                if acct_id['type'] == 'SecurityIdentifier':
+                    if acct_id.get('id').startswith('S-1-12-'):
+                        entra_sid = acct_id['id']
+                    else:
+                        sid = acct_id['id']
+                elif acct_id['type'] == 'AadObjectId':
+                    aadid = data.parse_kv_string(acct_id['id']).get('objectid')
+
+            if aadid:
+                user = f"<a href=\"https://security.microsoft.com/user?aad={aadid}&tab=overview\" target=\"_blank\">{x['User']}</a><br />(<a href=\"https://security.microsoft.com/security-graph?id={aadid}&assetType=AadObjectId\">Exposure Map</a>)"
+            elif sid:
+                user = f"<a href=\"https://security.microsoft.com/user?sid={sid}&tab=overview\" target=\"_blank\">{x['User']}</a><br />(<a href=\"https://security.microsoft.com/security-graph?id={sid}&assetType=SecurityIdentifier\">Exposure Map</a>)"
+            else:
+                user = x['User']
+
             out.append({
-                'User': x['User'],
+                'User': user,
                 'UserCriticality': f"{crit_level[x['UserCriticality']]}<br /><p><b>Rules:</b> {data.list_to_string(x['UserCriticalityRules'])}",
                 'UserTags': data.list_to_string(x['UserTags']),
                 'ElevatedRightsOn (Top 5)': data.list_to_string(x['ElevatedRightsOn']),

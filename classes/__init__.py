@@ -36,6 +36,7 @@ class BaseModule:
     def __init__(self):
         self.Accounts = []
         self.AccountsCount = 0
+        self.AccountsOnPrem = []
         self.Alerts = []
         self.Domains = []
         self.DomainsCount = 0
@@ -85,6 +86,7 @@ class BaseModule:
     def load_from_input(self, basebody):
         self.Accounts = basebody['Accounts']
         self.AccountsCount = basebody['AccountsCount']
+        self.AccountsOnPrem = basebody.get('AccountsOnPrem', [])
         self.Alerts = basebody.get('Alerts', [])
         self.Domains = basebody['Domains']
         self.DomainsCount = basebody['DomainsCount']
@@ -136,6 +138,9 @@ class BaseModule:
 
     def add_account_entity(self, data):
         self.Accounts.append(data)
+
+    def add_onprem_account_entity(self, data):
+        self.AccountsOnPrem.append(data)
 
     def get_ip_list(self):
         ip_list = []
@@ -265,6 +270,12 @@ class BaseModule:
                 sid = data.coalesce(raw_entity.get('properties',{}).get('sid'), raw_entity.get('sid'), raw_entity.get('Sid'))
                 if sid:
                     account_list.append(sid)
+
+        for onprem_account in self.AccountsOnPrem:
+            try:
+                account_list.append(onprem_account['onPremisesSecurityIdentifier'])
+            except KeyError:
+                pass
         
         return account_list
 

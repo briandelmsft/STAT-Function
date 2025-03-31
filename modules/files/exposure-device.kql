@@ -21,14 +21,17 @@ selected_edges
  ComputerExposureScore=device.NodeProperties.rawData.exposureScore,
  ComputerManualTags=device.NodeProperties.rawData.deviceManualTags,
  ComputerDynamicTags=device.NodeProperties.rawData.deviceDynamicTags,
+ ComputerEntityIds=device.EntityIds,
  EdgeLabel=hasCreds.EdgeLabel,
  UsersOnDevice=coalesce(user.NodeProperties.rawData.accountUpn,user.NodeProperties.rawData.accountName,user.NodeProperties.rawData.distinguishedName,user.NodeProperties.rawData.accountDisplayName,user.NodeProperties.rawData.accountObjectId),
  UserCrit=toint(coalesce(user.NodeProperties.rawData.criticalityLevel.criticalityLevel, dynamic(3))),
  UserCriticalityRules=user.NodeProperties.rawData.criticalityLevel.ruleNames,
  UserTags=user.NodeProperties.rawData.tags,
+ UserNodeLabel = user.NodeLabel,
+ UserEntityIds=user.EntityIds,
  device, user
 | extend ComputerTags = array_concat(ComputerManualTags, ComputerDynamicTags)
 | where array_length(set_difference(EdgeLabel, dynamic(['contains']))) > 0
 | sort by ComputerCrit asc, UserCrit asc, Computer asc
-| project Computer, ComputerCrit, ComputerCriticalityRules, ComputerRiskScore, ComputerExposureScore, ComputerMaxCVSSScore, ComputerOnboarding, ComputerSensorHealth, ComputerTags
-    , UsersOnDevice, UserCrit, UserCriticalityRules, UserTags //, device, user, EdgeLabel
+| project Computer, ComputerCrit, ComputerCriticalityRules, ComputerRiskScore, ComputerExposureScore, ComputerMaxCVSSScore, ComputerOnboarding, ComputerSensorHealth, ComputerTags, ComputerEntityIds
+    , UsersOnDevice, UserCrit, UserCriticalityRules, UserTags, UserNodeLabel, UserEntityIds //, device, user, EdgeLabel
