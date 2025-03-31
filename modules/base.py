@@ -175,7 +175,7 @@ def enrich_accounts(entities):
         upn_suffix = data.coalesce(account.get('properties',{}).get('upnSuffix'), account.get('UPNSuffix'))
         account_name = data.coalesce(account.get('properties',{}).get('accountName'), account.get('Name'))
         friendly_name = data.coalesce(account.get('properties',{}).get('friendlyName'), account.get('DisplayName'), account.get('Name'))
-        sid = data.coalesce(account.get('properties',{}).get('sid'), account.get('Sid'))
+        sid = data.coalesce(account.get('properties',{}).get('sid'), account.get('Sid'), account.get('sid'))
         nt_domain = data.coalesce(account.get('properties',{}).get('ntDomain'), account.get('NTDomain'))
         object_guid = data.coalesce(account.get('properties',{}).get('objectGuid'), account.get('ObjectGuid'))
         properties = data.coalesce(account.get('properties'), account)
@@ -259,6 +259,12 @@ def get_account_by_upn_or_id(account, attributes, properties, enrich_method:str=
         append_account_details(account, user_info, properties, enrich_method)
 
 def get_account_by_mail(account, attributes, properties, enrich_method:str='Mail'):
+    query = f'''union isfuzzy=true
+(datatable(userPrincipalName:string)[]),
+(IdentityInfo
+| where AccountUPN =~ '{account}'
+| summarize arg_max(TimeGenerated, *) by AccountUPN
+| project userPrincipalName=AccountUPN, id=AccountObjectId, onPremisesSecurityIdentifier=AccountSID, onPremisesDistinguishedName=OnPremisesDistinguishedName, onPremisesDomainName=AccountDomain, onPremisesSamAccountName=AccountName, mail=MailAddress, department=Department, jobTitle=JobTitle, accountEnabled=IsAccountEnabled, manager=Manager)'''
     try:
         user_info = json.loads(rest.rest_call_get(base_object, api='msgraph', path=f'''/v1.0/users?$filter=(mail%20eq%20'{account}')&$select={attributes}''').content)
     except STATError:
@@ -267,24 +273,43 @@ def get_account_by_mail(account, attributes, properties, enrich_method:str='Mail
         if user_info['value']:
             append_account_details(account, user_info['value'][0], properties, enrich_method)
         else:
-            base_object.add_account_entity({'EnrichmentMethod': f'{enrich_method} - No Match', 'RawEntity': properties})
+            results = rest.execute_la_query(base_object, query, 14)
+            if results:
+                user = results[0]
+                user['EnrichmentMethod'] = f'UPN-IdentityInfo'
+                base_object.add_onprem_account_entity(user)
+            else:
+                base_object.add_account_entity({'EnrichmentMethod': f'UPN-IdentityInfo - No Match', 'RawEntity': properties})
+            #base_object.add_account_entity({'EnrichmentMethod': f'{enrich_method} - No Match', 'RawEntity': properties})
 
 def get_account_by_dn(account, attributes, properties, enrich_method:str='DN'):
 
     query = f'''union isfuzzy=true
-(datatable(test:string)[]),
+(datatable(onPremisesDistinguishedName:string)[]),
 (IdentityInfo
 | where OnPremisesDistinguishedName =~ '{account}'
 | summarize arg_max(TimeGenerated, *) by OnPremisesDistinguishedName
-| project AccountUPN)'''
+| project userPrincipalName=AccountUPN, id=AccountObjectId, onPremisesSecurityIdentifier=AccountSID, onPremisesDistinguishedName=OnPremisesDistinguishedName, onPremisesDomainName=AccountDomain, onPremisesSamAccountName=AccountName, mail=MailAddress, department=Department, jobTitle=JobTitle, accountEnabled=IsAccountEnabled, manager=Manager)'''
 
     results = rest.execute_la_query(base_object, query, 14)
-    if results:
-        get_account_by_upn_or_id(results[0]['AccountUPN'], attributes, properties, enrich_method)
+    if results and results[0]['id']:
+        get_account_by_upn_or_id(results[0]['userPrincipalName'], attributes, properties, enrich_method)
+    elif results:
+        user = results[0]
+        user['EnrichmentMethod'] = f'DN-IdentityInfo'
+        base_object.add_onprem_account_entity(user)
     else:
         base_object.add_account_entity({'EnrichmentMethod': f'{enrich_method} - No Match', 'RawEntity': properties})
 
 def get_account_by_sid(account, attributes, properties, enrich_method:str='SID'):
+
+    query = f'''union isfuzzy=true
+(datatable(onPremisesSecurityIdentifier:string)[]),
+(IdentityInfo
+| where AccountSID =~ '{account}'
+| summarize arg_max(TimeGenerated, *) by AccountSID
+| project userPrincipalName=AccountUPN, id=AccountObjectId, onPremisesSecurityIdentifier=AccountSID, onPremisesDistinguishedName=OnPremisesDistinguishedName, onPremisesDomainName=AccountDomain, onPremisesSamAccountName=AccountName, mail=MailAddress, department=Department, jobTitle=JobTitle, accountEnabled=IsAccountEnabled, manager=Manager)'''
+
     try:
         user_info = json.loads(rest.rest_call_get(base_object, api='msgraph', path=f'''/v1.0/users?$filter=(onPremisesSecurityIdentifier%20eq%20'{account}')&$select={attributes}''').content)
     except STATError:
@@ -293,19 +318,31 @@ def get_account_by_sid(account, attributes, properties, enrich_method:str='SID')
         if user_info['value']:
             append_account_details(account, user_info['value'][0], properties, enrich_method)
         else:
-            base_object.add_account_entity({'EnrichmentMethod': f'{enrich_method} - No Match', 'RawEntity': properties})
+            results = rest.execute_la_query(base_object, query, 14)
+            if results:
+                user = results[0]
+                user['EnrichmentMethod'] = f'SID-IdentityInfo'
+                base_object.add_onprem_account_entity(user)
+            else:
+                base_object.add_account_entity({'EnrichmentMethod': f'SID-IdentityInfo - No Match', 'RawEntity': properties})
 
 def get_account_by_samaccountname(account, attributes, properties, enrich_method:str='SAMAccountName'):
     query = f'''union isfuzzy=true
-(datatable(test:string)[]),
+(datatable(onPremisesSecurityIdentifier:string)[]),
 (IdentityInfo
 | where AccountName =~ '{account}'
-| summarize arg_max(TimeGenerated, *) by AccountName
-| project AccountUPN)'''
+| summarize arg_max(TimeGenerated, *) by AccountSID, AccountObjectId
+| project userPrincipalName=AccountUPN, id=AccountObjectId, onPremisesSecurityIdentifier=AccountSID, onPremisesDistinguishedName=OnPremisesDistinguishedName, onPremisesDomainName=AccountDomain, onPremisesSamAccountName=AccountName, mail=MailAddress, department=Department, jobTitle=JobTitle, accountEnabled=IsAccountEnabled, manager=Manager)'''
 
     results = rest.execute_la_query(base_object, query, 14)
-    if results:
-        get_account_by_upn_or_id(results[0]['AccountUPN'], attributes, properties, enrich_method)
+    if len(results) == 1 and results[0].get('id'):
+        get_account_by_upn_or_id(results[0]['id'], attributes, properties, enrich_method)
+    elif len(results) == 1:
+        user = results[0]
+        user['EnrichmentMethod'] = f'SAMAccountName-IdentityInfo'
+        base_object.add_onprem_account_entity(user)
+    elif len(results) > 1:
+        base_object.add_account_entity({'EnrichmentMethod': f'{enrich_method} - Multiple Matches', 'RawEntity': properties})
     else:
         base_object.add_account_entity({'EnrichmentMethod': f'{enrich_method} - No Match', 'RawEntity': properties})
 
@@ -413,6 +450,11 @@ def get_account_comment():
                              'AADRoles': account.get('AssignedRoles'), 'ManagerUPN': account.get('manager', {}).get('userPrincipalName'), \
                              'MfaRegistered': account.get('isMfaRegistered'), 'SSPREnabled': account.get('isSSPREnabled'), \
                              'SSPRRegistered': account.get('isSSPRRegistered')})
+        
+    for onprem_acct in base_object.AccountsOnPrem:
+        account_list.append(
+            {'UserPrincipalName': data.coalesce(onprem_acct.get('userPrincipalName'),onprem_acct.get('onPremisesSamAccountName')), 'Department': onprem_acct.get('department'), 'JobTitle': onprem_acct.get('jobTitle'), 'ManagerUPN': onprem_acct.get('manager'), 'Notes': 'On-Prem - No Entra Sync'}
+        )
         
     return data.list_to_html_table(account_list, 20, 20, escape_html=False)
 

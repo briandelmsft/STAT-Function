@@ -31,12 +31,48 @@ def execute_device_exposure_module (req_body):
         out = []
 
         for x in exp_object.DetailedResults:
+
+            device_id = None
+
+            for dev_id in x.get('ComputerEntityIds', []):
+                if dev_id['type'] == 'DeviceInventoryId':
+                    device_id = dev_id['id']
+                    break
+
+            if device_id:
+                computer = f"<a href=\"https://security.microsoft.com/machines/v2/{device_id}/overview\" target=\"_blank\">{x['Computer']}</a><br />(<a href=\"https://security.microsoft.com/security-graph?id={device_id}&assetType=DeviceInventoryId\">Exposure Map</a>)"
+            else:
+                computer = x['Computer']
+
+            sid = None
+            entra_sid = None
+            aadid = None
+
+            for acct_id in x.get('UserEntityIds', []):
+                if acct_id['type'] == 'SecurityIdentifier':
+                    if acct_id.get('id').startswith('S-1-12-'):
+                        entra_sid = acct_id['id']
+                    else:
+                        sid = acct_id['id']
+                elif acct_id['type'] == 'AadObjectId':
+                    aadid = data.parse_kv_string(acct_id['id']).get('objectid')
+
+            if aadid:
+                user_on_device = f"<a href=\"https://security.microsoft.com/user?aad={aadid}&tab=overview\" target=\"_blank\">{x['UsersOnDevice']}</a>"
+            elif sid:
+                user_on_device = f"<a href=\"https://security.microsoft.com/user?sid={sid}&tab=overview\" target=\"_blank\">{x['UsersOnDevice']}</a>"
+            else:
+                user_on_device = x['UsersOnDevice']
+
+            if x['UserNodeLabel'] == 'managedidentity':
+                user_on_device += f"<br />(Managed Identity)"
+
             out.append({
-                'Computer': x['Computer'],
+                'Computer': computer,
                 'ComputerCriticality': f"{crit_level[x['ComputerCrit']]}<br /><p><b>Rules:</b> {data.list_to_string(x['ComputerCriticalityRules'])}",
                 'ComputerInfo': f"<b>Risk Level:</b> {x['ComputerRiskScore']}<br /><b>Exposure Level:</b> {x['ComputerExposureScore']}<br /><b>Max CVSS Score:</b> {x['ComputerMaxCVSSScore']}<br /><b>Onboarding:</b> {x['ComputerOnboarding']}<br /><b>Sensor:</b> {x['ComputerSensorHealth']}",
                 'ComputerTags': data.list_to_string(x['ComputerTags']),
-                'UsersOnDevice': x['UsersOnDevice'],
+                'UsersOnDevice': user_on_device,
                 'UserCriticality': f"{crit_level[x['UserCrit']]}<br /><p><b>Rules:</b> {data.list_to_string(x['UserCriticalityRules'])}",
                 'UserTags': data.list_to_string(x['UserTags']),
             })

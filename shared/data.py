@@ -187,3 +187,22 @@ def list_to_string(list_in, delimiter:str=', ', empty_str:str='N/A'):
         return delimiter.join(list_in)
     except:
         return list_in
+    
+def parse_kv_string(kv:str, item_delimitter:str=';', value_delimitter:str='='):
+    """
+    Parse a string of key-value pairs into a dictionary.
+    :param kv: The string to parse.
+    :param item_delimitter: The delimiter between items. Default is ';'.
+    :param value_delimitter: The delimiter between key and value. Default is '='.
+    :return: A dictionary of key-value pairs.
+    """
+
+    kv_pairs = kv.split(item_delimitter)
+    result = {}
+    for pair in kv_pairs:
+        if value_delimitter in pair:
+            key, value = pair.split(value_delimitter, 1)
+            result[key.strip()] = value.strip()
+        else:
+            result[pair.strip()] = None
+    return result
