@@ -24,4 +24,4 @@ selected_edges
 | extend RightsOnDevice = EdgeProperties[-1].rawData.userRightsOnDevice
 | extend isLocalAdmin = tobool(RightsOnDevice.isLocalAdmin)
 | sort by UserCriticality asc, ComputerCriticality asc
-| summarize ElevatedRightsOn=make_set(Computer, 5), UserCriticality=min(UserCriticality), UserCriticalityRules=make_set(UserCriticalityRules), UserTags=make_set(UserTags), HighestComputerCriticality=min(ComputerCriticality), LocalAdminCount=dcountif(Computer, isLocalAdmin), ComputerCriticalityRules=make_set(ComputerCriticalityRules), UserEntityIds=make_set(UserEntityIds) by tostring(User)
+| summarize ElevatedRightsOn=make_set(Computer, 5), ElevatedRightsOnCount=count_distinct(Computer), UserCriticality=min(UserCriticality), UserCriticalityRules=make_set(UserCriticalityRules), UserTags=make_set(UserTags), HighestComputerCriticality=min(ComputerCriticality), LocalAdminCount=dcountif(Computer, isLocalAdmin), ComputerCriticalityRules=make_set(ComputerCriticalityRules), UserEntityIds=make_set(UserEntityIds) by tostring(User)

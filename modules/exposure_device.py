@@ -69,12 +69,13 @@ def execute_device_exposure_module (req_body):
 
             out.append({
                 'Computer': computer,
-                'ComputerCriticality': f"{crit_level[x['ComputerCrit']]}<br /><p><b>Rules:</b> {data.list_to_string(x['ComputerCriticalityRules'])}",
-                'ComputerInfo': f"<b>Risk Level:</b> {x['ComputerRiskScore']}<br /><b>Exposure Level:</b> {x['ComputerExposureScore']}<br /><b>Max CVSS Score:</b> {x['ComputerMaxCVSSScore']}<br /><b>Onboarding:</b> {x['ComputerOnboarding']}<br /><b>Sensor:</b> {x['ComputerSensorHealth']}",
-                'ComputerTags': data.list_to_string(x['ComputerTags']),
+                'Computer Details': f"<b>Criticality:</b><br /> {crit_level[x['ComputerCrit']]}<br /><p><b>Asset Rules:</b> {data.list_to_string(x['ComputerCriticalityRules'])}<br /><b>Computer Tags:</b> {data.list_to_string(x['ComputerTags'])}<p><b>Risk Level:</b> {x['ComputerRiskScore']}<br /><b>Exposure Level:</b> {x['ComputerExposureScore']}<br /><b>Max CVSS Score:</b> {x['ComputerMaxCVSSScore']}<br /><b>Onboarding:</b> {x['ComputerOnboarding']}<br /><b>Sensor:</b> {x['ComputerSensorHealth']}",
+                #'ComputerCriticality': f"{crit_level[x['ComputerCrit']]}<br /><p><b>Rules:</b> {data.list_to_string(x['ComputerCriticalityRules'])}<br /><b>Computer Tags:</b> {data.list_to_string(x['ComputerTags'])}",
+                #'ComputerInfo': f"<b>Risk Level:</b> {x['ComputerRiskScore']}<br /><b>Exposure Level:</b> {x['ComputerExposureScore']}<br /><b>Max CVSS Score:</b> {x['ComputerMaxCVSSScore']}<br /><b>Onboarding:</b> {x['ComputerOnboarding']}<br /><b>Sensor:</b> {x['ComputerSensorHealth']}",
+                #'ComputerTags': data.list_to_string(x['ComputerTags']),
                 'UsersOnDevice': user_on_device,
-                'UserCriticality': f"{crit_level[x['UserCrit']]}<br /><p><b>Rules:</b> {data.list_to_string(x['UserCriticalityRules'])}",
-                'UserTags': data.list_to_string(x['UserTags']),
+                'UserCriticality': f"{crit_level[x['UserCrit']]}<br /><p><b>Asset Rules:</b> {data.list_to_string(x['UserCriticalityRules'])}<br /><b>User Tags:</b> {data.list_to_string(x['UserTags'])}",
+                #'UserTags': data.list_to_string(x['UserTags']),
             })
 
         html_table = data.list_to_html_table(out, index=False, max_cols=20, escape_html=False)

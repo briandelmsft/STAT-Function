@@ -180,12 +180,16 @@ def load_text_from_file(file_name:str, **kwargs):
     with open(pathlib.Path(__file__).parent.parent / f'modules/files/{file_name}') as f:
         return f.read().format(**kwargs)
 
-def list_to_string(list_in, delimiter:str=', ', empty_str:str='N/A'):
+def list_to_string(list_in:list, delimiter:str=', ', empty_str:str='N/A'):
     if not list_in:
         return empty_str
-    try:
-        return delimiter.join(list_in)
-    except:
+        
+    if isinstance(list_in, list):
+        try:
+            return delimiter.join(list_in)
+        except:
+            return list_in
+    else:
         return list_in
     
 def parse_kv_string(kv:str, item_delimitter:str=';', value_delimitter:str='='):
