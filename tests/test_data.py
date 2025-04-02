@@ -100,6 +100,27 @@ def test_html_remove_empty_col():
     expected_output = '<tableborder="1"class="dataframe"><thead><trstyle="text-align:left;"><th>All</th><th>NotAllEmpty</th></tr></thead><tbody><tr><td>a</td><td>a</td></tr><tr><td>b</td><td></td></tr></tbody></table>'
     assert table == expected_output
 
+def test_list_to_string():
+    list_data = ['a', 'b', 'c']
+    string_data = data.list_to_string(list_data)
+    assert string_data == 'a, b, c'
+
+def test_list_to_string_empty():
+    list_data = []
+    string_data = data.list_to_string(list_data)
+    assert string_data == 'N/A'
+
+def test_list_to_string_non_list_str():
+    list_data = 'abcde'
+    string_data = data.list_to_string(list_data)
+    assert string_data == 'abcde'
+
+def test_parse_kv_string():
+    kvdata = 'key1=value1;key2=value2;key3=value3'
+    parsed_data = data.parse_kv_string(kvdata)
+    assert parsed_data['key1'] == 'value1'
+    assert parsed_data['key2'] == 'value2'
+
 def list_data():
     test_data = [
         {

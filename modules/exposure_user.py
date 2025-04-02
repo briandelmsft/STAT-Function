@@ -54,11 +54,9 @@ def execute_user_exposure_module (req_body):
 
             out.append({
                 'User': user,
-                'UserCriticality': f"{crit_level[x['UserCriticality']]}<br /><p><b>Rules:</b> {data.list_to_string(x['UserCriticalityRules'])}",
-                'UserTags': data.list_to_string(x['UserTags']),
-                'ElevatedRightsOn (Top 5)': data.list_to_string(x['ElevatedRightsOn']),
-                "HighestComputerCriticality": f"{crit_level[x['HighestComputerCriticality']]}<br /><p><b>Rules: </b> {data.list_to_string(x['ComputerCriticalityRules'])}",
-                "LocalAdminCount": x['LocalAdminCount']
+                'UserCriticality': f"{crit_level[x['UserCriticality']]}<br /><p><b>Asset Rules:</b> {data.list_to_string(x['UserCriticalityRules'])}<br /><p><b>User Tags:</b> {data.list_to_string(x['UserTags'])}",
+                'ElevatedRightsOn (Top 5)': f"{data.list_to_string(x['ElevatedRightsOn'])}<p><b>Elevated Rights to Computers:</b> {x['ElevatedRightsOnCount']}<br /><b>Local Admin to Computers:</b> {x['LocalAdminCount']}",
+                "HighestComputerCriticality": f"{crit_level[x['HighestComputerCriticality']]}<br /><p><b>Combined Asset Rules:</b> {data.list_to_string(x['ComputerCriticalityRules'])}"
             })
 
             try:
