@@ -609,22 +609,52 @@ class DeviceExposureModule:
     def __init__(self):
         self.AnalyzedEntities = 0
         self.ModuleName = 'DeviceExposureModule'
-        self.DetailedResults = []
+        self.Nodes = []
+        self.Paths = []
 
     def load_from_input(self, body):
         self.AnalyzedEntities = body['AnalyzedEntities']
-        self.DetailedResults = body['DetailedResults']
+        self.Nodes = body['Nodes']
+        self.Paths = body['Paths']
+
+    def nodes_without_paths(self):
+        '''Only returns nodes where no path from node is present'''
+        out = []
+        path_nodes = []
+        for path in self.Paths:
+            path_nodes.append(path['ComputerNodeId'])
+
+        for node in self.Nodes:
+            if node['ComputerNodeId'] not in path_nodes:
+                out.append(node)
+
+        return out
 
 class UserExposureModule:
     '''An User Exposure module object'''
     def __init__(self):
         self.AnalyzedEntities = 0
         self.ModuleName = 'UserExposureModule'
-        self.DetailedResults = []
+        self.Nodes = []
+        self.Paths = []
 
     def load_from_input(self, body):
         self.AnalyzedEntities = body['AnalyzedEntities']
-        self.DetailedResults = body['DetailedResults']
+        self.Nodes = body['Nodes']
+        self.Paths = body['Paths']
+
+    def nodes_without_paths(self):
+        '''Only returns nodes where no path from node is present'''
+        out = []
+        path_nodes = []
+        for path in self.Paths:
+            path_nodes.append(path['UserNodeId'])
+
+        for node in self.Nodes:
+            if node['UserNodeId'] not in path_nodes:
+                out.append(node)
+                
+        return out
 
 class CreateIncident:
     '''A CreateIncident object'''
