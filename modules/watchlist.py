@@ -23,7 +23,7 @@ def execute_watchlist_module (req_body):
         raise STATError(f'The watchlist name {watchlist_object.WatchlistName} is invalid.', {})
     
     if watchlist_datatype == 'UPN':
-        account_entities = base_object.get_account_upn_list()
+        account_entities = base_object.get_account_upn_list(include_unsynced=True)
         query = f'''let accountUpns = dynamic({account_entities});
 print UserPrincipalName = accountUpns
 | mv-expand UserPrincipalName
