@@ -17,17 +17,20 @@ def execute_ueba_module (req_body):
 
     query = f'''let minPriority = {min_priority};
 let lookback = {lookback}d;
-{base_object.get_account_kql_table()}let accountIds = accountEntities
+{base_object.get_account_kql_table(include_unsynced=True)}let accountIds = accountEntities
 | summarize UserNames=make_set(SamAccountName), UPNs=make_set(UserPrincipalName)
 | extend ids = array_concat(UserNames, UPNs);
+let UPNs = accountIds | mv-expand UPNs | where isnotempty(UPNs) | summarize UPNs=make_set(UPNs);
+let UserNames = accountIds | mv-expand UserNames | where isnotempty(UserNames) | summarize UserNames=make_set(UserNames);
 let userDetails = BehaviorAnalytics
 | where TimeGenerated > ago(lookback)
-| join kind=inner (accountEntities) on UserPrincipalName
-| where InvestigationPriority >= minPriority or isnotnull(DevicesInsights.ThreatIntelIndicatorType) 
+| where UserPrincipalName has_any (UPNs) or UserName has_any (UserNames)
+| where InvestigationPriority >= minPriority or isnotnull(DevicesInsights.ThreatIntelIndicatorType)
+| extend UserPrincipalName = coalesce(UserPrincipalName, UserName)
 | summarize InvestigationPrioritySum=sum(InvestigationPriority), InvestigationPriorityAverage=avg(InvestigationPriority), InvestigationPriorityMax=max(InvestigationPriority), ThreatIntelMatches=countif(isnotnull(DevicesInsights.ThreatIntelIndicatorType)), EventCount=count() by UserPrincipalName;
 let userAnomalies = Anomalies
 | where TimeGenerated > ago(lookback)
-| where UserPrincipalName in~ (accountIds) or UserName in~ (accountIds)
+| where UserPrincipalName in~ (UPNs) or UserName in~ (UserNames)
 | mv-expand todynamic(Tactics)
 | summarize AnomalyTactics=make_set(Tactics), AnomalyCount=dcount(Id, 4)
 | extend UserPrincipalName="Total";
