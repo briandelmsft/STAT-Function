@@ -279,13 +279,21 @@ class BaseModule:
         
         return account_list
 
-    def get_account_upn_list(self):
+    def get_account_upn_list(self, include_unsynced:bool=True):
+        '''Returns a list of all UPNs, including unsynced accounts accounts'''
         account_list = []
         for account in self.Accounts:
             try:
                 account_list.append(account['userPrincipalName'])
             except KeyError:
                 pass
+
+        if include_unsynced:
+            for onprem_account in self.AccountsOnPrem:
+                try:
+                    account_list.append(onprem_account['userPrincipalName'])
+                except KeyError:
+                    pass
         
         return account_list
     
@@ -653,7 +661,7 @@ class UserExposureModule:
         for node in self.Nodes:
             if node['UserNodeId'] not in path_nodes:
                 out.append(node)
-                
+
         return out
 
 class CreateIncident:

@@ -23,9 +23,10 @@ def execute_watchlist_module (req_body):
         raise STATError(f'The watchlist name {watchlist_object.WatchlistName} is invalid.', {})
     
     if watchlist_datatype == 'UPN':
-        account_entities = base_object.get_account_kql_table()
-        query = account_entities +  f'''accountEntities
-| project UserPrincipalName
+        account_entities = base_object.get_account_upn_list()
+        query = f'''let accountUpns = dynamic({account_entities});
+print UserPrincipalName = accountUpns
+| mv-expand UserPrincipalName
 | extend UserPrincipalName = tolower(UserPrincipalName)
 | join kind=leftouter (_GetWatchlist("{watchlist_object.WatchlistName}")
 | extend {watchlist_key} = tolower({watchlist_key})) on $left.UserPrincipalName == $right.{watchlist_key}
