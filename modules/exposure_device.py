@@ -17,7 +17,8 @@ def execute_device_exposure_module (req_body):
         query = data.load_text_from_file('exposure-device.kql', mde_id_list=mde_ids)
         response = rest.execute_m365d_query(base_object, query)
 
-        exp_object.DetailedResults = response
+        exp_object.Nodes = list(filter(lambda x: x['NodeType'] == 'Node', response))
+        exp_object.Paths = list(filter(lambda x: x['NodeType'] == 'Path', response))
 
     crit_level = {
         0: 'Very High<br />🟥🟥🟥🟥',
@@ -30,19 +31,7 @@ def execute_device_exposure_module (req_body):
 
         out = []
 
-        for x in exp_object.DetailedResults:
-
-            device_id = None
-
-            for dev_id in x.get('ComputerEntityIds', []):
-                if dev_id['type'] == 'DeviceInventoryId':
-                    device_id = dev_id['id']
-                    break
-
-            if device_id:
-                computer = f"<a href=\"https://security.microsoft.com/machines/v2/{device_id}/overview\" target=\"_blank\">{x['Computer']}</a><br />(<a href=\"https://security.microsoft.com/security-graph?id={device_id}&assetType=DeviceInventoryId\">Exposure Map</a>)"
-            else:
-                computer = x['Computer']
+        for x in exp_object.Paths:
 
             sid = None
             entra_sid = None
@@ -68,19 +57,36 @@ def execute_device_exposure_module (req_body):
                 user_on_device += f"<br />(Managed Identity)"
 
             out.append({
-                'Computer': computer,
+                'Computer': get_device_link(x),
                 'Computer Details': f"<b>Criticality:</b><br /> {crit_level[x['ComputerCrit']]}<br /><p><b>Asset Rules:</b> {data.list_to_string(x['ComputerCriticalityRules'])}<br /><b>Computer Tags:</b> {data.list_to_string(x['ComputerTags'])}<p><b>Risk Level:</b> {x['ComputerRiskScore']}<br /><b>Exposure Level:</b> {x['ComputerExposureScore']}<br /><b>Max CVSS Score:</b> {x['ComputerMaxCVSSScore']}<br /><b>Onboarding:</b> {x['ComputerOnboarding']}<br /><b>Sensor:</b> {x['ComputerSensorHealth']}",
-                #'ComputerCriticality': f"{crit_level[x['ComputerCrit']]}<br /><p><b>Rules:</b> {data.list_to_string(x['ComputerCriticalityRules'])}<br /><b>Computer Tags:</b> {data.list_to_string(x['ComputerTags'])}",
-                #'ComputerInfo': f"<b>Risk Level:</b> {x['ComputerRiskScore']}<br /><b>Exposure Level:</b> {x['ComputerExposureScore']}<br /><b>Max CVSS Score:</b> {x['ComputerMaxCVSSScore']}<br /><b>Onboarding:</b> {x['ComputerOnboarding']}<br /><b>Sensor:</b> {x['ComputerSensorHealth']}",
-                #'ComputerTags': data.list_to_string(x['ComputerTags']),
                 'UsersOnDevice': user_on_device,
-                'UserCriticality': f"{crit_level[x['UserCrit']]}<br /><p><b>Asset Rules:</b> {data.list_to_string(x['UserCriticalityRules'])}<br /><b>User Tags:</b> {data.list_to_string(x['UserTags'])}",
-                #'UserTags': data.list_to_string(x['UserTags']),
+                'UserCriticality': f"{crit_level[x['UserCrit']]}<br /><p><b>Asset Rules:</b> {data.list_to_string(x['UserCriticalityRules'])}<br /><b>User Tags:</b> {data.list_to_string(x['UserTags'])}"
             })
 
-        html_table = data.list_to_html_table(out, index=False, max_cols=20, escape_html=False)
+        for x in exp_object.nodes_without_paths():
+            out.append({
+                'Computer': get_device_link(x),
+                'Computer Details': f"<b>Criticality:</b><br /> {crit_level[x['ComputerCrit']]}<br /><p><b>Asset Rules:</b> {data.list_to_string(x['ComputerCriticalityRules'])}<br /><b>Computer Tags:</b> {data.list_to_string(x['ComputerTags'])}<p><b>Risk Level:</b> {x['ComputerRiskScore']}<br /><b>Exposure Level:</b> {x['ComputerExposureScore']}<br /><b>Max CVSS Score:</b> {x['ComputerMaxCVSSScore']}<br /><b>Onboarding:</b> {x['ComputerOnboarding']}<br /><b>Sensor:</b> {x['ComputerSensorHealth']}"
+            })
 
-        comment = f'<h3>Device Exposure Module</h3>{html_table}<br />'
+        comment = f'<h3>Device Exposure Module</h3>'
+        if out:
+            html_table = data.list_to_html_table(out, index=False, max_cols=20, escape_html=False)
+            comment += html_table
+        else:
+            comment += f'No Device Exposure Results Detected'
+        
         comment_result = rest.add_incident_comment(base_object, comment)
 
     return Response(exp_object)
+
+def get_device_link(x):
+    for dev_id in x.get('ComputerEntityIds', []):
+        if dev_id['type'] == 'DeviceInventoryId':
+            device_id = dev_id['id']
+            break
+
+    if device_id:
+        return f"<a href=\"https://security.microsoft.com/machines/v2/{device_id}/overview\" target=\"_blank\">{x['Computer']}</a><br />(<a href=\"https://security.microsoft.com/security-graph?id={device_id}&assetType=DeviceInventoryId\">Exposure Map</a>)"
+    else:
+        return x['Computer']
