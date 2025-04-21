@@ -66,7 +66,8 @@ def execute_device_exposure_module (req_body):
         for x in exp_object.nodes_without_paths():
             out.append({
                 'Computer': get_device_link(x),
-                'Computer Details': f"<b>Criticality:</b><br /> {crit_level[x['ComputerCrit']]}<br /><p><b>Asset Rules:</b> {data.list_to_string(x['ComputerCriticalityRules'])}<br /><b>Computer Tags:</b> {data.list_to_string(x['ComputerTags'])}<p><b>Risk Level:</b> {x['ComputerRiskScore']}<br /><b>Exposure Level:</b> {x['ComputerExposureScore']}<br /><b>Max CVSS Score:</b> {x['ComputerMaxCVSSScore']}<br /><b>Onboarding:</b> {x['ComputerOnboarding']}<br /><b>Sensor:</b> {x['ComputerSensorHealth']}"
+                'Computer Details': f"<b>Criticality:</b><br /> {crit_level[x['ComputerCrit']]}<br /><p><b>Asset Rules:</b> {data.list_to_string(x['ComputerCriticalityRules'])}<br /><b>Computer Tags:</b> {data.list_to_string(x['ComputerTags'])}<p><b>Risk Level:</b> {x['ComputerRiskScore']}<br /><b>Exposure Level:</b> {x['ComputerExposureScore']}<br /><b>Max CVSS Score:</b> {x['ComputerMaxCVSSScore']}<br /><b>Onboarding:</b> {x['ComputerOnboarding']}<br /><b>Sensor:</b> {x['ComputerSensorHealth']}",
+                'UsersOnDevice': "None Detected"
             })
 
         comment = f'<h3>Device Exposure Module</h3>'

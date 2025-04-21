@@ -25,7 +25,7 @@ def test_kql_sentinel_search():
         'KQLQuery': 'CommonSecurityLogAux_CL | take 5',
         'RunQueryAgainst': 'Sentinel',
         'QueryDescription': 'Test Query',
-        'LookbackInDays': 1,
+        'LookbackInDays': 7,
         'BaseModuleBody': get_base_module_body()
     }
     kql_response:Response = kql.execute_kql_module(kql_input)

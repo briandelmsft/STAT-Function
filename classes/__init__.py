@@ -186,13 +186,17 @@ class BaseModule:
 '''
         return kql
     
-    def get_account_kql_table(self):
+    def get_account_kql_table(self, include_unsynced:bool=False):
 
         account_data = []
 
         for account in self.Accounts:
             account_data.append({'userPrincipalName': account.get('userPrincipalName'), 'SamAccountName': account.get('onPremisesSamAccountName'), \
                                  'SID': account.get('onPremisesSecurityIdentifier'), 'id': account.get('id'), 'ManagerUPN': account.get('manager', {}).get('userPrincipalName')})
+        if include_unsynced:
+            for onprem_account in self.AccountsOnPrem:
+                account_data.append({'userPrincipalName': onprem_account.get('userPrincipalName', 'NoUPNFound'), 'SamAccountName': onprem_account.get('onPremisesSamAccountName'), \
+                                     'SID': onprem_account.get('onPremisesSecurityIdentifier'), 'id': onprem_account.get('id', 'NoIdFound'), 'ManagerUPN': 'NoManagerUpnFound'})
 
         encoded = urllib.parse.quote(json.dumps(account_data))
 
@@ -279,13 +283,21 @@ class BaseModule:
         
         return account_list
 
-    def get_account_upn_list(self):
+    def get_account_upn_list(self, include_unsynced:bool=False):
+        '''Returns a list of all UPNs, including unsynced accounts accounts'''
         account_list = []
         for account in self.Accounts:
             try:
                 account_list.append(account['userPrincipalName'])
             except KeyError:
                 pass
+
+        if include_unsynced:
+            for onprem_account in self.AccountsOnPrem:
+                try:
+                    account_list.append(onprem_account['userPrincipalName'])
+                except KeyError:
+                    pass
         
         return account_list
     
@@ -653,7 +665,7 @@ class UserExposureModule:
         for node in self.Nodes:
             if node['UserNodeId'] not in path_nodes:
                 out.append(node)
-                
+
         return out
 
 class CreateIncident:

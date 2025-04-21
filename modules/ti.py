@@ -21,13 +21,12 @@ def execute_ti_module (req_body):
     if check_domains and base_object.Domains:
         query = base_object.get_domain_kql_table() + '''domainEntities
 | extend DomainName = tolower(Domain)
-| join kind=inner (ThreatIntelligenceIndicator
-| extend DomainName = coalesce(DomainName, EmailSourceDomain)
-| where isnotempty(DomainName)
-| summarize arg_max(TimeGenerated, *) by IndicatorId
-| where Active
-| extend DomainName = tolower(DomainName)) on DomainName
-| project TIType="Domain", TIData=Domain, SourceSystem, Description, ThreatType, ConfidenceScore, IndicatorId'''
+| join kind=inner (ThreatIntelIndicators
+| where ObservableKey =~ "domain-name:value"
+| summarize LatestIndicatorTime = arg_max(TimeGenerated, *) by Id, ObservableValue
+| where IsActive and (ValidUntil > now() or isempty(ValidUntil))
+| extend DomainName = tolower(ObservableValue)) on DomainName
+| project TIType="Domain", TIData=DomainName, SourceSystem, Description=tostring(Data.description), ThreatType=tostring(array_strcat(Data.indicator_types, ', ')), ConfidenceScore=Confidence, IndicatorId=Id'''
         results = rest.execute_la_query(base_object, query, 14)
         ti_object.DetailedResults = ti_object.DetailedResults + results
         ti_object.DomainEntitiesCount = len(base_object.get_domain_list())
@@ -37,12 +36,12 @@ def execute_ti_module (req_body):
     if check_filehashes and base_object.FileHashes:
         query = base_object.get_filehash_kql_table() + '''hashEntities
 | extend FileHash = tolower(FileHash)
-| join kind=inner (ThreatIntelligenceIndicator
-| where isnotempty(FileHashValue)
-| summarize arg_max(TimeGenerated, *) by IndicatorId
-| where Active
-| extend FileHash = tolower(FileHashValue)) on FileHash
-| project TIType="FileHash", TIData=FileHash, SourceSystem, Description, ThreatType, ConfidenceScore, IndicatorId'''
+| join kind=inner (ThreatIntelIndicators
+| where ObservableKey in~ ("file:hashes.'SHA-1'","file:hashes.'SHA-256'","file:hashes.MD5","file:hashes.'MD5'")
+| summarize LatestIndicatorTime = arg_max(TimeGenerated, *) by Id, ObservableValue
+| where IsActive and (ValidUntil > now() or isempty(ValidUntil))
+| extend FileHash = tolower(ObservableValue)) on FileHash
+| project TIType="FileHash", TIData=FileHash, SourceSystem, Description=tostring(Data.description), ThreatType=tostring(array_strcat(Data.indicator_types, ', ')), ConfidenceScore=Confidence, IndicatorId=Id'''
         results = rest.execute_la_query(base_object, query, 14)
         ti_object.DetailedResults = ti_object.DetailedResults + results
         ti_object.FileHashEntitiesCount = len(base_object.get_filehash_list())
@@ -51,12 +50,13 @@ def execute_ti_module (req_body):
 
     if check_ips and base_object.IPs:
         query = base_object.get_ip_kql_table() + '''ipEntities
-| join kind=inner (ThreatIntelligenceIndicator
-| extend tiIP = coalesce(NetworkIP, NetworkSourceIP, NetworkDestinationIP, EmailSourceIpAddress)
-| where isnotempty(tiIP)
-| summarize arg_max(TimeGenerated, *) by IndicatorId
-| where Active) on $left.IPAddress == $right.tiIP
-| project TIType="IP", TIData=IPAddress, SourceSystem, Description, ThreatType, ConfidenceScore, IndicatorId'''
+| join kind=inner (ThreatIntelIndicators
+| where ObservableKey in~ ("network-traffic:src_ref.value","network-traffic:dst_ref.value","ipv4-addr:value","ipv6-addr:value")
+| summarize LatestIndicatorTime = arg_max(TimeGenerated, *) by Id, ObservableValue
+| where IsActive and (ValidUntil > now() or isempty(ValidUntil))
+| extend IPAddress = tolower(ObservableValue)
+) on IPAddress
+| project TIType="IP", TIData=IPAddress, SourceSystem, Description=tostring(Data.description), ThreatType=tostring(array_strcat(Data.indicator_types, ', ')), ConfidenceScore=Confidence, IndicatorId=Id'''
         results = rest.execute_la_query(base_object, query, 14)
         ti_object.DetailedResults = ti_object.DetailedResults + results
         ti_object.IPEntitiesCount = len(base_object.get_ip_list())
@@ -64,15 +64,26 @@ def execute_ti_module (req_body):
         ti_object.IPTIFound = bool(results)
 
     if check_urls and base_object.URLs:
-        query = base_object.get_url_kql_table() + '''urlEntities
+        query = base_object.get_url_kql_table() + '''let entities = urlEntities
 | extend Url = tolower(Url)
-| join kind=inner (ThreatIntelligenceIndicator
-| where isnotempty(Url)
-| summarize arg_max(TimeGenerated, *) by IndicatorId
-| where Active
-| extend Url = tolower(Url)) on Url
+| extend DomainName = parse_url(Url)
+| extend DomainName = coalesce(DomainName.Host, Url);
+union isfuzzy=true
+(entities
+| join kind=inner (ThreatIntelIndicators
+| where ObservableKey =~ "url:value"
+| summarize LatestIndicatorTime = arg_max(TimeGenerated, *) by Id, ObservableValue
+| where IsActive and (ValidUntil > now() or isempty(ValidUntil))
+| extend Url = tolower(ObservableValue)) on Url
 | extend Url = strcat('[', tostring(split(Url, '//')[0]), ']//', tostring(split(Url, '//')[1]))
-| project TIType="URL", TIData=Url, SourceSystem, Description, ThreatType, ConfidenceScore, IndicatorId'''
+| project TIType="URL", TIData=Url, SourceSystem, Description=tostring(Data.description), ThreatType=tostring(array_strcat(Data.indicator_types, ', ')), ConfidenceScore=Confidence, IndicatorId=Id),
+(entities
+| join kind=inner (ThreatIntelIndicators
+| where ObservableKey =~ "domain-name:value"
+| summarize LatestIndicatorTime = arg_max(TimeGenerated, *) by Id, ObservableValue
+| where IsActive and (ValidUntil > now() or isempty(ValidUntil))
+| extend DomainName = tolower(ObservableValue)) on DomainName
+| project TIType="Domain", TIData=DomainName, SourceSystem, Description=tostring(Data.description), ThreatType=tostring(array_strcat(Data.indicator_types, ', ')), ConfidenceScore=Confidence, IndicatorId=Id)'''
         results = rest.execute_la_query(base_object, query, 14)
         ti_object.DetailedResults = ti_object.DetailedResults + results
         ti_object.URLEntitiesCount = len(base_object.get_url_list())

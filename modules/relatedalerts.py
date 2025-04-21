@@ -37,7 +37,7 @@ def execute_relatedalerts_module (req_body):
 let currentIncidentAlerts = dynamic({str(base_object.get_alert_ids())});
 let isFusionIncident = {related_alerts.FusionIncident};
 let severityOrder = datatable (AlertSeverity:string, Order:int)['Informational', 1, 'Low', 2, 'Medium', 3, 'High', 4];
-{base_object.get_account_kql_table()}let accounts = toscalar(accountEntities
+{base_object.get_account_kql_table(include_unsynced=True)}let accounts = toscalar(accountEntities
 | where {check_accounts}
 | extend UPNName = split(UserPrincipalName,'@')[0]
 | extend EntityData = pack_array(UserPrincipalName, SamAccountName, ObjectSID, AADUserId, UPNName)
