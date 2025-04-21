@@ -64,15 +64,26 @@ def execute_ti_module (req_body):
         ti_object.IPTIFound = bool(results)
 
     if check_urls and base_object.URLs:
-        query = base_object.get_url_kql_table() + '''urlEntities
+        query = base_object.get_url_kql_table() + '''let entities = urlEntities
 | extend Url = tolower(Url)
+| extend DomainName = parse_url(Url)
+| extend DomainName = coalesce(DomainName.Host, Url);
+union isfuzzy=true
+(entities
 | join kind=inner (ThreatIntelIndicators
 | where ObservableKey =~ "url:value"
 | summarize LatestIndicatorTime = arg_max(TimeGenerated, *) by Id, ObservableValue
 | where IsActive and (ValidUntil > now() or isempty(ValidUntil))
 | extend Url = tolower(ObservableValue)) on Url
 | extend Url = strcat('[', tostring(split(Url, '//')[0]), ']//', tostring(split(Url, '//')[1]))
-| project TIType="URL", TIData=Url, SourceSystem, Description=tostring(Data.description), ThreatType=tostring(array_strcat(Data.indicator_types, ', ')), ConfidenceScore=Confidence, IndicatorId=Id'''
+| project TIType="URL", TIData=Url, SourceSystem, Description=tostring(Data.description), ThreatType=tostring(array_strcat(Data.indicator_types, ', ')), ConfidenceScore=Confidence, IndicatorId=Id),
+(entities
+| join kind=inner (ThreatIntelIndicators
+| where ObservableKey =~ "domain-name:value"
+| summarize LatestIndicatorTime = arg_max(TimeGenerated, *) by Id, ObservableValue
+| where IsActive and (ValidUntil > now() or isempty(ValidUntil))
+| extend DomainName = tolower(ObservableValue)) on DomainName
+| project TIType="Domain", TIData=DomainName, SourceSystem, Description=tostring(Data.description), ThreatType=tostring(array_strcat(Data.indicator_types, ', ')), ConfidenceScore=Confidence, IndicatorId=Id)'''
         results = rest.execute_la_query(base_object, query, 14)
         ti_object.DetailedResults = ti_object.DetailedResults + results
         ti_object.URLEntitiesCount = len(base_object.get_url_list())
