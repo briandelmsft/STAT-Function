@@ -548,7 +548,7 @@ class MDCAModule:
         self.TopUserThresholdCount = 0
         self.AnyThreatScoreTrendingUp = False
         self.ModuleName = 'MDCAModule'
-        self.Warning = "The Sentinel Triage AssistanT's (STAT) Microsoft Defender for Cloud Apps module has been deprecated. This is due to Microsoft's depreation of the MDCA investigation score. Please remove the MDCA module from your STAT Analysis."
+        self.Warning = "The Sentinel Triage AssistanT's (STAT) Microsoft Defender for Cloud Apps module has been deprecated. This is due to Microsoft's deprecation of the MDCA investigation score. Please remove the MDCA module from your STAT Analysis."
 
 class RunPlaybook:
     '''A RunPlaybook module object'''
