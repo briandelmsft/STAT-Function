@@ -14,6 +14,7 @@ def execute_user_exposure_module (req_body):
     user_ids = base_object.get_account_id_and_sid_list()
 
     if user_ids:
+        exp_object.AnalyzedEntities = len(user_ids)
         query = data.load_text_from_file('exposure-user.kql', user_id_list=user_ids)
         response = rest.execute_m365d_query(base_object, query)
 

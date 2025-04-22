@@ -14,6 +14,7 @@ def execute_device_exposure_module (req_body):
     mde_ids = base_object.get_host_mdeid_list()
 
     if mde_ids:
+        exp_object.AnalyzedEntities = len(mde_ids)
         query = data.load_text_from_file('exposure-device.kql', mde_id_list=mde_ids)
         response = rest.execute_m365d_query(base_object, query)
 
@@ -82,6 +83,7 @@ def execute_device_exposure_module (req_body):
     return Response(exp_object)
 
 def get_device_link(x):
+    device_id = None
     for dev_id in x.get('ComputerEntityIds', []):
         if dev_id['type'] == 'DeviceInventoryId':
             device_id = dev_id['id']
