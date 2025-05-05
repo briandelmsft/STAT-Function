@@ -24,7 +24,7 @@ union
  ComputerManualTags=device.NodeProperties.rawData.deviceManualTags,
  ComputerDynamicTags=device.NodeProperties.rawData.deviceDynamicTags,
  ComputerEntityIds=device.EntityIds,
- EdgeLabel=hasCreds.EdgeLabel,
+ EdgeLabel=map(hasCreds, EdgeLabel),
  UsersOnDevice=coalesce(user.NodeProperties.rawData.accountUpn,user.NodeProperties.rawData.accountName,user.NodeProperties.rawData.distinguishedName,user.NodeProperties.rawData.accountDisplayName,user.NodeProperties.rawData.accountObjectId),
  UserCrit=toint(coalesce(user.NodeProperties.rawData.criticalityLevel.criticalityLevel, dynamic(3))),
  UserCriticalityRules=user.NodeProperties.rawData.criticalityLevel.ruleNames,
