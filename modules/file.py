@@ -124,8 +124,21 @@ union
 
 
     if req_body.get('AddIncidentComments', True) and base_object.IncidentAvailable:
+
+        files = []
+        for file in file_object.DetailedResults:
+            if file.get("SHA256"):
+                file_name = f'<a href="https://security.microsoft.com/file/{file.get("SHA256")}/overview">{file.get("FileName","Unknown")}</a>'
+            else:
+                file_name = file.get("FileName","Unknown")
+            files.append({
+                'File': f'<b>Name:</b> {file_name}<br><b>File Size:</b> {file.get("FileSize")} bytes<br><b>ThreatName:</b> {file.get("ThreatName")}',
+                'Signing': f'<b>Signer:</b> {file.get("Signer")}<br><b>Is Cert Valid:</b> {file.get("IsCertificateValid")}',
+                'Observations': f'<b>Global First Seen:</b> {file.get("GlobalFirstSeen")}<br><b>Global Last Seen:</b> {file.get("GlobalLastSeen")}<br><b>Global Prevalence:</b> {file.get("GlobalPrevalence")}<br><b>Email Attachment Count:</b> {file.get("EmailAttachmentCount", 0)}<br><b>Email Attachment First Seen:</b> {file.get("EmailAttachmentFirstSeen", "N/A")}<br><b>Email Attachment Last Seen:</b> {file.get("EmailAttachmentLastSeen", "N/A")}<br><b>DeviceUniqueDeviceCount:</b> {file.get("DeviceUniqueDeviceCount", "N/A")}<br><b>DeviceUniqueFileNameCount:</b> {file.get("DeviceUniqueFileNameCount", "N/A")}<br><b>DeviceFileActionCount:</b> {file.get("DeviceFileActionCount", "N/A")}',
+                'Hashes': f'<b>SHA1:</b> {file.get("SHA1", "Unknown")}<br><b>SHA256:</b> {file.get("SHA256", "Unknown")}<br>'
+            })
         
-        html_table = data.list_to_html_table(file_object.DetailedResults)
+        html_table = data.list_to_html_table(files, escape_html=False)
 
         comment = f'''<h3>File Module</h3>A total of {file_object.AnalyzedEntities} entities were analyzed with data from the last 30 days.<br>{html_table}'''
         comment_result = rest.add_incident_comment(base_object, comment)
