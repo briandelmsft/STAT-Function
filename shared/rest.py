@@ -134,13 +134,17 @@ def execute_rest_call(base_module:BaseModule, method:str, api:str, path:str, bod
                     raise STATError(error=f'Invalid rest method: {method}.', status_code=400)
             check_rest_response(response, api, path)
         except STATTooManyRequests as e:
-            wait_time += int(e.retry_after)
-            if wait_time >= 40:
+            try:
+                retry_after = int(e.retry_after)
+            except ValueError:
+                retry_after = 10
+            wait_time += retry_after
+            if wait_time >= 60:
                 raise STATTooManyRequests(error=e.error, source_error=e.source_error, status_code=429, retry_after=e.retry_after)
-            time.sleep(int(e.retry_after))
+            time.sleep(retry_after)
         except ConnectionError as e:
             wait_time += 20
-            if wait_time >= 40:
+            if wait_time >= 60:
                 raise STATError(error=f'Failed to establish a new connection to {url}', source_error=e, status_code=500)
             time.sleep(20)
         else:
