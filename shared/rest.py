@@ -139,8 +139,8 @@ def execute_rest_call(base_module:BaseModule, method:str, api:str, path:str, bod
             except ValueError:
                 retry_after = 10
             wait_time += retry_after
-            if wait_time >= 60:
-                raise STATTooManyRequests(error=e.error, source_error=e.source_error, status_code=429, retry_after=e.retry_after)
+            if wait_time > 60:
+                raise STATTooManyRequests(error=e.error, source_error=e.source_error, status_code=e.status_code, retry_after=e.retry_after)
             time.sleep(retry_after)
         except ConnectionError as e:
             wait_time += 20
@@ -156,8 +156,8 @@ def execute_rest_call(base_module:BaseModule, method:str, api:str, path:str, bod
 def check_rest_response(response:Response, api, path):
     if response.status_code == 404:
         raise STATNotFound(f'The API call to {api} with path {path} failed with status {response.status_code}', source_error={'status_code': int(response.status_code), 'reason': str(response.reason)})
-    elif response.status_code == 429:
-        raise STATTooManyRequests(f'The API call to {api} with path {path} failed with status {response.status_code}', source_error={'status_code': int(response.status_code), 'reason': str(response.reason)}, retry_after=response.headers.get('Retry-After'), status_code=429)
+    elif response.status_code == 429 or response.status_code == 408:
+        raise STATTooManyRequests(f'The API call to {api} with path {path} failed with status {response.status_code}', source_error={'status_code': int(response.status_code), 'reason': str(response.reason)}, retry_after=response.headers.get('Retry-After', 10), status_code=int(response.status_code))
     elif response.status_code >= 300:
         raise STATError(f'The API call to {api} with path {path} failed with status {response.status_code}', source_error={'status_code': int(response.status_code), 'reason': str(response.reason)})
     return

@@ -9,7 +9,7 @@ def test_kql_sentinel():
         'KQLQuery': 'SigninLogs | take 5 | project UserPrincipalName',
         'RunQueryAgainst': 'Sentinel',
         'QueryDescription': 'Test Query',
-        'LookbackInDays': 30,
+        'LookbackInDays': 7,
         'BaseModuleBody': get_base_module_body()
     }
     kql_response:Response = kql.execute_kql_module(kql_input)
@@ -40,7 +40,7 @@ def test_kql_m365():
         'KQLQuery': 'DeviceInfo | take 5 | project DeviceId',
         'RunQueryAgainst': 'M365',
         'QueryDescription': 'Test Query',
-        'LookbackInDays': 30,
+        'LookbackInDays': 7,
         'BaseModuleBody': get_base_module_body()
     }
     kql_response:Response = kql.execute_kql_module(kql_input)
