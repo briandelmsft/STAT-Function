@@ -4,7 +4,7 @@ import json
 
 def execute_user_exposure_module (req_body):
 
-    #Inputs AddIncidentComments, AddIncidentTask, Entities, IncidentTaskInstructions
+    #Inputs AddIncidentComments, AddIncidentTask, BaseModuleBody, IncidentTaskInstructions, AddIncidentTags
 
     base_object = BaseModule()
     base_object.load_from_input(req_body['BaseModuleBody'])
@@ -21,42 +21,57 @@ def execute_user_exposure_module (req_body):
         exp_object.Nodes = list(filter(lambda x: x['NodeType'] == 'Node', response))
         exp_object.Paths = list(filter(lambda x: x['NodeType'] == 'Path', response))
 
-    if req_body.get('AddIncidentComments', True):
+    if req_body.get('AddIncidentComments', True) and base_object.IncidentAvailable:
+        add_comment_to_incident(base_object, exp_object)
 
-        crit_level = {
-            0: 'Very High<br />🟥🟥🟥🟥',
-            1: 'High<br />🟥🟥🟥⬜ ',
-            2: 'Medium<br />🟥🟥⬜⬜',
-            3: 'Low<br />🟥⬜⬜⬜'
-        }
+    if req_body.get('AddIncidentTags', True) and base_object.IncidentAvailable:
+        add_tags_to_incident(base_object, exp_object)
 
-        out = []
-
-        for x in exp_object.Paths:
-            out.append({
-                'User': get_user_link(x),
-                'User Details': f"{crit_level[x['UserCriticality']]}<br /><p><b>Asset Rules:</b> {data.list_to_string(x['UserCriticalityRules'])}<br /><p><b>User Tags:</b> {data.list_to_string(x['UserTags'])}",
-                'ElevatedRightsOn (Top 5)': f"{data.list_to_string(x['ElevatedRightsOn'])}<p><b>Elevated Rights to Computers:</b> {x['ElevatedRightsOnCount']}<br /><b>Local Admin to Computers:</b> {x['LocalAdminCount']}",
-                "HighestComputerCriticality": f"{crit_level[x['HighestComputerCriticality']]}<br /><p><b>Combined Asset Rules:</b> {data.list_to_string(x['ComputerCriticalityRules'])}"
-            })
-
-        for x in exp_object.nodes_without_paths():
-            out.append({
-                'User': get_user_link(x),
-                'User Details': f"{crit_level[x['UserCriticality']]}<br /><p><b>Asset Rules:</b> {data.list_to_string(x['UserCriticalityRules'])}<br /><p><b>User Tags:</b> {data.list_to_string(x['UserTags'])}",
-                'ElevatedRightsOn (Top 5)': "None Detected"
-            })
-
-        comment = f'<h3>User Exposure Module</h3>'
-        if out:
-            html_table = data.list_to_html_table(out, index=False, max_cols=20, escape_html=False)
-            comment += html_table
-        else:
-            comment += f'No User Exposure Results Detected'
-        
-        comment_result = rest.add_incident_comment(base_object, comment)
+    if req_body.get('AddIncidentTask', False) and len(exp_object.Nodes) > 0 and base_object.IncidentAvailable:
+        rest.add_incident_task(base_object, 'Review User Exposure Information', data.coalesce(req_body.get('IncidentTaskInstructions'), 'Review the output of the User Exposure Module in the incident comments.'))
 
     return Response(exp_object)
+
+def add_comment_to_incident (base_object, exp_object):
+    crit_level = {
+        0: 'Very High<br />🟥🟥🟥🟥',
+        1: 'High<br />🟥🟥🟥⬜ ',
+        2: 'Medium<br />🟥🟥⬜⬜',
+        3: 'Low<br />🟥⬜⬜⬜'
+    }
+
+    out = []
+
+    for x in exp_object.Paths:
+        out.append({
+            'User': get_user_link(x),
+            'User Details': f"{crit_level[x['UserCriticality']]}<br /><p><b>Asset Rules:</b> {data.list_to_string(x['UserCriticalityRules'])}<br /><p><b>User Tags:</b> {data.list_to_string(x['UserTags'])}",
+            'ElevatedRightsOn (Top 5)': f"{data.list_to_string(x['ElevatedRightsOn'])}<p><b>Elevated Rights to Computers:</b> {x['ElevatedRightsOnCount']}<br /><b>Local Admin to Computers:</b> {x['LocalAdminCount']}",
+            "HighestComputerCriticality": f"{crit_level[x['HighestComputerCriticality']]}<br /><p><b>Combined Asset Rules:</b> {data.list_to_string(x['ComputerCriticalityRules'])}"
+        })
+
+    for x in exp_object.nodes_without_paths():
+        out.append({
+            'User': get_user_link(x),
+            'User Details': f"{crit_level[x['UserCriticality']]}<br /><p><b>Asset Rules:</b> {data.list_to_string(x['UserCriticalityRules'])}<br /><p><b>User Tags:</b> {data.list_to_string(x['UserTags'])}",
+            'ElevatedRightsOn (Top 5)': "None Detected"
+        })
+
+    comment = f'<h3>User Exposure Module</h3>'
+    if out:
+        html_table = data.list_to_html_table(out, index=False, max_cols=20, escape_html=False)
+        comment += html_table
+    else:
+        comment += f'No User Exposure Results Detected'
+    
+    comment_result = rest.add_incident_comment(base_object, comment)
+
+def add_tags_to_incident (base_object, exp_object):
+    tags = []
+    for x in exp_object.Nodes:
+        if x['UserCriticalityRules']:
+            tags += x['UserCriticalityRules']
+    rest.add_incident_tags(base_object, tags)
 
 def get_user_link(x):
     sid = None

@@ -17,7 +17,6 @@ la_endpoint = os.getenv('LOGANALYTICS_ENDPOINT')
 m365_endpoint = os.getenv('M365_ENDPOINT')
 mde_endpoint = os.getenv('MDE_ENDPOINT')
 default_tenant_id = os.getenv('AZURE_TENANT_ID')
-#mdca_endpoint = os.getenv('MDCA_ENDPOINT')
 kv_endpoint = os.getenv('KEYVAULT_ENDPOINT')
 kv_secret_name = os.getenv('KEYVAULT_SECRET_NAME')
 kv_client_id = os.getenv('KEYVAULT_CLIENT_ID')
@@ -49,10 +48,6 @@ def token_cache(base_module:BaseModule, api:str):
             tenant = base_module.MultiTenantConfig.get('MDETenantId', base_module.MultiTenantConfig.get('TenantId', default_tenant))
             token_expiration_check(api, stat_token.get(tenant,{}).get('mdetoken'), tenant)
             return stat_token[tenant]['mdetoken']
-        # case 'mdca':
-        #     tenant = base_module.MultiTenantConfig.get('M365DTenantId', base_module.MultiTenantConfig.get('TenantId', default_tenant))
-        #     token_expiration_check(api, stat_token.get(tenant,{}).get('mdcatoken'), tenant)
-        #     return stat_token[tenant]['mdcatoken']
 
 def token_expiration_check(api:str, token, tenant:str):
     
@@ -90,8 +85,6 @@ def acquire_token(api:str, tenant:str):
             stat_token[tenant]['m365token'] = cred.get_token(get_endpoint('m365') + "/.default", tenant_id=tenant)
         case 'mde':
             stat_token[tenant]['mdetoken'] = cred.get_token(get_endpoint('mde') + "/.default", tenant_id=tenant)
-        # case 'mdca':
-        #     stat_token[tenant]['mdcatoken'] = cred.get_token("05a65629-4c1b-48c1-a78b-804c4abdd4af/.default", tenant_id=tenant)
 
 def get_kv_secret():
     cred = DefaultAzureCredential()
@@ -220,8 +213,6 @@ def get_endpoint(api:str):
                 return 'https://' + m365_endpoint
             case 'mde':
                 return 'https://' + mde_endpoint
-            # case 'mdca':
-            #     return 'https://' + mdca_endpoint
     except TypeError:
         raise STATError(f'The STAT Function Application Setting was not configured for the {api} API. '
                         'Ensure that all API endpoint enrivonrment variables are correctly set in the STAT Function App '
@@ -249,6 +240,39 @@ def add_incident_task(base_module:BaseModule, title:str, description:str, status
         except:
             response = 'Task addition failed'
     return response
+
+def add_incident_tags(base_module:BaseModule, tags:list):
+    if tags:
+        path = base_module.IncidentARMId + '?api-version=2025-03-01'
+        tags_to_add = False
+        try:
+            response = json.loads(rest_call_get(base_module, 'arm', path).content)
+
+            all_tags = response.get('properties', {}).get('labels', [])
+            for tag in tags:
+                if any(existing_tag.get('labelName') == tag for existing_tag in all_tags):
+                    continue
+                else:
+                    all_tags.append({'labelName': tag, 'labelType': 'User'})
+                    tags_to_add = True
+
+            body = {
+                'etag': response['etag'],
+                'properties': {
+                    'severity': response['properties']['severity'],
+                    'status': response['properties']['status'],
+                    'title': response['properties']['title'],
+                    'labels': all_tags,
+                }
+            }
+
+            if tags_to_add:
+                response_put = rest_call_put(base_module, 'arm', path, body=body)
+            else:
+                response_put = 'No new tags to add'
+        except:
+            response_put = 'Tag addition failed'
+        return response_put
 
 def check_app_role(base_module:BaseModule, token_type:str, app_roles:list):
     token = token_cache(base_module, token_type)
