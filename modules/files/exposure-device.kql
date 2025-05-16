@@ -1,0 +1,58 @@
+let mde_ids = dynamic({mde_id_list});
+let selected_nodes = materialize (
+ExposureGraphNodes
+| where NodeLabel in~ ('user','device','entra-userCookie','microsoft.compute/virtualmachines','managedidentity'));
+let selected_edges = 
+ExposureGraphEdges
+| where EdgeLabel in~ ('has credentials of','contains', 'can authenticate as');
+union
+(selected_edges
+| make-graph SourceNodeId --> TargetNodeId with selected_nodes on NodeId
+| graph-match (device)-[hasCreds*1..2]->(user)
+ where device.EntityIds has_any (mde_ids)
+ project 
+ Computer=tostring(device.NodeName),
+ ComputerNodeId=device.NodeId,
+ ComputerCrit = toint(coalesce(device.NodeProperties.rawData.criticalityLevel.criticalityLevel, dynamic(3))),
+ ComputerCriticalityRules = device.NodeProperties.rawData.criticalityLevel.ruleNames,
+ ComputerMaxCVSSScore=device.NodeProperties.rawData.highRiskVulnerabilityInsights.maxCvssScore,
+ ComputerVulnerabilities=device.NodeProperties.rawData.highRiskVulnerabilityInsights,
+ ComputerOnboarding=device.NodeProperties.rawData.onboardingStatus,
+ ComputerSensorHealth=device.NodeProperties.rawData.sensorHealthState,
+ ComputerRiskScore=device.NodeProperties.rawData.riskScore,
+ ComputerExposureScore=device.NodeProperties.rawData.exposureScore,
+ ComputerManualTags=device.NodeProperties.rawData.deviceManualTags,
+ ComputerDynamicTags=device.NodeProperties.rawData.deviceDynamicTags,
+ ComputerEntityIds=device.EntityIds,
+ EdgeLabel=map(hasCreds, EdgeLabel),
+ UsersOnDevice=coalesce(user.NodeProperties.rawData.accountUpn,user.NodeProperties.rawData.accountName,user.NodeProperties.rawData.distinguishedName,user.NodeProperties.rawData.accountDisplayName,user.NodeProperties.rawData.accountObjectId),
+ UserCrit=toint(coalesce(user.NodeProperties.rawData.criticalityLevel.criticalityLevel, dynamic(3))),
+ UserCriticalityRules=user.NodeProperties.rawData.criticalityLevel.ruleNames,
+ UserTags=user.NodeProperties.rawData.tags,
+ UserNodeLabel = user.NodeLabel,
+ UserEntityIds=user.EntityIds,
+ device, user
+| extend ComputerTags = array_concat(ComputerManualTags, ComputerDynamicTags)
+| where array_length(set_difference(EdgeLabel, dynamic(['contains']))) > 0
+| project Computer, ComputerNodeId, ComputerCrit, ComputerCriticalityRules, ComputerRiskScore, ComputerExposureScore, ComputerMaxCVSSScore, ComputerOnboarding, ComputerSensorHealth, ComputerTags, ComputerEntityIds
+    , UsersOnDevice, UserCrit, UserCriticalityRules, UserTags, UserNodeLabel, UserEntityIds, NodeType="Path"
+),
+(selected_nodes
+| where EntityIds has_any (mde_ids)
+| project 
+Computer=tostring(NodeName),
+ ComputerCrit = toint(coalesce(NodeProperties.rawData.criticalityLevel.criticalityLevel, dynamic(3))),
+ ComputerCriticalityRules = NodeProperties.rawData.criticalityLevel.ruleNames,
+ ComputerMaxCVSSScore=NodeProperties.rawData.highRiskVulnerabilityInsights.maxCvssScore,
+ ComputerVulnerabilities=NodeProperties.rawData.highRiskVulnerabilityInsights,
+ ComputerOnboarding=NodeProperties.rawData.onboardingStatus,
+ ComputerSensorHealth=NodeProperties.rawData.sensorHealthState,
+ ComputerRiskScore=NodeProperties.rawData.riskScore,
+ ComputerExposureScore=NodeProperties.rawData.exposureScore,
+ ComputerManualTags=NodeProperties.rawData.deviceManualTags,
+ ComputerDynamicTags=NodeProperties.rawData.deviceDynamicTags,
+ ComputerEntityIds=EntityIds,
+ NodeType="Node",
+ ComputerNodeId=NodeId
+)
+| sort by ComputerCrit asc, UserCrit asc, Computer asc

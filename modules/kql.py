@@ -13,7 +13,7 @@ def execute_kql_module (req_body):
 
     arm_id = f'let incidentArmId = "{base_object.IncidentARMId}";\n'
     ip_entities = base_object.get_ip_kql_table()
-    account_entities = base_object.get_account_kql_table()
+    account_entities = base_object.get_account_kql_table(include_unsynced=True)
     host_entities = base_object.get_host_kql_table()
 
     query = arm_id + ip_entities + account_entities + host_entities + req_body['KQLQuery']

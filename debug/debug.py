@@ -23,6 +23,9 @@ def debug_module (req_body):
             default_debug(debug_out)
             token_debug(debug_out)
             rbac_debug(debug_out)
+        case 'comment':
+            default_debug(debug_out)
+            comment_debug(debug_out)
         case 'exception':
             exception_debug(debug_out)
         case _:
@@ -36,7 +39,6 @@ def default_debug(debug_out:DebugModule):
     debug_out.LAEndpoint = os.getenv('LOGANALYTICS_ENDPOINT')
     debug_out.M365Endpoint = os.getenv('M365_ENDPOINT')
     debug_out.MDEEndpoint = os.getenv('MDE_ENDPOINT')
-    debug_out.MDCAEndpoint = os.getenv('MDCA_ENDPOINT')
     debug_out.TenantId = os.getenv('AZURE_TENANT_ID')
     debug_out.KVEndpoint = os.getenv('KEYVAULT_ENDPOINT')
     debug_out.KVSecretName = os.getenv('KEYVAULT_SECRET_NAME')
@@ -136,3 +138,13 @@ def parse_response(debug_out:DebugModule, response):
     debug_out.StatusCode = response.status_code
     debug_out.Url = response.url
     debug_out.TextContent = response.text
+
+def comment_debug(debug_out:DebugModule):
+    comment = debug_out.Params.get('Comment')
+    base_module = BaseModule()
+    base_module.MultiTenantConfig = debug_out.Params.get('MultiTenantConfig', {})
+    base_module.IncidentARMId = debug_out.Params['IncidentARMId']
+    base_module.IncidentAvailable = True
+    response = rest.add_incident_comment(base_module, comment)
+    debug_out.CommentStatus = response.status_code
+    debug_out.CommentResponse = response.json()

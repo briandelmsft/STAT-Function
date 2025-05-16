@@ -36,6 +36,7 @@ class BaseModule:
     def __init__(self):
         self.Accounts = []
         self.AccountsCount = 0
+        self.AccountsOnPrem = []
         self.Alerts = []
         self.Domains = []
         self.DomainsCount = 0
@@ -85,6 +86,7 @@ class BaseModule:
     def load_from_input(self, basebody):
         self.Accounts = basebody['Accounts']
         self.AccountsCount = basebody['AccountsCount']
+        self.AccountsOnPrem = basebody.get('AccountsOnPrem', [])
         self.Alerts = basebody.get('Alerts', [])
         self.Domains = basebody['Domains']
         self.DomainsCount = basebody['DomainsCount']
@@ -115,8 +117,18 @@ class BaseModule:
         self.CurrentVersion = basebody.get('CurrentVersion')
         self.ModuleName = basebody.get('ModuleName')
 
-    def add_ip_entity(self, address, geo_data, rawentity):
-        self.IPs.append({'Address': address, 'GeoData': geo_data, 'RawEntity': rawentity })
+    def add_ip_entity(self, address, geo_data, rawentity, ip_type:int=9):
+        '''Adds an IP entity, types 1=global, 2=private, 3=link-local, 9=unknown'''
+        self.IPs.append({'Address': address, 'IPType': ip_type, 'GeoData': geo_data, 'RawEntity': rawentity })
+
+    def check_global_and_local_ips(self):
+        '''Checks if any private or global IPs are in the IPs array for IP comment'''
+        found = False
+        for ip in self.IPs:
+            if ip.get('IPType') != 3:
+                found = True
+                break
+        return found
 
     def add_host_entity(self, fqdn, hostname, dnsdomain, mdedeviceid, rawentity, mde_enrichment:str='Unknown'):
         if mdedeviceid:
@@ -126,6 +138,9 @@ class BaseModule:
 
     def add_account_entity(self, data):
         self.Accounts.append(data)
+
+    def add_onprem_account_entity(self, data):
+        self.AccountsOnPrem.append(data)
 
     def get_ip_list(self):
         ip_list = []
@@ -171,13 +186,17 @@ class BaseModule:
 '''
         return kql
     
-    def get_account_kql_table(self):
+    def get_account_kql_table(self, include_unsynced:bool=False):
 
         account_data = []
 
         for account in self.Accounts:
             account_data.append({'userPrincipalName': account.get('userPrincipalName'), 'SamAccountName': account.get('onPremisesSamAccountName'), \
                                  'SID': account.get('onPremisesSecurityIdentifier'), 'id': account.get('id'), 'ManagerUPN': account.get('manager', {}).get('userPrincipalName')})
+        if include_unsynced:
+            for onprem_account in self.AccountsOnPrem:
+                account_data.append({'userPrincipalName': onprem_account.get('userPrincipalName', 'NoUPNFound'), 'SamAccountName': onprem_account.get('onPremisesSamAccountName'), \
+                                     'SID': onprem_account.get('onPremisesSecurityIdentifier'), 'id': onprem_account.get('id', 'NoIdFound'), 'ManagerUPN': 'NoManagerUpnFound'})
 
         encoded = urllib.parse.quote(json.dumps(account_data))
 
@@ -245,26 +264,60 @@ class BaseModule:
 '''
         return kql
         
-    def get_account_id_list(self):
+    def get_account_id_and_sid_list(self):
         account_list = []
         for account in self.Accounts:
-            account_list.append(account['id'])
+            try:
+                account_list.append(account['id'])
+            except KeyError:
+                raw_entity = account.get('RawEntity', {})
+                sid = data.coalesce(raw_entity.get('properties',{}).get('sid'), raw_entity.get('sid'), raw_entity.get('Sid'))
+                if sid:
+                    account_list.append(sid)
+
+        for onprem_account in self.AccountsOnPrem:
+            try:
+                account_list.append(onprem_account['onPremisesSecurityIdentifier'])
+            except KeyError:
+                pass
         
         return account_list
 
-    def get_account_upn_list(self):
+    def get_account_upn_list(self, include_unsynced:bool=False):
+        '''Returns a list of all UPNs, including unsynced accounts accounts'''
         account_list = []
         for account in self.Accounts:
-            account_list.append(account['userPrincipalName'])
+            try:
+                account_list.append(account['userPrincipalName'])
+            except KeyError:
+                pass
+
+        if include_unsynced:
+            for onprem_account in self.AccountsOnPrem:
+                try:
+                    account_list.append(onprem_account['userPrincipalName'])
+                except KeyError:
+                    pass
         
         return account_list
     
     def get_account_sam_list(self):
         account_list = []
         for account in self.Accounts:
-            account_list.append(account['onPremisesSamAccountName'])
+            try:
+                account_list.append(account['onPremisesSamAccountName'])
+            except:
+                pass
 
         return account_list
+    
+    def get_host_mdeid_list(self):
+        host_list = []
+        for host in self.Hosts:
+            if host.get('MdatpDeviceId'):
+                host_list.append(host.get('MdatpDeviceId'))
+        
+        return host_list
     
     def get_alert_ids(self):
         alert_list = []
@@ -495,6 +548,7 @@ class MDCAModule:
         self.TopUserThresholdCount = 0
         self.AnyThreatScoreTrendingUp = False
         self.ModuleName = 'MDCAModule'
+        self.Warning = "The Sentinel Triage AssistanT's (STAT) Microsoft Defender for Cloud Apps module has been deprecated. This is due to Microsoft's deprecation of the MDCA investigation score. Please remove the MDCA module from your STAT Analysis."
 
 class RunPlaybook:
     '''A RunPlaybook module object'''
@@ -561,6 +615,58 @@ class MDEModule:
         self.HostsHighestExposureLevel = body['HostsHighestExposureLevel']
         self.HostsHighestRiskScore = body['HostsHighestRiskScore']
         self.DetailedResults = body['DetailedResults']
+
+class DeviceExposureModule:
+    '''An Device Exposure module object'''
+    def __init__(self):
+        self.AnalyzedEntities = 0
+        self.ModuleName = 'DeviceExposureModule'
+        self.Nodes = []
+        self.Paths = []
+
+    def load_from_input(self, body):
+        self.AnalyzedEntities = body['AnalyzedEntities']
+        self.Nodes = body['Nodes']
+        self.Paths = body['Paths']
+
+    def nodes_without_paths(self):
+        '''Only returns nodes where no path from node is present'''
+        out = []
+        path_nodes = []
+        for path in self.Paths:
+            path_nodes.append(path['ComputerNodeId'])
+
+        for node in self.Nodes:
+            if node['ComputerNodeId'] not in path_nodes:
+                out.append(node)
+
+        return out
+
+class UserExposureModule:
+    '''An User Exposure module object'''
+    def __init__(self):
+        self.AnalyzedEntities = 0
+        self.ModuleName = 'UserExposureModule'
+        self.Nodes = []
+        self.Paths = []
+
+    def load_from_input(self, body):
+        self.AnalyzedEntities = body['AnalyzedEntities']
+        self.Nodes = body['Nodes']
+        self.Paths = body['Paths']
+
+    def nodes_without_paths(self):
+        '''Only returns nodes where no path from node is present'''
+        out = []
+        path_nodes = []
+        for path in self.Paths:
+            path_nodes.append(path['UserNodeId'])
+
+        for node in self.Nodes:
+            if node['UserNodeId'] not in path_nodes:
+                out.append(node)
+
+        return out
 
 class CreateIncident:
     '''A CreateIncident object'''

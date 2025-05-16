@@ -1,6 +1,6 @@
 {account_table}
-let UPNs = accountEntities | project UserPrincipalName;
-let IDs = accountEntities | project AADUserId;
+let UPNs = accountEntities | where isnotempty(UserPrincipalName) | project UserPrincipalName;
+let IDs = accountEntities | where isnotempty(AADUserId) | project AADUserId;
 union (OfficeActivity
 | where Operation == "Set-Mailbox"
 | where UserId in~ (UPNs)

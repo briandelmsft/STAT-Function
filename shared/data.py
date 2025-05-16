@@ -117,9 +117,11 @@ def min_column_by_key(input_list, key):
         val = int(0)
     return val
 
-def sort_list_by_key(input_list, key, ascending=False):
+def sort_list_by_key(input_list, key, ascending=False, drop_columns:list=[]):
     df = pd.DataFrame(input_list)
     df = df.sort_values(by=[key], ascending=ascending)
+    if drop_columns:
+        df.drop(columns=drop_columns, inplace=True)
     return df.to_dict('records')
 
 def coalesce(*args):
@@ -177,3 +179,34 @@ def load_json_from_file(file_name:str):
 def load_text_from_file(file_name:str, **kwargs):
     with open(pathlib.Path(__file__).parent.parent / f'modules/files/{file_name}') as f:
         return f.read().format(**kwargs)
+
+def list_to_string(list_in:list, delimiter:str=', ', empty_str:str='N/A'):
+    if not list_in:
+        return empty_str
+        
+    if isinstance(list_in, list):
+        try:
+            return delimiter.join(list_in)
+        except:
+            return list_in
+    else:
+        return list_in
+    
+def parse_kv_string(kv:str, item_delimitter:str=';', value_delimitter:str='='):
+    """
+    Parse a string of key-value pairs into a dictionary.
+    :param kv: The string to parse.
+    :param item_delimitter: The delimiter between items. Default is ';'.
+    :param value_delimitter: The delimiter between key and value. Default is '='.
+    :return: A dictionary of key-value pairs.
+    """
+
+    kv_pairs = kv.split(item_delimitter)
+    result = {}
+    for pair in kv_pairs:
+        if value_delimitter in pair:
+            key, value = pair.split(value_delimitter, 1)
+            result[key.strip()] = value.strip()
+        else:
+            result[pair.strip()] = None
+    return result
