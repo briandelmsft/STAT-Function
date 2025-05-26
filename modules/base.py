@@ -5,6 +5,7 @@ import time
 import logging
 import requests
 import ipaddress
+import datetime as dt
 
 stat_version = None
 
@@ -43,10 +44,11 @@ def execute_base_module (req_body):
     enrich_files(entities)
     enrich_filehashes(entities)
     enrich_urls(entities)
+    enrich_mail_message(entities)
     append_other_entities(entities)
 
     base_object.CurrentVersion = data.get_current_version()
-    base_object.EntitiesCount = base_object.AccountsCount + base_object.IPsCount + base_object.DomainsCount + base_object.FileHashesCount + base_object.FilesCount + base_object.HostsCount + base_object.OtherEntitiesCount + base_object.URLsCount
+    base_object.EntitiesCount = base_object.AccountsCount + base_object.IPsCount + base_object.DomainsCount + base_object.FileHashesCount + base_object.FilesCount + base_object.HostsCount + base_object.OtherEntitiesCount + base_object.URLsCount + base_object.MailMessagesCount
 
     org_info = json.loads(rest.rest_call_get(base_object, api='msgraph', path='/v1.0/organization').content)
     base_object.TenantDisplayName = org_info['value'][0]['displayName']
@@ -212,6 +214,51 @@ def enrich_domains(entities):
         raw_entity = data.coalesce(domain.get('properties'), domain)
         base_object.Domains.append({'Domain': domain_name, 'RawEntity': raw_entity})
 
+def enrich_mail_message(entities):
+    mail_entities = list(filter(lambda x: x['kind'].lower() == 'mailmessage', entities))
+    base_object.MailMessagesCount = len(mail_entities)
+    
+    for mail in mail_entities:
+        recipient = data.coalesce(mail.get('properties',{}).get('recipient'), mail.get('Recipient'))
+        network_message_id = data.coalesce(mail.get('properties',{}).get('networkMessageId'), mail.get('NetworkMessageId'))
+        receive_date = data.coalesce(mail.get('properties',{}).get('receiveDate'), mail.get('ReceivedDate'))
+
+        if receive_date:
+            start_time = (dt.datetime.fromisoformat(receive_date) + dt.timedelta(days=-14)).strftime("%Y-%m-%dT%H:%M:%SZ")
+            end_time = (dt.datetime.fromisoformat(receive_date) + dt.timedelta(days=14)).strftime("%Y-%m-%dT%H:%M:%SZ")
+        else:
+            start_time = (dt.datetime.fromisoformat(base_object.CreatedTime) + dt.timedelta(days=-14)).strftime("%Y-%m-%dT%H:%M:%SZ")
+            end_time = (dt.datetime.fromisoformat(base_object.CreatedTime) + dt.timedelta(days=14)).strftime("%Y-%m-%dT%H:%M:%SZ")
+
+        raw_entity = data.coalesce(mail.get('properties'), mail)
+
+        if recipient and network_message_id:
+            try:
+                get_message = json.loads(rest.rest_call_get(base_object, api='msgraph', path=f"/beta/security/collaboration/analyzedemails?startTime={start_time}&endTime={end_time}&filter=networkMessageId eq '{network_message_id}' and recipientEmailAddress eq '{recipient}'").content)
+                if get_message['value']:
+                    message_details = json.loads(rest.rest_call_get(base_object, api='msgraph', path=f"/beta/security/collaboration/analyzedemails/{get_message['value'][0]['id']}").content)
+                    message_details['RawEntity'] = raw_entity
+                else:
+                    message_details = {
+                    'networkMessageId': network_message_id,
+                    'recipientEmailAddress': recipient,
+                    'EnrichmentMethod': 'MailMessage - analyzedMessage could not be found',
+                    'RawEntity': raw_entity
+                    } 
+            except: 
+                message_details = {
+                    'networkMessageId': network_message_id,
+                    'recipientEmailAddress': recipient,
+                    'EnrichmentMethod': 'MailMessage - Failed to get analyzedMessage',
+                    'RawEntity': raw_entity
+                    } 
+            
+        else:
+            message_details = {'EnrichmentMethod': 'MailMessage - No Recipient or NetworkMessageId', 'RawEntity': raw_entity}
+
+        base_object.MailMessages.append(message_details)
+
+
 def enrich_files(entities):
     file_entities = list(filter(lambda x: x['kind'].lower() == 'file', entities))
     base_object.FilesCount = len(file_entities)
@@ -240,7 +287,7 @@ def enrich_urls(entities):
         base_object.URLs.append({'Url': url_data, 'RawEntity': raw_entity})
 
 def append_other_entities(entities):
-    other_entities = list(filter(lambda x: x['kind'].lower() not in ('ip','account','dnsresolution','dns','file','filehash','host','url'), entities))
+    other_entities = list(filter(lambda x: x['kind'].lower() not in ('ip','account','dnsresolution','dns','file','filehash','host','url','mailmessage'), entities))
     base_object.OtherEntitiesCount = len(other_entities)
 
     for entity in other_entities:

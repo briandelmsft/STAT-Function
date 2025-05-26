@@ -38,6 +38,7 @@ class BaseModule:
         self.AccountsCount = 0
         self.AccountsOnPrem = []
         self.Alerts = []
+        self.CreatedTime = ''
         self.Domains = []
         self.DomainsCount = 0
         self.EntitiesCount = 0
@@ -52,6 +53,8 @@ class BaseModule:
         self.IncidentARMId = ""
         self.IncidentTriggered = False
         self.IncidentAvailable = False
+        self.MailMessages = []
+        self.MailMessagesCount = 0
         self.ModuleVersions = {}
         self.MultiTenantConfig = {}
         self.OtherEntities = []
@@ -70,6 +73,7 @@ class BaseModule:
     def load_incident_trigger(self, req_body):
         
         self.IncidentARMId = req_body['object']['id']
+        self.CreatedTime = req_body['object']['properties']['createdTimeUtc']
         self.IncidentTriggered = True
         self.IncidentAvailable = True
         self.SentinelRGARMId = "/subscriptions/" + req_body['workspaceInfo']['SubscriptionId'] + "/resourceGroups/" + req_body['workspaceInfo']['ResourceGroupName']
@@ -80,6 +84,7 @@ class BaseModule:
 
     def load_alert_trigger(self, req_body):
         self.IncidentTriggered = False
+        self.CreatedTime = req_body['EndTimeUtc']
         self.SentinelRGARMId = "/subscriptions/" + req_body['WorkspaceSubscriptionId'] + "/resourceGroups/" + req_body['WorkspaceResourceGroup']
         self.WorkspaceId = req_body['WorkspaceId']
 
@@ -88,6 +93,7 @@ class BaseModule:
         self.AccountsCount = basebody['AccountsCount']
         self.AccountsOnPrem = basebody.get('AccountsOnPrem', [])
         self.Alerts = basebody.get('Alerts', [])
+        self.CreatedTime = basebody.get('CreatedTime', '')
         self.Domains = basebody['Domains']
         self.DomainsCount = basebody['DomainsCount']
         self.EntitiesCount = basebody['EntitiesCount']
@@ -102,6 +108,8 @@ class BaseModule:
         self.IncidentTriggered = basebody['IncidentTriggered']
         self.IncidentAvailable = basebody['IncidentAvailable']
         self.IncidentARMId = basebody['IncidentARMId']
+        self.MailMessages = basebody['MailMessages']
+        self.MailMessagesCount = basebody['MailMessagesCount']
         self.ModuleVersions = basebody['ModuleVersions']
         self.MultiTenantConfig = basebody.get('MultiTenantConfig', {})
         self.OtherEntities = basebody['OtherEntities']
