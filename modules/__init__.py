@@ -5,7 +5,7 @@ import azure.functions as func
 from classes import STATError
 from shared import coordinator, data
 
-def main(req: func.HttpRequest, context: func.Context) -> func.HttpResponse:
+def main_v1_deprecated(req: func.HttpRequest, context: func.Context) -> func.HttpResponse:
     logging.debug('STAT Function started processing a request.')
     module_name = req.route_params.get('modulename')
 

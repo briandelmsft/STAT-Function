@@ -6,7 +6,7 @@ from classes import STATError
 from shared import data
 from . import debug
 
-def main(req: func.HttpRequest, context: func.Context) -> func.HttpResponse:
+def main_v1_deprecated(req: func.HttpRequest, context: func.Context) -> func.HttpResponse:
     logging.debug('STAT Debug Function started processing a request.')
 
     try:
