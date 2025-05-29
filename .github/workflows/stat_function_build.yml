@@ -62,7 +62,7 @@ jobs:
     - name: Setup Python ${{ env.PYTHON_VERSION_312 }} Environment
       uses: actions/setup-python@v5
       with:
-        python-version: ${{ env.PYTHON_VERSION }}
+        python-version: ${{ env.PYTHON_VERSION_312 }}
 
     - name: 'Resolve Project Dependencies Using Pip'
       shell: bash
