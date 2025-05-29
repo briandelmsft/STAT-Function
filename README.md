@@ -20,8 +20,7 @@ To debug in VS Code create a local.settings.json file in the root of the project
     "GRAPH_ENDPOINT": "graph.microsoft.com",
     "LOGANALYTICS_ENDPOINT": "api.loganalytics.io",
     "M365_ENDPOINT": "api.security.microsoft.com",
-    "MDE_ENDPOINT": "api.securitycenter.microsoft.com",
-    "MDCA_ENDPOINT": "",
+    "MDE_ENDPOINT": "api.securitycenter.microsoft.com"
   }
 }
 ```
