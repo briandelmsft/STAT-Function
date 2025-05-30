@@ -8,7 +8,25 @@ date_format = os.getenv('DATE_FORMAT')
 tz_info = os.getenv('TIME_ZONE')
 
 def list_to_html_table(input_list:list, max_rows:int=20, max_cols:int=10, nan_str:str='N/A', escape_html:bool=True, columns:list=None, index:bool=False, justify:str='left', drop_empty_cols:bool=False):
-    '''Convert a list of dictionaries into an HTML table'''
+    """Convert a list of dictionaries into an HTML table.
+    
+    This function takes a list of dictionaries and converts it to an HTML table format,
+    with optional time zone and date formatting based on environment variables.
+    
+    Args:
+        input_list (list): List of dictionaries to convert to HTML table.
+        max_rows (int, optional): Maximum number of rows to display. Defaults to 20.
+        max_cols (int, optional): Maximum number of columns to display. Defaults to 10.
+        nan_str (str, optional): String to replace NaN values. Defaults to 'N/A'.
+        escape_html (bool, optional): Whether to escape HTML characters. Defaults to True.
+        columns (list, optional): Specific columns to include. Defaults to None.
+        index (bool, optional): Whether to include row index. Defaults to False.
+        justify (str, optional): Text alignment for table. Defaults to 'left'.
+        drop_empty_cols (bool, optional): Whether to drop empty columns. Defaults to False.
+    
+    Returns:
+        str: HTML table representation of the input data.
+    """
     df = pd.DataFrame(input_list)
     df.index = df.index + 1
 
@@ -49,7 +67,21 @@ def list_to_html_table(input_list:list, max_rows:int=20, max_cols:int=10, nan_st
     return html_table
 
 def update_column_value_in_list(input_list:list, col_name:str, update_str:str):
-    '''Updates the value of a column in each dict in the list with a value from another column, to include the column value in your replacement use [col_value]'''
+    """Update column values in a list of dictionaries with templated strings.
+    
+    Updates the value of a specified column in each dictionary within the list.
+    The update string can include [col_value] as a placeholder which will be 
+    replaced with the current column value.
+    
+    Args:
+        input_list (list): List of dictionaries to update.
+        col_name (str): Name of the column to update.
+        update_str (str): Template string for the new value. Use [col_value] 
+            to reference the current column value.
+    
+    Returns:
+        list: New list with updated dictionaries.
+    """
     updated_list = []
     for row in input_list:
         current_row = copy.copy(row)
@@ -59,7 +91,20 @@ def update_column_value_in_list(input_list:list, col_name:str, update_str:str):
     return updated_list
 
 def replace_column_value_in_list(input_list:list, col_name:str, original_value:str, replacement_value:str):
-    '''Updates the value of a column in each dict in the list, with a static value'''
+    """Replace specific values in a column across a list of dictionaries.
+    
+    Updates the value of a specified column in each dictionary by replacing
+    occurrences of the original value with the replacement value.
+    
+    Args:
+        input_list (list): List of dictionaries to update.
+        col_name (str): Name of the column to update.
+        original_value (str): Value to be replaced.
+        replacement_value (str): Value to replace with.
+    
+    Returns:
+        list: New list with updated dictionaries.
+    """
     updated_list = []
     for row in input_list:
         current_row = copy.copy(row)
@@ -69,7 +114,20 @@ def replace_column_value_in_list(input_list:list, col_name:str, original_value:s
     return updated_list
 
 def return_highest_value(input_list:list, key:str, order:list=['High','Medium','Low','Informational','None','Unknown']):
-    '''Locate the highest value in a list of dictionaries by key'''
+    """Find the highest priority value in a list of dictionaries.
+    
+    Searches through a list of dictionaries to find the highest priority value
+    for a specific key, based on a predefined priority order.
+    
+    Args:
+        input_list (list): List of dictionaries to search.
+        key (str): Key name to check in each dictionary.
+        order (list, optional): Priority order from highest to lowest. 
+            Defaults to ['High','Medium','Low','Informational','None','Unknown'].
+    
+    Returns:
+        str: The highest priority value found, or 'Unknown' if none match.
+    """
     
     unsorted_list = []
     for item in input_list:

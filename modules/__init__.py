@@ -6,6 +6,21 @@ from classes import STATError
 from shared import coordinator, data
 
 def main(req: func.HttpRequest, context: func.Context) -> func.HttpResponse:
+    """Main entry point for the STAT Function Azure Function.
+    
+    This is the primary Azure Function handler that processes HTTP requests
+    for various STAT modules. It extracts the module name from the route,
+    parses the request body, and delegates to the appropriate module coordinator.
+    
+    Args:
+        req (func.HttpRequest): The HTTP request object containing the module request.
+        context (func.Context): Azure Function execution context with metadata.
+    
+    Returns:
+        func.HttpResponse: HTTP response containing module results or error information.
+            Success responses include the module output as JSON.
+            Error responses include error details, invocation ID, and traceback.
+    """
     logging.debug('STAT Function started processing a request.')
     module_name = req.route_params.get('modulename')
 

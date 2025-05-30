@@ -9,6 +9,23 @@ import ipaddress
 stat_version = None
 
 def execute_base_module (req_body):
+    """Execute the base STAT module to process incident or alert data.
+    
+    This is the main entry point for the STAT base module. It processes either
+    incident or alert trigger data, enriches entities with additional information,
+    and returns a processed BaseModule object.
+    
+    Args:
+        req_body (dict): Request body containing trigger data and configuration.
+            Must include 'Body' with incident/alert data and optionally various
+            enrichment configuration flags.
+    
+    Returns:
+        Response: Response object containing the processed BaseModule data.
+        
+    Raises:
+        STATError: If trigger data is missing/invalid or no entities are found.
+    """
     global base_object
     global enrich_mfa
     global enrich_roles

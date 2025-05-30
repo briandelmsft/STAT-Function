@@ -223,6 +223,18 @@ def get_endpoint(api:str):
                         '(ARM_ENDPOINT, GRAPH_ENDPOINT, LOGANALYTICS_ENDPOINT, M365_ENDPOINT, and MDE_ENDPOINT).')
     
 def add_incident_comment(base_module:BaseModule, comment:str):
+    """Add a comment to a Microsoft Sentinel incident.
+    
+    Creates a new comment on the specified incident using the Azure REST API.
+    The comment is truncated to 30,000 characters if longer.
+    
+    Args:
+        base_module (BaseModule): Base module containing incident information.
+        comment (str): Comment text to add to the incident.
+    
+    Returns:
+        Response or str: API response object on success, or 'Comment failed' on error.
+    """
     path = base_module.IncidentARMId + '/comments/' + str(uuid.uuid4()) + '?api-version=2023-02-01'
     try:
         response = rest_call_put(base_module, 'arm', path, {'properties': {'message': comment[:30000]}})
@@ -231,6 +243,20 @@ def add_incident_comment(base_module:BaseModule, comment:str):
     return response
 
 def add_incident_task(base_module:BaseModule, title:str, description:str, status:str='New'):
+    """Add a task to a Microsoft Sentinel incident.
+    
+    Creates a new task on the specified incident using the Azure REST API.
+    The description is truncated to 3,000 characters if longer.
+    
+    Args:
+        base_module (BaseModule): Base module containing incident information.
+        title (str): Title of the task.
+        description (str): Description of the task. Can be None or empty.
+        status (str, optional): Status of the task. Defaults to 'New'.
+    
+    Returns:
+        Response or str: API response object on success, or 'Task addition failed' on error.
+    """
     path = base_module.IncidentARMId + '/tasks/' + str(uuid.uuid4()) + '?api-version=2024-03-01'
 
     if description is None or description == '':
@@ -243,6 +269,7 @@ def add_incident_task(base_module:BaseModule, title:str, description:str, status
             response = rest_call_put(base_module, 'arm', path, {'properties': {'title': title, 'description': description[:3000], 'status': status}})
         except:
             response = 'Task addition failed'
+    return response
     return response
 
 def add_incident_tags(base_module:BaseModule, tags:list):

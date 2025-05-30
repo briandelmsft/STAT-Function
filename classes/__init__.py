@@ -3,7 +3,21 @@ import json
 from shared import data
 
 class Response:
-    '''A response object'''
+    """HTTP response object for STAT Function modules.
+    
+    This class encapsulates the response data, status code, and content type
+    for HTTP responses returned by STAT Function modules.
+    
+    Args:
+        body: The response body content, typically a dictionary or object.
+        statuscode (int, optional): HTTP status code. Defaults to 200.
+        contenttype (str, optional): Content type header. Defaults to 'application/json'.
+    
+    Attributes:
+        body: The response body content.
+        statuscode (int): HTTP status code.
+        contenttype (str): Content type header.
+    """
     
     def __init__(self, body, statuscode=200, contenttype='application/json'):
         self.body = body
@@ -11,7 +25,21 @@ class Response:
         self.contenttype = contenttype
 
 class STATError(Exception):
-    '''A handled STAT exception'''
+    """Custom exception class for STAT Function errors.
+    
+    This exception is raised when a handled error occurs in STAT Function processing.
+    It includes additional context such as source error details and HTTP status codes.
+    
+    Args:
+        error (str): The error message describing what went wrong.
+        source_error (dict, optional): Additional error details from the source. Defaults to {}.
+        status_code (int, optional): HTTP status code associated with the error. Defaults to 400.
+    
+    Attributes:
+        error (str): The error message.
+        source_error (dict): Additional error details from the source.
+        status_code (int): HTTP status code associated with the error.
+    """
 
     def __init__(self, error:str, source_error:dict={}, status_code:int=400):
         self.error = error
@@ -19,11 +47,30 @@ class STATError(Exception):
         self.status_code = status_code
 
 class STATNotFound(STATError):
-    '''A handled STAT exception where the API call returned a 404 error'''
+    """STAT exception raised when an API call returns a 404 Not Found error.
+    
+    This exception is a specialized version of STATError for cases where
+    a resource or endpoint could not be found.
+    """
     pass
 
 class STATTooManyRequests(STATError):
-    '''A handled STAT exception where the API call returned a 429 error'''
+    """STAT exception raised when an API call returns a 429 Too Many Requests error.
+    
+    This exception includes retry timing information to help with rate limiting handling.
+    
+    Args:
+        error (str): The error message describing what went wrong.
+        source_error (dict, optional): Additional error details from the source. Defaults to {}.
+        status_code (int, optional): HTTP status code associated with the error. Defaults to 400.
+        retry_after (int, optional): Number of seconds to wait before retrying. Defaults to 10.
+    
+    Attributes:
+        error (str): The error message.
+        source_error (dict): Additional error details from the source.
+        status_code (int): HTTP status code associated with the error.
+        retry_after (str): String representation of seconds to wait before retrying.
+    """
     def __init__(self, error:str, source_error:dict={}, status_code:int=400, retry_after:int=10):
         self.error = error
         self.source_error = source_error
@@ -31,7 +78,47 @@ class STATTooManyRequests(STATError):
         self.retry_after = str(retry_after)
 
 class BaseModule:
-    '''A base module object'''
+    """Base module class for STAT Function processing.
+    
+    This class serves as the foundation for all STAT Function modules, containing
+    core functionality for handling entities, incident data, and Azure resources.
+    It manages entities like accounts, IPs, domains, file hashes, hosts, URLs,
+    and other security-related data extracted from Microsoft Sentinel incidents or alerts.
+    
+    Attributes:
+        Accounts (list): List of account entities found in the trigger data.
+        AccountsCount (int): Number of account entities.
+        AccountsOnPrem (list): List of on-premises account entities.
+        Alerts (list): List of alerts associated with the incident.
+        Domains (list): List of domain entities.
+        DomainsCount (int): Number of domain entities.
+        EntitiesCount (int): Total count of all entities.
+        FileHashes (list): List of file hash entities.
+        FileHashesCount (int): Number of file hash entities.
+        Files (list): List of file entities.
+        FilesCount (int): Number of file entities.
+        Hosts (list): List of host entities.
+        HostsCount (int): Number of host entities.
+        IPs (list): List of IP address entities.
+        IPsCount (int): Number of IP address entities.
+        IncidentARMId (str): Azure Resource Manager ID of the incident.
+        IncidentTriggered (bool): Whether this was triggered by an incident.
+        IncidentAvailable (bool): Whether incident data is available.
+        ModuleVersions (dict): Version information for different modules.
+        MultiTenantConfig (dict): Multi-tenant configuration settings.
+        OtherEntities (list): List of other entity types not covered by specific categories.
+        OtherEntitiesCount (int): Number of other entities.
+        RelatedAnalyticRuleIds (list): IDs of related analytic rules.
+        SentinelRGARMId (str): Azure Resource Manager ID of the Sentinel resource group.
+        TenantDisplayName (str): Display name of the Azure tenant.
+        TenantId (str): ID of the Azure tenant.
+        URLs (list): List of URL entities.
+        URLsCount (int): Number of URL entities.
+        WorkspaceARMId (str): Azure Resource Manager ID of the Log Analytics workspace.
+        WorkspaceId (str): ID of the Log Analytics workspace.
+        CurrentVersion (str): Current version of the STAT Function.
+        ModuleName (str): Name of the module (defaults to 'BaseModule').
+    """
     
     def __init__(self):
         self.Accounts = []
@@ -68,6 +155,15 @@ class BaseModule:
         self.ModuleName = 'BaseModule'
 
     def load_incident_trigger(self, req_body):
+        """Load incident trigger data into the BaseModule.
+        
+        Extracts and stores incident-specific information from the request body,
+        including incident ARM ID, workspace information, and related analytics rules.
+        
+        Args:
+            req_body (dict): Request body containing incident trigger data.
+                Expected keys include 'object', 'workspaceInfo', and 'workspaceId'.
+        """
         
         self.IncidentARMId = req_body['object']['id']
         self.IncidentTriggered = True
@@ -79,11 +175,31 @@ class BaseModule:
         self.Alerts = req_body['object']['properties'].get('alerts', [])
 
     def load_alert_trigger(self, req_body):
+        """Load alert trigger data into the BaseModule.
+        
+        Extracts and stores alert-specific information from the request body,
+        including workspace subscription and resource group information.
+        
+        Args:
+            req_body (dict): Request body containing alert trigger data.
+                Expected keys include 'WorkspaceSubscriptionId', 'WorkspaceResourceGroup', 
+                and 'WorkspaceId'.
+        """
         self.IncidentTriggered = False
         self.SentinelRGARMId = "/subscriptions/" + req_body['WorkspaceSubscriptionId'] + "/resourceGroups/" + req_body['WorkspaceResourceGroup']
         self.WorkspaceId = req_body['WorkspaceId']
 
     def load_from_input(self, basebody):
+        """Load data from a base module body into this BaseModule instance.
+        
+        Populates all module attributes from a dictionary containing previously
+        processed base module data. This is typically used when loading data
+        from another module's output.
+        
+        Args:
+            basebody (dict): Dictionary containing base module data with keys
+                corresponding to BaseModule attributes.
+        """
         self.Accounts = basebody['Accounts']
         self.AccountsCount = basebody['AccountsCount']
         self.AccountsOnPrem = basebody.get('AccountsOnPrem', [])
@@ -118,7 +234,15 @@ class BaseModule:
         self.ModuleName = basebody.get('ModuleName')
 
     def add_ip_entity(self, address, geo_data, rawentity, ip_type:int=9):
-        '''Adds an IP entity, types 1=global, 2=private, 3=link-local, 9=unknown'''
+        """Add an IP address entity to the module.
+        
+        Args:
+            address: The IP address string.
+            geo_data: Geographic data associated with the IP address.
+            rawentity: Raw entity data from the source.
+            ip_type (int, optional): Type of IP address. 
+                1=global, 2=private, 3=link-local, 9=unknown. Defaults to 9.
+        """
         self.IPs.append({'Address': address, 'IPType': ip_type, 'GeoData': geo_data, 'RawEntity': rawentity })
 
     def check_global_and_local_ips(self):
@@ -336,7 +460,17 @@ class BaseModule:
         return list(set(tactics_list))
 
 class KQLModule:
-    '''A KQL module object'''
+    """KQL (Kusto Query Language) module for executing and managing query results.
+    
+    This module handles the execution of KQL queries against various Microsoft
+    services and stores the results for further processing.
+    
+    Attributes:
+        DetailedResults (list): List of detailed query results.
+        ModuleName (str): Name of the module, defaults to 'KQLModule'.
+        ResultsCount (int): Number of results returned by the query.
+        ResultsFound (bool): Whether any results were found.
+    """
     
     def __init__(self):
         self.DetailedResults = []
@@ -345,12 +479,32 @@ class KQLModule:
         self.ResultsFound = False
 
     def load_from_input(self, body):
+        """Load KQL module data from input body.
+        
+        Args:
+            body (dict): Dictionary containing KQL module data with keys:
+                - DetailedResults: List of query results
+                - ResultsCount: Number of results
+                - ResultsFound: Boolean indicating if results were found
+        """
         self.DetailedResults = body['DetailedResults']
         self.ResultsCount = body['ResultsCount']
         self.ResultsFound = body['ResultsFound']
 
 class WatchlistModule:
-    '''A Watchlist module object'''
+    """Watchlist module for checking entities against Microsoft Sentinel watchlists.
+    
+    This module analyzes entities to determine if they appear on any configured
+    watchlists in Microsoft Sentinel, providing threat intelligence correlation.
+    
+    Attributes:
+        DetailedResults (list): Detailed results of watchlist analysis.
+        EntitiesAnalyzedCount (int): Number of entities analyzed.
+        EntitiesOnWatchlist (bool): Whether any entities were found on watchlists.
+        EntitiesOnWatchlistCount (int): Count of entities found on watchlists.
+        WatchlistName (str): Name of the watchlist being analyzed.
+        ModuleName (str): Name of the module, defaults to 'WatchlistModule'.
+    """
     
     def __init__(self):
         self.DetailedResults = []
@@ -361,6 +515,16 @@ class WatchlistModule:
         self.ModuleName = 'WatchlistModule'
 
     def load_from_input(self, body):
+        """Load watchlist module data from input body.
+        
+        Args:
+            body (dict): Dictionary containing watchlist module data with keys:
+                - DetailedResults: List of analysis results
+                - EntitiesAnalyzedCount: Number of entities analyzed
+                - EntitiesOnWatchlist: Boolean indicating if entities found
+                - EntitiesOnWatchlistCount: Count of entities on watchlist
+                - WatchlistName: Name of the watchlist
+        """
         self.DetailedResults = body['DetailedResults']
         self.EntitiesAnalyzedCount = body['EntitiesAnalyzedCount']
         self.EntitiesOnWatchlist = body['EntitiesOnWatchlist']
