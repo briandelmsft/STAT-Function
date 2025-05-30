@@ -2,6 +2,27 @@ from classes import BaseModule, Response, KQLModule
 from shared import rest, data
 
 def execute_kql_module (req_body):
+    """Execute a KQL (Kusto Query Language) module for custom queries.
+    
+    This module allows execution of custom KQL queries against Microsoft Sentinel
+    Log Analytics or Microsoft 365 Defender Advanced Hunting, with automatic
+    entity injection and result processing.
+    
+    Args:
+        req_body (dict): Request body containing:
+            - BaseModuleBody: Base module data with entities
+            - KQLQuery (str): The KQL query to execute
+            - LookbackInDays (int): Number of days to look back for data
+            - RunQueryAgainst (str, optional): Target service ('M365' or Log Analytics)
+            - Endpoint (str, optional): Query endpoint type. Defaults to 'query'
+            - QueryDescription (str, optional): Description of the query
+            - AddIncidentComments (bool, optional): Whether to add comments. Defaults to True.
+            - AddIncidentTask (bool, optional): Whether to add tasks. Defaults to False.
+            - IncidentTaskInstructions (str, optional): Custom task instructions.
+    
+    Returns:
+        Response: Response object containing KQLModule with query results.
+    """
 
     #Inputs AddIncidentComments, AddIncidentTask, Entities, IncidentTaskInstructions, KQLQuery, LookbackInDays, QueryDescription, RunQueryAgainst
 

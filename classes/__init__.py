@@ -274,6 +274,11 @@ class BaseModule:
         return ip_list
     
     def get_domain_list(self):
+        """Get a list of domain names from the domain entities.
+        
+        Returns:
+            list: List of domain name strings.
+        """
         domain_list = []
         for domain in self.Domains:
             domain_list.append(domain['Domain'])
@@ -281,6 +286,11 @@ class BaseModule:
         return domain_list
     
     def get_url_list(self):
+        """Get a list of URLs from the URL entities.
+        
+        Returns:
+            list: List of URL strings.
+        """
         url_list = []
         for url in self.URLs:
             url_list.append(url['Url'])
@@ -288,6 +298,11 @@ class BaseModule:
         return url_list
     
     def get_filehash_list(self):
+        """Get a list of file hashes from the file hash entities.
+        
+        Returns:
+            list: List of file hash strings.
+        """
         hash_list = []
         for hash in self.FileHashes:
             hash_list.append(hash['FileHash'])
@@ -295,6 +310,14 @@ class BaseModule:
         return hash_list
     
     def get_ip_kql_table(self):
+        """Generate a KQL table of IP entities with geographic data.
+        
+        Creates a KQL table definition that can be used in queries to reference
+        IP entities along with their geographic information.
+        
+        Returns:
+            str: KQL table definition string for IP entities.
+        """
 
         ip_data = []
 

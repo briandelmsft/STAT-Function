@@ -2,6 +2,28 @@ from classes import BaseModule, Response, WatchlistModule, STATError
 from shared import rest, data
 
 def execute_watchlist_module (req_body):
+    """Execute the watchlist module to check entities against Microsoft Sentinel watchlists.
+    
+    This module checks various entity types (UPNs, IPs, CIDRs, FQDNs) against
+    specified Microsoft Sentinel watchlists to identify entities of interest
+    or known indicators.
+    
+    Args:
+        req_body (dict): Request body containing:
+            - BaseModuleBody: Base module data with entities to check
+            - WatchlistName (str): Name of the watchlist to check against
+            - WatchlistKeyDataType (str): Type of data to check ('UPN', 'IP', 'CIDR', 'FQDN')
+            - WatchlistKey (str): Key column name in the watchlist
+            - AddIncidentComments (bool, optional): Whether to add comments. Defaults to True.
+            - AddIncidentTask (bool, optional): Whether to add tasks. Defaults to False.
+            - IncidentTaskInstructions (str, optional): Custom task instructions.
+    
+    Returns:
+        Response: Response object containing WatchlistModule with matching results.
+        
+    Raises:
+        STATError: If the specified watchlist name is invalid or doesn't exist.
+    """
 
     #Inputs AddIncidentComments, AddIncidentTask, BaseModuleBody, IncidentTaskInstructions, WatchlistKey, WatchlistKeyDataType, WatchlistName
     # WatchlistKeyDataType: UPN, IP, CIDR, FQDN
