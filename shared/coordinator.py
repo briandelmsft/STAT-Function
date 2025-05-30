@@ -2,7 +2,24 @@ from modules import base, kql, watchlist, ti, relatedalerts, scoring, ueba, play
 from classes import STATError
 
 def initiate_module(module_name, req_body):
-    '''Call the appropriate STAT Module.'''
+    """Call the appropriate STAT module based on the module name.
+    
+    This function serves as the main coordinator for routing requests to the
+    appropriate STAT module based on the provided module name.
+    
+    Args:
+        module_name (str): Name of the module to execute. Valid values include:
+            'base', 'kql', 'scoring', 'watchlist', 'relatedalerts', 'threatintel',
+            'mdca', 'mde', 'file', 'aadrisks', 'deviceexposure', 'userexposure',
+            'ueba', 'oofmodule', 'exchangemodule', 'runplaybook', 'createincident'.
+        req_body (dict): Request body containing module-specific input data.
+    
+    Returns:
+        Response: Response object from the executed module.
+        
+    Raises:
+        STATError: If the module name is invalid or not supported.
+    """
 
     match module_name:
         case 'base':

@@ -3,6 +3,24 @@ from shared import rest, data
 import json
 
 def execute_user_exposure_module (req_body):
+    """Execute the user exposure module to analyze user risk and exposure.
+    
+    This module analyzes user accounts to assess their exposure levels, criticality,
+    and elevated rights. It queries user exposure data from Microsoft Defender
+    and optionally adds comments, tags, and tasks to incidents.
+    
+    Args:
+        req_body (dict): Request body containing:
+            - BaseModuleBody: Base module data with user entities
+            - LookbackInDays (int, optional): Days to look back for data. Defaults to 14.
+            - AddIncidentComments (bool, optional): Whether to add comments. Defaults to True.
+            - AddIncidentTags (bool, optional): Whether to add tags. Defaults to True.
+            - AddIncidentTask (bool, optional): Whether to add tasks. Defaults to False.
+            - IncidentTaskInstructions (str, optional): Custom task instructions.
+    
+    Returns:
+        Response: Response object containing UserExposureModule with analysis results.
+    """
 
     #Inputs AddIncidentComments, AddIncidentTask, BaseModuleBody, IncidentTaskInstructions, AddIncidentTags
 
@@ -33,6 +51,16 @@ def execute_user_exposure_module (req_body):
     return Response(exp_object)
 
 def add_comment_to_incident (base_object, exp_object):
+    """Add user exposure analysis comment to the incident.
+    
+    Creates a detailed HTML comment showing user exposure information including
+    criticality levels, asset rules, and elevated rights information. The comment
+    is formatted as an HTML table for easy viewing in Microsoft Sentinel.
+    
+    Args:
+        base_object (BaseModule): Base module containing incident information.
+        exp_object (UserExposureModule): User exposure module with analysis results.
+    """
     crit_level = {
         0: 'Very High<br />🟥🟥🟥🟥',
         1: 'High<br />🟥🟥🟥⬜ ',

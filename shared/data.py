@@ -152,6 +152,15 @@ def join_lists(left_list, right_list, kind, left_key, right_key, fill_nan=None):
     return join_data.to_dict('records')
 
 def sum_column_by_key(input_list, key):
+    """Calculate the sum of a numeric column in a list of dictionaries.
+    
+    Args:
+        input_list (list): List of dictionaries containing the data.
+        key (str): Key name of the column to sum.
+    
+    Returns:
+        int: Sum of the column values, or 0 if key doesn't exist.
+    """
     df = pd.DataFrame(input_list)
     try:
         val = int(df[key].sum())
@@ -160,6 +169,15 @@ def sum_column_by_key(input_list, key):
     return val
 
 def max_column_by_key(input_list, key):
+    """Find the maximum value in a numeric column of a list of dictionaries.
+    
+    Args:
+        input_list (list): List of dictionaries containing the data.
+        key (str): Key name of the column to find maximum value.
+    
+    Returns:
+        int: Maximum value in the column, or 0 if key doesn't exist.
+    """
     df = pd.DataFrame(input_list)
     try:
         val = int(df[key].max())
@@ -176,6 +194,17 @@ def min_column_by_key(input_list, key):
     return val
 
 def sort_list_by_key(input_list, key, ascending=False, drop_columns:list=[]):
+    """Sort a list of dictionaries by a specified key.
+    
+    Args:
+        input_list (list): List of dictionaries to sort.
+        key (str): Key name to sort by.
+        ascending (bool, optional): Sort in ascending order. Defaults to False.
+        drop_columns (list, optional): List of column names to drop from result. Defaults to [].
+    
+    Returns:
+        list: Sorted list of dictionaries.
+    """
     df = pd.DataFrame(input_list)
     df = df.sort_values(by=[key], ascending=ascending)
     if drop_columns:
@@ -183,11 +212,34 @@ def sort_list_by_key(input_list, key, ascending=False, drop_columns:list=[]):
     return df.to_dict('records')
 
 def coalesce(*args):
+    """Return the first non-None argument.
+    
+    Similar to SQL COALESCE function, returns the first argument that is not None.
+    
+    Args:
+        *args: Variable number of arguments to check.
+    
+    Returns:
+        Any: The first non-None argument, or None if all arguments are None.
+    """
     for arg in args:
         if arg is not None:
             return arg
         
 def version_check(current_version:str, avaialble_version:str, update_check_type:str):
+    """Check if an update is available based on version comparison.
+    
+    Compares current version with available version to determine if an update
+    is available based on the specified update check type.
+    
+    Args:
+        current_version (str): Current version string in format "major.minor.build".
+        avaialble_version (str): Available version string in format "major.minor.build".
+        update_check_type (str): Type of update to check for ('Major', 'Minor', or 'Build').
+    
+    Returns:
+        dict: Dictionary with 'UpdateAvailable' (bool) and 'UpdateType' (str) keys.
+    """
     
     if current_version == 'Unknown':
         return {'UpdateAvailable': False, 'UpdateType': 'None'}
@@ -221,6 +273,13 @@ def return_slope(input_list_x:list, input_list_y:list):
     return slope
 
 def get_current_version():
+    """Get the current STAT Function version from version.json file.
+    
+    Reads the version information from the modules/version.json file.
+    
+    Returns:
+        str: Current function version string, or 'Unknown' if unable to read.
+    """
 
     try:
         with open(pathlib.Path(__file__).parent.parent / 'modules/version.json') as f:
@@ -231,14 +290,41 @@ def get_current_version():
     return stat_version
 
 def load_json_from_file(file_name:str):
+    """Load and parse JSON data from a file in the modules/files directory.
+    
+    Args:
+        file_name (str): Name of the JSON file to load.
+    
+    Returns:
+        dict: Parsed JSON data from the file.
+    """
     with open(pathlib.Path(__file__).parent.parent / f'modules/files/{file_name}') as f:
         return json.loads(f.read())
     
 def load_text_from_file(file_name:str, **kwargs):
+    """Load text from a file and format it with provided keyword arguments.
+    
+    Args:
+        file_name (str): Name of the text file to load from modules/files directory.
+        **kwargs: Keyword arguments to use for string formatting.
+    
+    Returns:
+        str: Formatted text content from the file.
+    """
     with open(pathlib.Path(__file__).parent.parent / f'modules/files/{file_name}') as f:
         return f.read().format(**kwargs)
 
 def list_to_string(list_in:list, delimiter:str=', ', empty_str:str='N/A'):
+    """Convert a list to a delimited string.
+    
+    Args:
+        list_in (list): List to convert to string.
+        delimiter (str, optional): Delimiter to use between items. Defaults to ', '.
+        empty_str (str, optional): String to return if list is empty. Defaults to 'N/A'.
+    
+    Returns:
+        str: Delimited string representation of the list, or empty_str if list is empty.
+    """
     if not list_in:
         return empty_str
         
@@ -251,12 +337,15 @@ def list_to_string(list_in:list, delimiter:str=', ', empty_str:str='N/A'):
         return list_in
     
 def parse_kv_string(kv:str, item_delimitter:str=';', value_delimitter:str='='):
-    """
-    Parse a string of key-value pairs into a dictionary.
-    :param kv: The string to parse.
-    :param item_delimitter: The delimiter between items. Default is ';'.
-    :param value_delimitter: The delimiter between key and value. Default is '='.
-    :return: A dictionary of key-value pairs.
+    """Parse a string of key-value pairs into a dictionary.
+    
+    Args:
+        kv (str): The string containing key-value pairs to parse.
+        item_delimitter (str, optional): Delimiter between items. Defaults to ';'.
+        value_delimitter (str, optional): Delimiter between key and value. Defaults to '='.
+    
+    Returns:
+        dict: Dictionary of parsed key-value pairs. Values are None if no delimiter found.
     """
 
     kv_pairs = kv.split(item_delimitter)

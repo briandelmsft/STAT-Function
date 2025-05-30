@@ -532,7 +532,29 @@ class WatchlistModule:
         self.WatchlistName = body['WatchlistName']
 
 class TIModule:
-    '''A Threat Intelligence module object'''
+    """Threat Intelligence module for analyzing entities against threat intelligence sources.
+    
+    This module checks various entity types (IPs, domains, file hashes, URLs) against
+    Microsoft's threat intelligence sources to identify known malicious indicators.
+    
+    Attributes:
+        AnyTIFound (bool): Whether any threat intelligence was found for any entity.
+        DetailedResults (list): Detailed threat intelligence results.
+        DomainEntitiesCount (int): Number of domain entities analyzed.
+        DomainEntitiesWithTI (int): Number of domains with threat intelligence hits.
+        DomainTIFound (bool): Whether threat intelligence was found for domains.
+        FileHashEntitiesCount (int): Number of file hash entities analyzed.
+        FileHashEntitiesWithTI (int): Number of file hashes with threat intelligence hits.
+        FileHashTIFound (bool): Whether threat intelligence was found for file hashes.
+        IPEntitiesCount (int): Number of IP entities analyzed.
+        IPEntitiesWithTI (int): Number of IPs with threat intelligence hits.
+        IPTIFound (bool): Whether threat intelligence was found for IPs.
+        ModuleName (str): Name of the module, defaults to 'TIModule'.
+        TotalTIMatchCount (int): Total number of threat intelligence matches found.
+        URLEntitiesCount (int): Number of URL entities analyzed.
+        URLEntitiesWithTI (int): Number of URLs with threat intelligence hits.
+        URLTIFound (bool): Whether threat intelligence was found for URLs.
+    """
 
     def __init__(self):
         self.AnyTIFound = False
@@ -553,6 +575,12 @@ class TIModule:
         self.URLTIFound = False
 
     def load_from_input(self, body):
+        """Load threat intelligence module data from input body.
+        
+        Args:
+            body (dict): Dictionary containing threat intelligence module data
+                with keys corresponding to all TIModule attributes.
+        """
         self.AnyTIFound = body['AnyTIFound']
         self.DetailedResults = body['DetailedResults']
         self.DomainEntitiesCount = body['DomainEntitiesCount']

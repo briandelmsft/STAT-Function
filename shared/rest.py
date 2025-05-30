@@ -23,6 +23,18 @@ kv_client_id = os.getenv('KEYVAULT_CLIENT_ID')
 kv_secret = None
 
 def token_cache(base_module:BaseModule, api:str):
+    """Retrieve cached authentication token for the specified API.
+    
+    Gets the appropriate authentication token for the specified API service,
+    handling multi-tenant configurations and token expiration checking.
+    
+    Args:
+        base_module (BaseModule): Base module containing multi-tenant configuration.
+        api (str): API service name ('arm', 'msgraph', 'la', 'm365', 'mde').
+    
+    Returns:
+        str: Authentication token for the specified API.
+    """
     global stat_token
 
     default_tenant = os.getenv('AZURE_TENANT_ID')
