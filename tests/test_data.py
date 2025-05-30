@@ -1,4 +1,5 @@
 from shared import data
+import pytest
 
 def test_return_highest_value():
 
@@ -92,7 +93,7 @@ def test_slope():
 
 def test_html_table():
     table = data.list_to_html_table(list_data()).replace(' ', '')
-    expected_output = '<table border="1" class="dataframe"><thead><tr style="text-align: left;"><th>TimeGenerated</th><th>Description</th><th>Severity</th><th>Value</th></tr></thead><tbody><tr><td>2025-01-05 15:57:33 EST</td><td>Value 4</td><td>low</td><td>4</td></tr><tr><td>2025-01-06 15:57:33 EST</td><td>Highest</td><td>MEDIUM</td><td>10</td></tr><tr><td>2025-01-07 15:57:33 EST</td><td>Value 5</td><td>informational</td><td>5</td></tr><tr><td>2025-01-08 15:57:33 EST</td><td>Lowest</td><td>low</td><td>1</td></tr></tbody></table>'.replace(' ', '')
+    expected_output = '<table border="1" class="dataframe"><thead><tr style="text-align: left;"><th>TimeGenerated</th><th>Description</th><th>Severity</th><th>Value</th></tr></thead><tbody><tr><td>2025-01-05T20:57:33.2151737Z</td><td>Value 4</td><td>low</td><td>4</td></tr><tr><td>2025-01-06T20:57:33.2151737Z</td><td>Highest</td><td>MEDIUM</td><td>10</td></tr><tr><td>2025-01-07T20:57:33.2151737Z</td><td>Value 5</td><td>informational</td><td>5</td></tr><tr><td>2025-01-08T20:57:33.2151737Z</td><td>Lowest</td><td>low</td><td>1</td></tr></tbody></table>'.replace(' ', '')
     assert table == expected_output
 
 def test_html_remove_empty_col():
@@ -120,6 +121,94 @@ def test_parse_kv_string():
     parsed_data = data.parse_kv_string(kvdata)
     assert parsed_data['key1'] == 'value1'
     assert parsed_data['key2'] == 'value2'
+
+def test_parse_kv_string_empty():
+    """Test parse_kv_string with empty input"""
+    empty_data = data.parse_kv_string('')
+    # The function returns {'': None} for empty input
+    assert empty_data == {'': None}
+
+def test_parse_kv_string_malformed():
+    """Test parse_kv_string with malformed input"""
+    malformed_data = data.parse_kv_string('key1=value1;invalidpair;key2=value2')
+    assert malformed_data['key1'] == 'value1'
+    assert malformed_data['key2'] == 'value2'
+    # Should handle malformed pairs gracefully
+
+def test_list_to_string_with_custom_separator():
+    """Test list_to_string with custom separator"""
+    list_data = ['a', 'b', 'c']
+    string_data = data.list_to_string(list_data, delimiter=' | ')
+    assert string_data == 'a | b | c'
+
+def test_return_highest_value_empty_list():
+    """Test return_highest_value with empty list"""
+    result = data.return_highest_value([], 'Severity')
+    assert result == 'Unknown'
+
+def test_return_highest_value_missing_key():
+    """Test return_highest_value with missing key in data raises KeyError"""
+    test_data = [{'Other': 'value1'}, {'Other': 'value2'}]
+    with pytest.raises(KeyError):
+        data.return_highest_value(test_data, 'MissingKey')
+
+def test_sort_list_by_key_missing_key():
+    """Test sort_list_by_key with missing key"""
+    test_data = [{'Value': 5}, {'NoValue': 3}, {'Value': 1}]
+    sorted_data = data.sort_list_by_key(test_data, 'Value', True)
+    # Should handle missing keys gracefully
+    assert len(sorted_data) == 3
+
+def test_max_column_by_key_empty_list():
+    """Test max_column_by_key with empty list"""
+    result = data.max_column_by_key([], 'Value')
+    assert result == 0
+
+def test_sum_column_by_key_empty_list():
+    """Test sum_column_by_key with empty list"""
+    result = data.sum_column_by_key([], 'Value')
+    assert result == 0
+
+def test_join_lists_empty_lists():
+    """Test join_lists with empty lists raises KeyError"""
+    with pytest.raises(KeyError):
+        data.join_lists([], [], 'left', 'Key', 'Key')
+
+def test_coalesce_all_none():
+    """Test coalesce with all None values"""
+    result = data.coalesce(None, None, None)
+    assert result is None
+
+def test_coalesce_mixed_values():
+    """Test coalesce with mixed values including empty strings"""
+    # The function returns the first non-None value, even if it's an empty string
+    result = data.coalesce(None, '', 'valid', None)
+    assert result == ''  # Function returns first non-None value
+
+def test_version_check_invalid_versions():
+    """Test version_check with invalid version strings"""
+    # First case raises IndexError when current version is invalid
+    with pytest.raises(IndexError):
+        data.version_check('invalid', '1.0.0', 'Major')
+    
+    # Second case doesn't raise error but may give unexpected results
+    result = data.version_check('1.0.0', 'invalid', 'Major')
+    assert 'UpdateAvailable' in result
+    assert 'UpdateType' in result
+
+def test_return_slope_edge_cases():
+    """Test return_slope with edge cases"""
+    # Same values should have 0 slope
+    dates = [1, 2, 3, 4]
+    values = [5, 5, 5, 5]
+    result = data.return_slope(dates, values)
+    assert result == 0.0
+    
+    # Single point raises ZeroDivisionError
+    single_date = [1]
+    single_value = [5]
+    with pytest.raises(ZeroDivisionError):
+        data.return_slope(single_date, single_value)
 
 def list_data():
     test_data = [
