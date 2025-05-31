@@ -92,9 +92,18 @@ def test_slope():
     assert data.return_slope(dates_list,trending_down) < 0
 
 def test_html_table():
-    table = data.list_to_html_table(list_data()).replace(' ', '')
-    expected_output = '<table border="1" class="dataframe"><thead><tr style="text-align: left;"><th>TimeGenerated</th><th>Description</th><th>Severity</th><th>Value</th></tr></thead><tbody><tr><td>2025-01-05T20:57:33.2151737Z</td><td>Value 4</td><td>low</td><td>4</td></tr><tr><td>2025-01-06T20:57:33.2151737Z</td><td>Highest</td><td>MEDIUM</td><td>10</td></tr><tr><td>2025-01-07T20:57:33.2151737Z</td><td>Value 5</td><td>informational</td><td>5</td></tr><tr><td>2025-01-08T20:57:33.2151737Z</td><td>Lowest</td><td>low</td><td>1</td></tr></tbody></table>'.replace(' ', '')
-    assert table == expected_output
+    # Test HTML table generation without environment variables to ensure consistent output
+    import os
+    from unittest.mock import patch
+    
+    # Mock environment variables to ensure consistent test behavior
+    with patch.dict(os.environ, {}, clear=True):
+        # Clear any existing environment variables that affect date formatting
+        table = data.list_to_html_table(list_data()).replace(' ', '')
+        expected_output = '<table border="1" class="dataframe"><thead><tr style="text-align: left;"><th>TimeGenerated</th><th>Description</th><th>Severity</th><th>Value</th></tr></thead><tbody><tr><td>2025-01-05T20:57:33.2151737Z</td><td>Value 4</td><td>low</td><td>4</td></tr><tr><td>2025-01-06T20:57:33.2151737Z</td><td>Highest</td><td>MEDIUM</td><td>10</td></tr><tr><td>2025-01-07T20:57:33.2151737Z</td><td>Value 5</td><td>informational</td><td>5</td></tr><tr><td>2025-01-08T20:57:33.2151737Z</td><td>Lowest</td><td>low</td><td>1</td></tr></tbody></table>'.replace(' ', '')
+        assert table == expected_output
+
+
 
 def test_html_remove_empty_col():
     table = data.list_to_html_table(list_data3(), drop_empty_cols=True).replace(' ', '')
