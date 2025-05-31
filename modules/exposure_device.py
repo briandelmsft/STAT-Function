@@ -3,6 +3,24 @@ from shared import rest, data
 import json
 
 def execute_device_exposure_module (req_body):
+    """Execute the device exposure module to analyze device risk and exposure.
+    
+    This module analyzes devices from Microsoft Defender for Endpoint to assess
+    their exposure levels, criticality, and associated users. It queries device
+    exposure data and optionally adds comments, tags, and tasks to incidents.
+    
+    Args:
+        req_body (dict): Request body containing:
+            - BaseModuleBody: Base module data with device entities
+            - LookbackInDays (int, optional): Days to look back for data. Defaults to 14.
+            - AddIncidentComments (bool, optional): Whether to add comments. Defaults to True.
+            - AddIncidentTags (bool, optional): Whether to add tags. Defaults to True.
+            - AddIncidentTask (bool, optional): Whether to add tasks. Defaults to False.
+            - IncidentTaskInstructions (str, optional): Custom task instructions.
+    
+    Returns:
+        Response: Response object containing DeviceExposureModule with analysis results.
+    """
 
     #Inputs AddIncidentComments, AddIncidentTask, BaseModuleBody, IncidentTaskInstructions, AddIncidentTags
 
@@ -34,6 +52,15 @@ def execute_device_exposure_module (req_body):
 
 
 def add_tags_to_incident (base_object, exp_object):
+    """Add device criticality rule tags to the incident.
+    
+    Extracts computer criticality rules from the device exposure analysis
+    and adds them as tags to the Microsoft Sentinel incident.
+    
+    Args:
+        base_object (BaseModule): Base module containing incident information.
+        exp_object (DeviceExposureModule): Device exposure module with analysis results.
+    """
     tags = []
     for x in exp_object.Nodes:
         if x['ComputerCriticalityRules']:
@@ -41,6 +68,16 @@ def add_tags_to_incident (base_object, exp_object):
     rest.add_incident_tags(base_object, tags)
 
 def add_comment_to_incident (base_object, exp_object):
+    """Add device exposure analysis comment to the incident.
+    
+    Creates a detailed HTML comment showing device exposure information including
+    criticality levels, asset rules, risk scores, and associated users. The comment
+    is formatted as an HTML table for easy viewing in Microsoft Sentinel.
+    
+    Args:
+        base_object (BaseModule): Base module containing incident information.
+        exp_object (DeviceExposureModule): Device exposure module with analysis results.
+    """
     crit_level = {
         0: 'Very High<br />🟥🟥🟥🟥',
         1: 'High<br />🟥🟥🟥⬜ ',

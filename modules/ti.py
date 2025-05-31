@@ -2,6 +2,29 @@ from classes import BaseModule, Response, TIModule, STATError
 from shared import rest, data
 
 def execute_ti_module (req_body):
+    """Execute the threat intelligence module to check entities against threat intel sources.
+    
+    This module analyzes various entity types (domains, file hashes, IPs, URLs)
+    against Microsoft Sentinel's threat intelligence indicators to identify
+    known malicious indicators and provide context for security analysis.
+    
+    Args:
+        req_body (dict): Request body containing:
+            - BaseModuleBody: Base module data with entities to check
+            - CheckDomains (bool, optional): Whether to check domains. Defaults to True.
+            - CheckFileHashes (bool, optional): Whether to check file hashes. Defaults to True.
+            - CheckIPs (bool, optional): Whether to check IP addresses. Defaults to True.
+            - CheckURLs (bool, optional): Whether to check URLs. Defaults to True.
+            - AddIncidentComments (bool, optional): Whether to add comments. Defaults to True.
+            - AddIncidentTask (bool, optional): Whether to add tasks. Defaults to False.
+            - IncidentTaskInstructions (str, optional): Custom task instructions.
+    
+    Returns:
+        Response: Response object containing TIModule with threat intelligence results.
+        
+    Raises:
+        STATError: If all threat intelligence checks are disabled.
+    """
 
     #Inputs AddIncidentComments, AddIncidentTask, BaseModuleBody, IncidentTaskInstructions, CheckDomains, CheckFileHashes, CheckIPs, CheckURLs
 
