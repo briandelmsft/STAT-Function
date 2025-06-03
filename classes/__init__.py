@@ -303,6 +303,21 @@ class BaseModule:
 | project Domain=tostring(t.Domain);
 '''
         return kql
+
+    def get_mail_kql_table(self):
+        
+        mail_data = []
+
+        for mail in self.MailMessages:
+            mail_data.append({'rec': mail.get('recipientEmailAddress'), 'nid': mail.get('networkMessageId'), 'send': mail.get('senderDetail', {}).get('fromAddress'), 'sendfrom': mail.get('senderDetail', {}).get('mailFromAddress')})
+
+        encoded = urllib.parse.quote(json.dumps(mail_data))
+
+        kql = f'''let mailEntities = print t = todynamic(url_decode('{encoded}'))
+| mv-expand t
+| project RecipientEmailAddress=tostring(t.rec), NetworkMessageId=tostring(t.nid), SenderMailFromAddress=tostring(t.send), SenderFromAddress=tostring(t.sendfrom);
+'''
+        return kql
         
     def get_account_id_and_sid_list(self):
         account_list = []
