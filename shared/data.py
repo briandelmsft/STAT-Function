@@ -8,7 +8,26 @@ date_format = os.getenv('DATE_FORMAT')
 tz_info = os.getenv('TIME_ZONE')
 
 def list_to_html_table(input_list:list, max_rows:int=20, max_cols:int=10, nan_str:str='N/A', escape_html:bool=True, columns:list=None, index:bool=False, justify:str='left', drop_empty_cols:bool=False):
-    '''Convert a list of dictionaries into an HTML table'''
+    """Convert a list of dictionaries into an HTML table.
+    
+    This function takes a list of dictionaries and converts it to an HTML table format,
+    with optional time zone and date formatting based on environment variables.
+    
+    Args:
+        input_list (list): List of dictionaries to convert to HTML table.
+        max_rows (int, optional): Maximum number of rows to display. Defaults to 20.
+        max_cols (int, optional): Maximum number of columns to display. Defaults to 10.
+        nan_str (str, optional): String to replace NaN values. Defaults to 'N/A'.
+        escape_html (bool, optional): Whether to escape HTML characters. Defaults to True.
+        columns (list, optional): Specific columns to include. Defaults to None.
+        index (bool, optional): Whether to include row index. Defaults to False.
+        justify (str, optional): Text alignment for table. Defaults to 'left'.
+        drop_empty_cols (bool, optional): Whether to drop empty columns. Defaults to False.
+    
+    Returns:
+        str: HTML table representation of the input data.
+    """
+    
     df = pd.DataFrame(input_list)
     df.index = df.index + 1
 
@@ -49,7 +68,22 @@ def list_to_html_table(input_list:list, max_rows:int=20, max_cols:int=10, nan_st
     return html_table
 
 def update_column_value_in_list(input_list:list, col_name:str, update_str:str):
-    '''Updates the value of a column in each dict in the list with a value from another column, to include the column value in your replacement use [col_value]'''
+    """Update column values in a list of dictionaries with templated strings.
+    
+    Updates the value of a specified column in each dictionary within the list.
+    The update string can include [col_value] as a placeholder which will be 
+    replaced with the current column value.
+    
+    Args:
+        input_list (list): List of dictionaries to update.
+        col_name (str): Name of the column to update.
+        update_str (str): Template string for the new value. Use [col_value] 
+            to reference the current column value.
+    
+    Returns:
+        list: New list with updated dictionaries.
+    """
+    
     updated_list = []
     for row in input_list:
         current_row = copy.copy(row)
@@ -59,7 +93,21 @@ def update_column_value_in_list(input_list:list, col_name:str, update_str:str):
     return updated_list
 
 def replace_column_value_in_list(input_list:list, col_name:str, original_value:str, replacement_value:str):
-    '''Updates the value of a column in each dict in the list, with a static value'''
+    """Replace specific values in a column across a list of dictionaries.
+    
+    Updates the value of a specified column in each dictionary by replacing
+    occurrences of the original value with the replacement value.
+    
+    Args:
+        input_list (list): List of dictionaries to update.
+        col_name (str): Name of the column to update.
+        original_value (str): Value to be replaced.
+        replacement_value (str): Value to replace with.
+    
+    Returns:
+        list: New list with updated dictionaries.
+    """
+    
     updated_list = []
     for row in input_list:
         current_row = copy.copy(row)
@@ -69,7 +117,20 @@ def replace_column_value_in_list(input_list:list, col_name:str, original_value:s
     return updated_list
 
 def return_highest_value(input_list:list, key:str, order:list=['High','Medium','Low','Informational','None','Unknown']):
-    '''Locate the highest value in a list of dictionaries by key'''
+    """Find the highest value in a list of dictionaries.
+    
+    Searches through a list of dictionaries to find the highest value
+    for a specific key, based on a predefined priority order.
+    
+    Args:
+        input_list (list): List of dictionaries to search.
+        key (str): Key name to check in each dictionary.
+        order (list, optional): Priority order from highest to lowest. 
+            Defaults to ['High','Medium','Low','Informational','None','Unknown'].
+    
+    Returns:
+        str: The highest priority value found, or 'Unknown' if none match.
+    """
     
     unsorted_list = []
     for item in input_list:
@@ -82,7 +143,20 @@ def return_highest_value(input_list:list, key:str, order:list=['High','Medium','
     return 'Unknown'
 
 def join_lists(left_list, right_list, kind, left_key, right_key, fill_nan=None):
-    '''Join 2 lists of objects using a key.  Supported join kinds left, right, outer, inner, cross'''
+    """Join two lists of dictionaries using specified keys and join kind.
+    
+    Args:
+        left_list (list): List of dictionaries to join from the left.
+        right_list (list): List of dictionaries to join from the right.
+        kind (str): Type of join to perform ('left', 'right', 'outer', 'inner', 'cross').
+        left_key (str): Key name in the left list to join on.
+        right_key (str): Key name in the right list to join on.
+        fill_nan (any, optional): Value to fill NaN entries in the result.
+    
+    Returns:
+        list: List of dictionaries resulting from the join operation.
+    """
+    
     left_df = pd.DataFrame(left_list)
     right_df = pd.DataFrame(right_list)
     join_data = left_df.merge(right=right_df, how=kind, left_on=left_key, right_on=right_key)
@@ -94,6 +168,16 @@ def join_lists(left_list, right_list, kind, left_key, right_key, fill_nan=None):
     return join_data.to_dict('records')
 
 def sum_column_by_key(input_list, key):
+    """Calculate the sum of a numeric column in a list of dictionaries.
+    
+    Args:
+        input_list (list): List of dictionaries containing the data.
+        key (str): Key name of the column to sum.
+    
+    Returns:
+        int: Sum of the column values, or 0 if key doesn't exist.
+    """
+    
     df = pd.DataFrame(input_list)
     try:
         val = int(df[key].sum())
@@ -102,6 +186,16 @@ def sum_column_by_key(input_list, key):
     return val
 
 def max_column_by_key(input_list, key):
+    """Find the maximum value in a numeric column of a list of dictionaries.
+    
+    Args:
+        input_list (list): List of dictionaries containing the data.
+        key (str): Key name of the column to find maximum value.
+    
+    Returns:
+        int: Maximum value in the column, or 0 if key doesn't exist.
+    """
+    
     df = pd.DataFrame(input_list)
     try:
         val = int(df[key].max())
@@ -110,6 +204,16 @@ def max_column_by_key(input_list, key):
     return val
 
 def min_column_by_key(input_list, key):
+    """Find the minimum value in a numeric column of a list of dictionaries.
+    
+    Args:
+        input_list (list): List of dictionaries containing the data.
+        key (str): Key name of the column to find minimum value.
+    
+    Returns:
+        int: Minimum value in the column, or 0 if key doesn't exist.
+    """
+    
     df = pd.DataFrame(input_list)
     try:
         val = int(df[key].min())
@@ -118,6 +222,18 @@ def min_column_by_key(input_list, key):
     return val
 
 def sort_list_by_key(input_list, key, ascending=False, drop_columns:list=[]):
+    """Sort a list of dictionaries by a specified key.
+    
+    Args:
+        input_list (list): List of dictionaries to sort.
+        key (str): Key name to sort by.
+        ascending (bool, optional): Sort in ascending order. Defaults to False.
+        drop_columns (list, optional): List of column names to drop from result. Defaults to [].
+    
+    Returns:
+        list: Sorted list of dictionaries.
+    """
+    
     df = pd.DataFrame(input_list)
     df = df.sort_values(by=[key], ascending=ascending)
     if drop_columns:
@@ -125,12 +241,36 @@ def sort_list_by_key(input_list, key, ascending=False, drop_columns:list=[]):
     return df.to_dict('records')
 
 def coalesce(*args):
+    """Return the first non-None argument.
+    
+    Similar to SQL COALESCE function, returns the first argument that is not None.
+    
+    Args:
+        *args: Variable number of arguments to check.
+    
+    Returns:
+        Any: The first non-None argument, or None if all arguments are None.
+    """
+    
     for arg in args:
         if arg is not None:
             return arg
         
 def version_check(current_version:str, avaialble_version:str, update_check_type:str):
+    """Check if an update is available based on version comparison.
     
+    Compares current version with available version to determine if an update
+    is available based on the specified update check type.
+    
+    Args:
+        current_version (str): Current version string in format "major.minor.build".
+        avaialble_version (str): Available version string in format "major.minor.build".
+        update_check_type (str): Type of update to check for ('Major', 'Minor', or 'Build').
+    
+    Returns:
+        dict: Dictionary with 'UpdateAvailable' (bool) and 'UpdateType' (str) keys.
+    """
+
     if current_version == 'Unknown':
         return {'UpdateAvailable': False, 'UpdateType': 'None'}
     
@@ -153,16 +293,46 @@ def version_check(current_version:str, avaialble_version:str, update_check_type:
         return {'UpdateAvailable': False, 'UpdateType': 'None'}
 
 def return_property_as_list(input_list:list, property_name:str):
+    """Returns a list of property data from a list of dictionaries.
+    
+    From a list of dicstionaries, extracts the values of a specified property
+    and returns them as a list.
+    
+    Args:
+        input_list (list): List of dictionaries to extract property from.
+        property_name (str): Name of the property to extract from each dictionary.
+    
+    Returns:
+        list: List of values for the specified property from each dictionary.
+    """
+
     return_list = []
     for item in input_list:
         return_list.append(item[property_name])
     return return_list
 
 def return_slope(input_list_x:list, input_list_y:list):
+    """Calculate the slope of a linear regression line for two lists of values.
+    
+    Args:
+        input_list_x (list): List of x-values.
+        input_list_y (list): List of y-values.
+    
+    Returns:
+        float: Slope of the linear regression line calculated from the two lists.
+    """
+
     slope = ( ( len(input_list_y) * sum([a * b for a, b in zip(input_list_x, input_list_y)]) ) - ( sum(input_list_x) * sum(input_list_y)) ) / ( ( len(input_list_y) * sum([sq ** 2 for sq in input_list_x])) - (sum(input_list_x) ** 2))
     return slope
 
 def get_current_version():
+    """Get the current STAT Function version from version.json file.
+    
+    Reads the version information from the modules/version.json file.
+    
+    Returns:
+        str: Current function version string, or 'Unknown' if unable to read.
+    """
 
     try:
         with open(pathlib.Path(__file__).parent.parent / 'modules/version.json') as f:
@@ -173,14 +343,44 @@ def get_current_version():
     return stat_version
 
 def load_json_from_file(file_name:str):
+    """Load and parse JSON data from a file in the modules/files directory.
+    
+    Args:
+        file_name (str): Name of the JSON file to load.
+    
+    Returns:
+        dict: Parsed JSON data from the file.
+    """
+
     with open(pathlib.Path(__file__).parent.parent / f'modules/files/{file_name}') as f:
         return json.loads(f.read())
     
 def load_text_from_file(file_name:str, **kwargs):
+    """Load text from a file and format it with provided keyword arguments.
+    
+    Args:
+        file_name (str): Name of the text file to load from modules/files directory.
+        **kwargs: Keyword arguments to use for string formatting.
+    
+    Returns:
+        str: Formatted text content from the file.
+    """
+
     with open(pathlib.Path(__file__).parent.parent / f'modules/files/{file_name}') as f:
         return f.read().format(**kwargs)
 
 def list_to_string(list_in:list, delimiter:str=', ', empty_str:str='N/A'):
+    """Convert a list to a delimited string.
+    
+    Args:
+        list_in (list): List to convert to string.
+        delimiter (str, optional): Delimiter to use between items. Defaults to ', '.
+        empty_str (str, optional): String to return if list is empty. Defaults to 'N/A'.
+    
+    Returns:
+        str: Delimited string representation of the list, or empty_str if list is empty.
+    """
+
     if not list_in:
         return empty_str
         
@@ -193,12 +393,15 @@ def list_to_string(list_in:list, delimiter:str=', ', empty_str:str='N/A'):
         return list_in
     
 def parse_kv_string(kv:str, item_delimitter:str=';', value_delimitter:str='='):
-    """
-    Parse a string of key-value pairs into a dictionary.
-    :param kv: The string to parse.
-    :param item_delimitter: The delimiter between items. Default is ';'.
-    :param value_delimitter: The delimiter between key and value. Default is '='.
-    :return: A dictionary of key-value pairs.
+    """Parse a string of key-value pairs into a dictionary.
+    
+    Args:
+        kv (str): The string containing key-value pairs to parse.
+        item_delimitter (str, optional): Delimiter between items. Defaults to ';'.
+        value_delimitter (str, optional): Delimiter between key and value. Defaults to '='.
+    
+    Returns:
+        dict: Dictionary of parsed key-value pairs. Values are None if no delimiter found.
     """
 
     kv_pairs = kv.split(item_delimitter)
