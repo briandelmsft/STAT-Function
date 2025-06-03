@@ -11,7 +11,7 @@ class Response:
         self.contenttype = contenttype
 
 class STATError(Exception):
-    '''A handled STAT exception'''
+    '''A standard STAT exception'''
 
     def __init__(self, error:str, source_error:dict={}, status_code:int=400):
         self.error = error
@@ -19,11 +19,15 @@ class STATError(Exception):
         self.status_code = status_code
 
 class STATNotFound(STATError):
-    '''A handled STAT exception where the API call returned a 404 error'''
+    '''A STAT exception where the API call returned a 404 error'''
+    pass
+
+class STATServerError(STATError):
+    '''A STAT exception where the API call returned a 5xx series error'''
     pass
 
 class STATTooManyRequests(STATError):
-    '''A handled STAT exception where the API call returned a 429 error'''
+    '''A STAT exception where the API call returned a 429 error'''
     def __init__(self, error:str, source_error:dict={}, status_code:int=400, retry_after:int=10):
         self.error = error
         self.source_error = source_error
