@@ -15,8 +15,9 @@ def execute_kql_module (req_body):
     ip_entities = base_object.get_ip_kql_table()
     account_entities = base_object.get_account_kql_table(include_unsynced=True)
     host_entities = base_object.get_host_kql_table()
+    mail_entities = base_object.get_mail_kql_table()
 
-    query = arm_id + ip_entities + account_entities + host_entities + req_body['KQLQuery']
+    query = arm_id + ip_entities + account_entities + host_entities + mail_entities + req_body['KQLQuery']
 
     if req_body.get('RunQueryAgainst') == 'M365':
         results = rest.execute_m365d_query(base_object, query)

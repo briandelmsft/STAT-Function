@@ -46,6 +46,14 @@ class STATError(Exception):
         self.source_error = source_error
         self.status_code = status_code
 
+class STATServerError(STATError):
+    """STAT exception raised when an API call returns a 5xx series error.
+    
+    This exception is a specialized version of STATError for cases where
+    a server side error was encountered and a retry may be needed.
+    """
+    pass
+        
 class STATNotFound(STATError):
     """STAT exception raised when an API call returns a 404 Not Found error.
     
@@ -85,6 +93,7 @@ class BaseModule:
         self.AccountsCount = 0
         self.AccountsOnPrem = []
         self.Alerts = []
+        self.CreatedTime = ''
         self.Domains = []
         self.DomainsCount = 0
         self.EntitiesCount = 0
@@ -99,6 +108,8 @@ class BaseModule:
         self.IncidentARMId = ""
         self.IncidentTriggered = False
         self.IncidentAvailable = False
+        self.MailMessages = []
+        self.MailMessagesCount = 0
         self.ModuleVersions = {}
         self.MultiTenantConfig = {}
         self.OtherEntities = []
@@ -117,6 +128,7 @@ class BaseModule:
     def load_incident_trigger(self, req_body):
         
         self.IncidentARMId = req_body['object']['id']
+        self.CreatedTime = req_body['object']['properties']['createdTimeUtc']
         self.IncidentTriggered = True
         self.IncidentAvailable = True
         self.SentinelRGARMId = "/subscriptions/" + req_body['workspaceInfo']['SubscriptionId'] + "/resourceGroups/" + req_body['workspaceInfo']['ResourceGroupName']
@@ -127,6 +139,7 @@ class BaseModule:
 
     def load_alert_trigger(self, req_body):
         self.IncidentTriggered = False
+        self.CreatedTime = req_body['EndTimeUtc']
         self.SentinelRGARMId = "/subscriptions/" + req_body['WorkspaceSubscriptionId'] + "/resourceGroups/" + req_body['WorkspaceResourceGroup']
         self.WorkspaceId = req_body['WorkspaceId']
 
@@ -135,6 +148,7 @@ class BaseModule:
         self.AccountsCount = basebody['AccountsCount']
         self.AccountsOnPrem = basebody.get('AccountsOnPrem', [])
         self.Alerts = basebody.get('Alerts', [])
+        self.CreatedTime = basebody.get('CreatedTime', '')
         self.Domains = basebody['Domains']
         self.DomainsCount = basebody['DomainsCount']
         self.EntitiesCount = basebody['EntitiesCount']
@@ -149,6 +163,8 @@ class BaseModule:
         self.IncidentTriggered = basebody['IncidentTriggered']
         self.IncidentAvailable = basebody['IncidentAvailable']
         self.IncidentARMId = basebody['IncidentARMId']
+        self.MailMessages = basebody.get('MailMessages', [])
+        self.MailMessagesCount = basebody.get('MailMessagesCount', 0)
         self.ModuleVersions = basebody['ModuleVersions']
         self.MultiTenantConfig = basebody.get('MultiTenantConfig', {})
         self.OtherEntities = basebody['OtherEntities']
@@ -189,10 +205,15 @@ class BaseModule:
     def add_onprem_account_entity(self, data):
         self.AccountsOnPrem.append(data)
 
-    def get_ip_list(self):
+    def get_ip_list(self, include_mail_ips:bool=True):
         ip_list = []
         for ip in self.IPs:
             ip_list.append(ip['Address'])
+
+        if include_mail_ips:
+            for message in self.MailMessages:
+                if message.get('senderDetail', {}).get('ipv4'):
+                    ip_list.append(message.get('senderDetail', {}).get('ipv4')) 
 
         return ip_list
     
@@ -203,27 +224,43 @@ class BaseModule:
         
         return domain_list
     
-    def get_url_list(self):
+    def get_url_list(self, include_mail_urls:bool=True):
         url_list = []
         for url in self.URLs:
             url_list.append(url['Url'])
         
+        if include_mail_urls:
+            for message in self.MailMessages:
+                for url in message.get('urls', []):
+                    url_list.append(url.get('url'))
+
         return url_list
     
-    def get_filehash_list(self):
+    def get_filehash_list(self, include_mail_hashes:bool=True):
         hash_list = []
         for hash in self.FileHashes:
             hash_list.append(hash['FileHash'])
+
+        if include_mail_hashes:
+            for message in self.MailMessages:
+                for attachment in message.get('attachments', []):
+                    if attachment.get('sha256'):
+                        hash_list.append(attachment.get('sha256'))
         
         return hash_list
     
-    def get_ip_kql_table(self):
+    def get_ip_kql_table(self, include_mail_ips:bool=True):
 
         ip_data = []
 
         for ip in self.IPs:
             ip_data.append({'Address': ip.get('Address'), 'Latitude': ip.get('GeoData').get('latitude'), 'Longitude': ip.get('GeoData').get('longitude'), \
                             'Country': ip.get('GeoData').get('country'), 'State': ip.get('GeoData').get('state')})
+            
+        if include_mail_ips:
+            for message in self.MailMessages:
+                if message.get('senderDetail', {}).get('ipv4'):
+                    ip_data.append({'Address': message.get('senderDetail', {}).get('ipv4')})          
 
         encoded = urllib.parse.quote(json.dumps(ip_data))
 
@@ -268,11 +305,16 @@ class BaseModule:
 '''
         return kql
     
-    def get_url_kql_table(self):
+    def get_url_kql_table(self, include_mail_urls:bool=True):
         url_data = []
 
         for url in self.URLs:
             url_data.append({'Url': url.get('Url')})
+
+        if include_mail_urls:
+            for message in self.MailMessages:
+                for url in message.get('urls', []):
+                    url_data.append({'Url': url.get('url')})
 
         encoded = urllib.parse.quote(json.dumps(url_data))
 
@@ -282,11 +324,17 @@ class BaseModule:
 '''
         return kql
 
-    def get_filehash_kql_table(self):
+    def get_filehash_kql_table(self, include_mail_hashes:bool=True):
         hash_data = []
 
         for hash in self.FileHashes:
             hash_data.append({'FileHash': hash.get('FileHash'), 'Algorithm': hash.get('Algorithm')})
+
+        if include_mail_hashes:
+            for message in self.MailMessages:
+                for attachment in message.get('attachments', []):
+                    if attachment.get('sha256'):
+                        hash_data.append({'FileHash': attachment.get('sha256'), 'Algorithm': 'SHA256'})
 
         encoded = urllib.parse.quote(json.dumps(hash_data))
 
@@ -308,6 +356,21 @@ class BaseModule:
         kql = f'''let domainEntities = print t = todynamic(url_decode('{encoded}'))
 | mv-expand t
 | project Domain=tostring(t.Domain);
+'''
+        return kql
+
+    def get_mail_kql_table(self):
+        
+        mail_data = []
+
+        for mail in self.MailMessages:
+            mail_data.append({'rec': mail.get('recipientEmailAddress'), 'nid': mail.get('networkMessageId'), 'send': mail.get('senderDetail', {}).get('fromAddress'), 'sendfrom': mail.get('senderDetail', {}).get('mailFromAddress')})
+
+        encoded = urllib.parse.quote(json.dumps(mail_data))
+
+        kql = f'''let mailEntities = print t = todynamic(url_decode('{encoded}'))
+| mv-expand t
+| project RecipientEmailAddress=tostring(t.rec), NetworkMessageId=tostring(t.nid), SenderMailFromAddress=tostring(t.send), SenderFromAddress=tostring(t.sendfrom);
 '''
         return kql
         
