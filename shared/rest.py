@@ -8,7 +8,7 @@ import os
 import uuid
 import time
 import base64
-from classes import STATError, STATNotFound, BaseModule, STATTooManyRequests
+from classes import STATError, STATNotFound, BaseModule, STATTooManyRequests, STATServerError
 
 stat_token = {}
 graph_endpoint = os.getenv('GRAPH_ENDPOINT')
@@ -201,9 +201,14 @@ def execute_rest_call(base_module:BaseModule, method:str, api:str, path:str, bod
             if wait_time > 60:
                 raise STATTooManyRequests(error=e.error, source_error=e.source_error, status_code=e.status_code, retry_after=e.retry_after)
             time.sleep(retry_after)
+        except STATServerError as e:
+            wait_time += 15
+            if wait_time > 60:
+                raise STATServerError(error=f'Server error returned by {url}', source_error=e.source_error, status_code=500)
+            time.sleep(15)
         except ConnectionError as e:
             wait_time += 20
-            if wait_time >= 60:
+            if wait_time > 60:
                 raise STATError(error=f'Failed to establish a new connection to {url}', source_error=e, status_code=500)
             time.sleep(20)
         else:
@@ -217,6 +222,8 @@ def check_rest_response(response:Response, api, path):
         raise STATNotFound(f'The API call to {api} with path {path} failed with status {response.status_code}', source_error={'status_code': int(response.status_code), 'reason': str(response.reason)})
     elif response.status_code == 429 or response.status_code == 408:
         raise STATTooManyRequests(f'The API call to {api} with path {path} failed with status {response.status_code}', source_error={'status_code': int(response.status_code), 'reason': str(response.reason)}, retry_after=response.headers.get('Retry-After', 10), status_code=int(response.status_code))
+    elif response.status_code >= 500:
+        raise STATServerError(f'The API call to {api} with path {path} failed with status {response.status_code}', source_error={'status_code': int(response.status_code), 'reason': str(response.reason)})
     elif response.status_code >= 300:
         raise STATError(f'The API call to {api} with path {path} failed with status {response.status_code}', source_error={'status_code': int(response.status_code), 'reason': str(response.reason)})
     return
