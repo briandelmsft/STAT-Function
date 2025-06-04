@@ -228,6 +228,7 @@ def enrich_domains(entities):
 def enrich_mail_message(entities):
     mail_entities = list(filter(lambda x: x['kind'].lower() == 'mailmessage', entities))
     base_object.MailMessagesCount = len(mail_entities)
+    message_role = rest.check_app_role(base_object, 'msgraph', ['SecurityAnalyzedMessage.Read.All','SecurityAnalyzedMessage.ReadWrite.All'])
     
     for mail in mail_entities:
         recipient = data.coalesce(mail.get('properties',{}).get('recipient'), mail.get('Recipient'))
@@ -242,6 +243,10 @@ def enrich_mail_message(entities):
             end_time = (dt.datetime.fromisoformat(base_object.CreatedTime) + dt.timedelta(days=14)).strftime("%Y-%m-%dT%H:%M:%SZ")
 
         raw_entity = data.coalesce(mail.get('properties'), mail)
+
+        if not message_role:
+            base_object.MailMessages.append({'networkMessageId': network_message_id, 'recipientEmailAddress': recipient, 'EnrichmentMethod': 'MailMessage - No App Role', 'RawEntity': raw_entity})
+            continue
 
         if recipient and network_message_id:
             try:
@@ -548,10 +553,10 @@ def get_mail_comment():
     mail_list = []
     for msg in base_object.MailMessages:
         mail_list.append({
-                'Basics': f"<b>Recipient</b>: {msg.get('recipientEmailAddress')}<br><b>Sender</b>: {msg.get('senderDetail', {}).get('fromAddress')}<br><b>SenderFromAddress</b>: {msg.get('senderDetail', {}).get('mailFromAddress')}<br><b>Subject</b>: {msg.get('subject')}<br><b>AttachmentCount:</b> {len(msg.get('attachments', []))}<br><b>URLCount:</b> {len(msg.get('urls', []))}",
+                'MessageDetails': f"<b>Recipient</b>: {msg.get('recipientEmailAddress')}<br><b>Sender</b>: {msg.get('senderDetail', {}).get('fromAddress')}<br><b>SenderFromAddress</b>: {msg.get('senderDetail', {}).get('mailFromAddress')}<br><b>Subject</b>: {msg.get('subject')}<br><b>AttachmentCount:</b> {len(msg.get('attachments', []))}<br><b>URLCount:</b> {len(msg.get('urls', []))}",
                 'Delivery': f"<b>Original Delivery</b>: {msg.get('originalDelivery', {}).get('location')}<br><b>Latest Delivery</b>: {msg.get('latestDelivery', {}).get('location')}",
                 'Authentication': f"<b>SPF</b>: {msg.get('authenticationDetails', {}).get('senderPolicyFramework')}<br><b>DKIM</b>: {msg.get('authenticationDetails', {}).get('dkim')}<br><b>DMARC</b>: {msg.get('authenticationDetails', {}).get('dmarc')}",
-                'ThreatInfo': f"<b>ThreatTypes</b>: {', '.join(msg.get('threatTypes'))}<br><b>DetectionMethods</b>: {', '.join(msg.get('detectionMethods'))}"
+                'ThreatInfo': f"<b>ThreatTypes</b>: {', '.join(msg.get('threatTypes', []))}<br><b>DetectionMethods</b>: {', '.join(msg.get('detectionMethods', []))}"
             })
         
     return data.list_to_html_table(mail_list, escape_html=False)
