@@ -552,7 +552,13 @@ def get_mail_comment():
     
     mail_list = []
     for msg in base_object.MailMessages:
-        mail_list.append({
+        if msg.get('EnrichmentMethod'):
+            mail_list.append({
+                'MessageDetails': f"<b>NetworkMessageId</b>: {msg.get('networkMessageId')}<br><b>Recipient</b>: {msg.get('recipientEmailAddress', 'Unknown')}",
+                'EnrichmentMethod': f"<b>Enrichment Method</b>: {msg.get('EnrichmentMethod')}",
+            })
+        else:
+            mail_list.append({
                 'MessageDetails': f"<b>Recipient</b>: {msg.get('recipientEmailAddress')}<br><b>Sender</b>: {msg.get('senderDetail', {}).get('fromAddress')}<br><b>SenderFromAddress</b>: {msg.get('senderDetail', {}).get('mailFromAddress')}<br><b>Subject</b>: {msg.get('subject')}<br><b>AttachmentCount:</b> {len(msg.get('attachments', []))}<br><b>URLCount:</b> {len(msg.get('urls', []))}",
                 'Delivery': f"<b>Original Delivery</b>: {msg.get('originalDelivery', {}).get('location')}<br><b>Latest Delivery</b>: {msg.get('latestDelivery', {}).get('location')}",
                 'Authentication': f"<b>SPF</b>: {msg.get('authenticationDetails', {}).get('senderPolicyFramework')}<br><b>DKIM</b>: {msg.get('authenticationDetails', {}).get('dkim')}<br><b>DMARC</b>: {msg.get('authenticationDetails', {}).get('dmarc')}",
