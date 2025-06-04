@@ -23,6 +23,19 @@ kv_client_id = os.getenv('KEYVAULT_CLIENT_ID')
 kv_secret = None
 
 def token_cache(base_module:BaseModule, api:str):
+    """Retrieve cached authentication token for the specified API.
+    
+    Gets the appropriate authentication token for the specified API service,
+    handling multi-tenant configurations and token expiration checking.
+    
+    Args:
+        base_module (BaseModule): Base module containing multi-tenant configuration.
+        api (str): API service name ('arm', 'msgraph', 'la', 'm365', 'mde').
+    
+    Returns:
+        str: Authentication token for the specified API.
+    """
+
     global stat_token
 
     default_tenant = os.getenv('AZURE_TENANT_ID')
@@ -93,27 +106,73 @@ def get_kv_secret():
     return kv_return.value
 
 def rest_call_get(base_module:BaseModule, api:str, path:str, headers:dict={}):
-    '''Perform a GET HTTP call to a REST API.  Accepted API values are arm, msgraph, la, m365 and mde'''
+    """Perform a GET HTTP call to a REST API.
+    
+    Args:
+        base_module (BaseModule): Base module containing incident information.
+        api (str): API service name ('arm', 'msgraph', 'la', 'm365', 'mde').
+        path (str): API endpoint path to call.
+        headers (dict, optional): Additional headers to include in the request. Defaults to an empty dictionary.
+    
+    Returns:
+        Response: HTTP response object containing the result of the API call.
+    """
 
     response = execute_rest_call(base_module, 'get', api, path, None, headers)
     
     return response
 
 def rest_call_post(base_module:BaseModule, api:str, path:str, body, headers:dict={}):
-    '''Perform a POST HTTP call to a REST API.  Accepted API values are arm, msgraph, la, m365 and mde'''
+    """Perform a POST HTTP call to a REST API.
+    
+    Args:
+        base_module (BaseModule): Base module containing incident information.
+        api (str): API service name ('arm', 'msgraph', 'la', 'm365', 'mde').
+        path (str): API endpoint path to call.
+        body: Request body to send with the POST request.
+        headers (dict, optional): Additional headers to include in the request. Defaults to an empty dictionary.
+    
+    Returns:
+        Response: HTTP response object containing the result of the API call.
+    """
 
     response = execute_rest_call(base_module, 'post', api, path, body, headers)
     
     return response
 
 def rest_call_put(base_module:BaseModule, api:str, path:str, body, headers:dict={}):
-    '''Perform a PUT HTTP call to a REST API.  Accepted API values are arm, msgraph, la, m365 and mde'''
+    """Perform a PUT HTTP call to a REST API.
+    
+    Args:
+        base_module (BaseModule): Base module containing incident information.
+        api (str): API service name ('arm', 'msgraph', 'la', 'm365', 'mde').
+        path (str): API endpoint path to call.
+        body: Request body to send with the PUT request.
+        headers (dict, optional): Additional headers to include in the request. Defaults to an empty dictionary.
+    
+    Returns:
+        Response: HTTP response object containing the result of the API call.
+    """
     
     response = execute_rest_call(base_module, 'put', api, path, body, headers)
     
     return response
 
 def execute_rest_call(base_module:BaseModule, method:str, api:str, path:str, body=None, headers:dict={}):
+    """Execute a REST API call with retry logic for handling rate limits and connection errors.
+    This should only be called from the rest_call_get, rest_call_post, or rest_call_put functions.
+
+    Args:
+        base_module (BaseModule): Base module containing incident information.
+        method (str): HTTP method to use ('get', 'post', 'put').
+        api (str): API service name ('arm', 'msgraph', 'la', 'm365', 'mde').
+        path (str): API endpoint path to call.
+        body: Request body to send with the request, if applicable.
+        headers (dict, optional): Additional headers to include in the request. Defaults to an empty dictionary.
+    Returns:
+        Response: HTTP response object containing the result of the API call.
+    """
+
     token = token_cache(base_module, api)
     url = get_endpoint(api) + path
     headers['Authorization'] = 'Bearer ' + token.token
@@ -170,6 +229,18 @@ def check_rest_response(response:Response, api, path):
     return
 
 def execute_la_query(base_module:BaseModule, query:str, lookbackindays:int, endpoint:str='query'):
+    """Execute a Log Analytics Query.
+    
+    Args:
+        base_module (BaseModule): Base module containing incident information.
+        query (str): Log Analytics query to execute.
+        lookbackindays (int): Number of days to look back in the query.
+        endpoint (str): Endpoint to use for the query ('query' or 'search'). Defaults to 'query'.
+    
+    Returns:
+        list: List of query results, where each result is a dictionary mapping column names to values.
+    """
+
     duration = 'P' + str(lookbackindays) + 'D'
 
     if endpoint == 'search':
@@ -196,6 +267,16 @@ def execute_la_query(base_module:BaseModule, query:str, lookbackindays:int, endp
     return query_results
 
 def execute_m365d_query(base_module:BaseModule, query:str):
+    """Execute a M365 Advanced Hunting Query.
+    
+    Args:
+        base_module (BaseModule): Base module containing incident information.
+        query (str): Log Analytics query to execute.
+    
+    Returns:
+        list: List of query results, where each result is a dictionary mapping column names to values.
+    """
+
     path = '/api/advancedhunting/run'
     body = {'Query': query}
     response = rest_call_post(base_module, 'm365', path, body)
@@ -204,6 +285,16 @@ def execute_m365d_query(base_module:BaseModule, query:str):
     return data['Results']
 
 def execute_mde_query(base_module:BaseModule, query:str):
+    """Execute a MDE Advanced Hunting Query.
+    
+    Args:
+        base_module (BaseModule): Base module containing incident information.
+        query (str): Log Analytics query to execute.
+    
+    Returns:
+        list: List of query results, where each result is a dictionary mapping column names to values.
+    """
+
     path = '/api/advancedqueries/run'
     body = {'Query': query}
     response = rest_call_post(base_module, 'mde', path, body)
@@ -230,6 +321,19 @@ def get_endpoint(api:str):
                         '(ARM_ENDPOINT, GRAPH_ENDPOINT, LOGANALYTICS_ENDPOINT, M365_ENDPOINT, and MDE_ENDPOINT).')
     
 def add_incident_comment(base_module:BaseModule, comment:str):
+    """Add a comment to a Microsoft Sentinel incident.
+    
+    Creates a new comment on the specified incident using the Azure REST API.
+    The comment is truncated to 30,000 characters if longer.
+    
+    Args:
+        base_module (BaseModule): Base module containing incident information.
+        comment (str): Comment text to add to the incident.
+    
+    Returns:
+        Response or str: API response object on success, or 'Comment failed' on error.
+    """
+
     path = base_module.IncidentARMId + '/comments/' + str(uuid.uuid4()) + '?api-version=2023-02-01'
     try:
         response = rest_call_put(base_module, 'arm', path, {'properties': {'message': comment[:30000]}})

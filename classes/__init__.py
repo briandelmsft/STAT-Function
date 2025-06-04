@@ -3,7 +3,21 @@ import json
 from shared import data
 
 class Response:
-    '''A response object'''
+    """HTTP response object for STAT Function modules.
+    
+    This class encapsulates the response data, status code, and content type
+    for HTTP responses returned by STAT Function modules.  All modules should return this class.
+    
+    Args:
+        body: The response body content, typically a dictionary or object.
+        statuscode (int, optional): HTTP status code. Defaults to 200.
+        contenttype (str, optional): Content type header. Defaults to 'application/json'.
+    
+    Attributes:
+        body: The response body content.
+        statuscode (int): HTTP status code.
+        contenttype (str): Content type header.
+    """
     
     def __init__(self, body, statuscode=200, contenttype='application/json'):
         self.body = body
@@ -11,23 +25,60 @@ class Response:
         self.contenttype = contenttype
 
 class STATError(Exception):
-    '''A standard STAT exception'''
+    """Exception class for STAT Function errors.
+    
+    This exception is raised when a handled error occurs in STAT Function processing.
+    It includes additional context such as source error details and HTTP status codes.
+    
+    Args:
+        error (str): The error message describing what went wrong.
+        source_error (dict, optional): Additional error details from the source. Defaults to {}.
+        status_code (int, optional): HTTP status code associated with the error. Defaults to 400.
+    
+    Attributes:
+        error (str): The error message.
+        source_error (dict): Additional error details from the source.
+        status_code (int): HTTP status code associated with the error.
+    """
 
     def __init__(self, error:str, source_error:dict={}, status_code:int=400):
         self.error = error
         self.source_error = source_error
         self.status_code = status_code
 
-class STATNotFound(STATError):
-    '''A STAT exception where the API call returned a 404 error'''
-    pass
-
 class STATServerError(STATError):
-    '''A STAT exception where the API call returned a 5xx series error'''
+    """STAT exception raised when an API call returns a 5xx series error.
+    
+    This exception is a specialized version of STATError for cases where
+    a server side error was encountered and a retry may be needed.
+    """
+    pass
+        
+class STATNotFound(STATError):
+    """STAT exception raised when an API call returns a 404 Not Found error.
+    
+    This exception is a specialized version of STATError for cases where
+    a resource or endpoint could not be found.
+    """
     pass
 
 class STATTooManyRequests(STATError):
-    '''A STAT exception where the API call returned a 429 error'''
+    """STAT exception raised when an API call returns a 429 Too Many Requests error.
+    
+    This exception includes retry timing information to help with rate limiting handling.
+    
+    Args:
+        error (str): The error message describing what went wrong.
+        source_error (dict, optional): Additional error details from the source. Defaults to {}.
+        status_code (int, optional): HTTP status code associated with the error. Defaults to 400.
+        retry_after (int, optional): Number of seconds to wait before retrying. Defaults to 10.
+    
+    Attributes:
+        error (str): The error message.
+        source_error (dict): Additional error details from the source.
+        status_code (int): HTTP status code associated with the error.
+        retry_after (str): String representation of seconds to wait before retrying.
+    """
     def __init__(self, error:str, source_error:dict={}, status_code:int=400, retry_after:int=10):
         self.error = error
         self.source_error = source_error

@@ -1,4 +1,5 @@
 from shared import data
+import pytest
 
 def test_return_highest_value():
 
@@ -120,6 +121,86 @@ def test_parse_kv_string():
     parsed_data = data.parse_kv_string(kvdata)
     assert parsed_data['key1'] == 'value1'
     assert parsed_data['key2'] == 'value2'
+
+def test_parse_kv_string_empty():
+    """Test parse_kv_string with empty input"""
+    empty_data = data.parse_kv_string('')
+    # The function returns {'': None} for empty input
+    assert empty_data == {'': None}
+
+def test_parse_kv_string_malformed():
+    """Test parse_kv_string with malformed input"""
+    malformed_data = data.parse_kv_string('key1=value1;invalidpair;key2=value2')
+    assert malformed_data['key1'] == 'value1'
+    assert malformed_data['key2'] == 'value2'
+    # Should handle malformed pairs gracefully
+
+def test_list_to_string_with_custom_separator():
+    """Test list_to_string with custom separator"""
+    list_data = ['a', 'b', 'c']
+    string_data = data.list_to_string(list_data, delimiter=' | ')
+    assert string_data == 'a | b | c'
+
+def test_return_highest_value_empty_list():
+    """Test return_highest_value with empty list"""
+    result = data.return_highest_value([], 'Severity')
+    assert result == 'Unknown'
+
+def test_return_highest_value_missing_key():
+    """Test return_highest_value with missing key in data raises KeyError"""
+    test_data = [{'Other': 'value1'}, {'Other': 'value2'}]
+    with pytest.raises(KeyError):
+        data.return_highest_value(test_data, 'MissingKey')
+
+def test_sort_list_by_key_missing_key():
+    """Test sort_list_by_key with missing key"""
+    test_data = [{'Value': 5}, {'NoValue': 3}, {'Value': 1}]
+    sorted_data = data.sort_list_by_key(test_data, 'Value', False)
+    # Should handle missing keys gracefully
+    assert len(sorted_data) == 3
+    assert sorted_data[0]['Value'] == 5
+    assert sorted_data[2]['NoValue'] == 3
+
+def test_max_column_by_key_empty_list():
+    """Test max_column_by_key with empty list"""
+    result = data.max_column_by_key([], 'Value')
+    assert result == 0
+
+def test_sum_column_by_key_empty_list():
+    """Test sum_column_by_key with empty list"""
+    result = data.sum_column_by_key([], 'Value')
+    assert result == 0
+
+def test_join_lists_empty_lists():
+    """Test join_lists with empty lists raises KeyError"""
+    with pytest.raises(KeyError):
+        data.join_lists([], [], 'left', 'Key', 'Key')
+
+def test_return_slope_edge_cases():
+    """Test return_slope with edge cases"""
+    # Same values should have 0 slope
+    dates = [1, 2, 3, 4]
+    values = [5, 5, 5, 5]
+    result = data.return_slope(dates, values)
+    assert result == 0.0
+
+    # Single point raises ZeroDivisionError
+    single_date = [1]
+    single_value = [5]
+    with pytest.raises(ZeroDivisionError):
+        data.return_slope(single_date, single_value)
+
+def test_load_text_from_file():
+    """Test load_text_from_file with a valid file path"""
+    content = data.load_text_from_file('exposure-device.kql', mde_id_list=['12345'])
+    assert "let mde_ids = dynamic(['12345']);" in content
+
+def test_load_json_from_file():
+    """Test load_json_from_file with a valid file path"""
+    content = data.load_json_from_file('privileged-roles.json')
+    assert "Exchange Administrator" in content
+    assert "Global Administrator" in content
+    assert "Security Administrator" in content
 
 def list_data():
     test_data = [
