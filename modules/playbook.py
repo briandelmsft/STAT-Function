@@ -1,9 +1,14 @@
 from classes import BaseModule, Response, STATError, RunPlaybook
 from shared import rest
+import logging
 
 def execute_playbook_module (req_body):
 
     #Inputs AddIncidentComments, LogicAppResourceId, PlaybookName, TenantId
+
+    # Log module invocation with parameters (excluding BaseModuleBody)
+    log_params = {k: v for k, v in req_body.items() if k != 'BaseModuleBody'}
+    logging.info(f'Playbook Module invoked with parameters: {log_params}')
 
     base_object = BaseModule()
     base_object.load_from_input(req_body['BaseModuleBody'])

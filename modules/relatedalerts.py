@@ -2,11 +2,16 @@ from classes import BaseModule, Response, RelatedAlertsModule, STATError
 from shared import rest, data
 import datetime as dt
 import json
+import logging
 
 def execute_relatedalerts_module (req_body):
 
     #Inputs AddIncidentComments, AddIncidentTask, BaseModuleBody, IncidentTaskInstructions
     #LookbackInDays, CheckAccountEntityMatches, CheckHostEntityMatches, CheckIPEntityMatches, AlertKQLFilter
+
+    # Log module invocation with parameters (excluding BaseModuleBody)
+    log_params = {k: v for k, v in req_body.items() if k != 'BaseModuleBody'}
+    logging.info(f'Related Alerts Module invoked with parameters: {log_params}')
 
     base_object = BaseModule()
     base_object.load_from_input(req_body['BaseModuleBody'])

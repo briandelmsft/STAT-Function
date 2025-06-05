@@ -1,9 +1,14 @@
 from classes import BaseModule, Response, TIModule, STATError
 from shared import rest, data
+import logging
 
 def execute_ti_module (req_body):
 
     #Inputs AddIncidentComments, AddIncidentTask, BaseModuleBody, IncidentTaskInstructions, CheckDomains, CheckFileHashes, CheckIPs, CheckURLs
+
+    # Log module invocation with parameters (excluding BaseModuleBody)
+    log_params = {k: v for k, v in req_body.items() if k != 'BaseModuleBody'}
+    logging.info(f'Threat Intelligence Module invoked with parameters: {log_params}')
 
     base_object = BaseModule()
     base_object.load_from_input(req_body['BaseModuleBody'])
@@ -17,6 +22,9 @@ def execute_ti_module (req_body):
 
     if all((not(check_domains), not(check_filehashes), not(check_ips), not(check_urls))):
         raise STATError('The Threat Intelligence module was excuted, but all TI checks were disabled.')
+
+    # Log entity counts for troubleshooting
+    logging.info(f'TI Module processing: {len(base_object.Domains)} domains, {len(base_object.FileHashes)} file hashes, {len(base_object.IPs)} IPs, {len(base_object.URLs)} URLs')
 
     if check_domains and base_object.Domains:
         query = base_object.get_domain_kql_table() + '''domainEntities

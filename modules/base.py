@@ -14,6 +14,10 @@ def execute_base_module (req_body):
     global enrich_roles
     global enrich_mde_device
     
+    # Log module invocation with parameters (excluding incident/alert body data)
+    log_params = {k: v for k, v in req_body.items() if k != 'Body'}
+    logging.info(f'Base Module invoked with parameters: {log_params}')
+    
     base_object = BaseModule()
 
     try:

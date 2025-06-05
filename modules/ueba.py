@@ -1,11 +1,16 @@
 from classes import BaseModule, Response, UEBAModule
 from shared import rest, data
 import ast
+import logging
 
 def execute_ueba_module (req_body):
 
     #Inputs AddIncidentComments, AddIncidentTask, BaseModuleBody, IncidentTaskInstructions
     #LookbackInDays, MinimumInvestigationPriority
+
+    # Log module invocation with parameters (excluding BaseModuleBody)
+    log_params = {k: v for k, v in req_body.items() if k != 'BaseModuleBody'}
+    logging.info(f'UEBA Module invoked with parameters: {log_params}')
 
     base_object = BaseModule()
     base_object.load_from_input(req_body['BaseModuleBody'])
@@ -42,6 +47,9 @@ userDetails
 | union userDetails
 | project-away UserPrincipalName1
 | extend InvestigationPriorityAverage=iff(isnan(InvestigationPriorityAverage), toreal(0), round(toreal(InvestigationPriorityAverage),2))'''
+
+    # Log the executed UEBA query for troubleshooting
+    logging.info(f'Executing UEBA query with lookback {lookback} days and min priority {min_priority}')
 
     results = rest.execute_la_query(base_object, query, lookback)
 

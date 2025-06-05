@@ -1,10 +1,15 @@
 from classes import BaseModule, Response, WatchlistModule, STATError
 from shared import rest, data
+import logging
 
 def execute_watchlist_module (req_body):
 
     #Inputs AddIncidentComments, AddIncidentTask, BaseModuleBody, IncidentTaskInstructions, WatchlistKey, WatchlistKeyDataType, WatchlistName
     # WatchlistKeyDataType: UPN, IP, CIDR, FQDN
+
+    # Log module invocation with parameters (excluding BaseModuleBody)
+    log_params = {k: v for k, v in req_body.items() if k != 'BaseModuleBody'}
+    logging.info(f'Watchlist Module invoked with parameters: {log_params}')
 
     base_object = BaseModule()
     base_object.load_from_input(req_body['BaseModuleBody'])
@@ -17,10 +22,17 @@ def execute_watchlist_module (req_body):
 
     #Check if the WatchlistName is valid, otherwise the query will succeed and never find anything on the watchlist
     watchlist_check = f'_GetWatchlistAlias\n| where WatchlistAlias == "{watchlist_object.WatchlistName}"'
+    
+    # Log watchlist check for troubleshooting
+    logging.info(f'Checking validity of watchlist: {watchlist_object.WatchlistName}')
+    
     check_watchlist = rest.execute_la_query(base_object, watchlist_check, 7)
 
     if not check_watchlist:
         raise STATError(f'The watchlist name {watchlist_object.WatchlistName} is invalid.', {})
+    
+    # Log the type of entities being checked against the watchlist
+    logging.info(f'Checking {watchlist_datatype} entities against watchlist {watchlist_object.WatchlistName} using key {watchlist_key}')
     
     if watchlist_datatype == 'UPN':
         account_entities = base_object.get_account_upn_list(include_unsynced=True)
