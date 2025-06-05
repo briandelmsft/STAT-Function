@@ -2,10 +2,15 @@ from classes import Response, STATError, DebugModule, BaseModule
 from shared import rest
 import os, sys, json, base64
 import datetime as dt
+import logging
 
 def debug_module (req_body):
 
     #Inputs Test, Params
+
+    # Log debug module invocation with parameters (excluding sensitive params)
+    log_params = {k: v for k, v in req_body.items() if k != 'Params'}
+    logging.info(f'Debug Module invoked with parameters: {log_params}')
 
     if os.getenv('DEBUG_MODE') != "1":
         raise STATError('DEBUG_MODE environment variable must be set to 1 to run this module')
