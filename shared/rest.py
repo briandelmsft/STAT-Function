@@ -223,7 +223,7 @@ def check_rest_response(response:Response, api, path):
     elif response.status_code == 429 or response.status_code == 408:
         raise STATTooManyRequests(f'The API call to {api} with path {path} failed with status {response.status_code}', source_error={'status_code': int(response.status_code), 'reason': str(response.reason)}, retry_after=response.headers.get('Retry-After', 10), status_code=int(response.status_code))
     elif response.status_code >= 500:
-        raise STATServerError(f'The API call to {api} with path {path} failed with status {response.status_code}', source_error={'status_code': int(response.status_code), 'reason': str(response.reason)})
+        raise STATServerError(f'The API call to {api} with path {path} failed with status {response.status_code}', source_error={'status_code': int(response.status_code), 'reason': str(response.reason)}, status_code=int(response.status_code))
     elif response.status_code >= 300:
         raise STATError(f'The API call to {api} with path {path} failed with status {response.status_code}', source_error={'status_code': int(response.status_code), 'reason': str(response.reason)})
     return
