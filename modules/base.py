@@ -1,4 +1,4 @@
-from classes import BaseModule, Response, STATError, STATNotFound
+from classes import BaseModule, Response, STATError, STATNotFound, STATFailedToDecodeToken, STATInsufficientPermissions
 from shared import rest, data
 import json
 import time
@@ -26,6 +26,13 @@ def execute_base_module (req_body):
     enrich_mfa = req_body.get('EnrichAccountsWithMFA', True)
     enrich_roles = req_body.get('EnrichAccountsWithRoles', True)
     enrich_mde_device = req_body.get('EnrichHostsWithMDE', True)
+
+    try:
+        #Check for Directory.Read.All or combination of other sufficient roles
+        rest.check_app_role2(base_object, 'msgraph', ['Organization.Read.All', 'Directory.Read.All', 'Organization.ReadWrite.All', 'Directory.ReadWrite.All'])
+        rest.check_app_role2(base_object, 'msgraph', ['User.Read.All', 'User.ReadWrite.All', 'Directory.Read.All', 'Directory.ReadWrite.All'])
+    except STATFailedToDecodeToken:
+        pass
 
     if trigger_type.lower() == 'incident':
         entities = process_incident_trigger(req_body)

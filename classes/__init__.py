@@ -62,6 +62,14 @@ class STATNotFound(STATError):
     """
     pass
 
+class STATFailedToDecodeToken(STATError):
+    """STAT exception raised when an the JWT can't be decoded to check for app roles."""
+    pass
+
+class STATInsufficientPermissions(STATError):
+    """STAT exception raised when the STAT Function identity does not have sufficient permissions."""
+    pass
+
 class STATTooManyRequests(STATError):
     """STAT exception raised when an API call returns a 429 Too Many Requests error.
     

@@ -8,7 +8,7 @@ import os
 import uuid
 import time
 import base64
-from classes import STATError, STATNotFound, BaseModule, STATTooManyRequests, STATServerError
+from classes import STATError, STATNotFound, BaseModule, STATTooManyRequests, STATServerError, STATFailedToDecodeToken, STATInsufficientPermissions
 
 stat_token = {}
 graph_endpoint = os.getenv('GRAPH_ENDPOINT')
@@ -390,15 +390,56 @@ def add_incident_tags(base_module:BaseModule, tags:list):
         return response_put
 
 def check_app_role(base_module:BaseModule, token_type:str, app_roles:list):
+    """Check if the current application token has the required roles.
+    Args:
+        base_module (BaseModule): Base module containing incident information.
+        token_type (str): Type of token to check ('msgraph', 'la', 'm365', 'mde').
+        app_roles (list): List of required application roles to check against the token.
+    Returns:
+        bool: True if the token has at least one of the required roles, False otherwise.    
+    Raises:
+        STATFailedToDecodeToken: If the JWT token cannot be decoded to check for roles.
+    """
     token = token_cache(base_module, token_type)
 
-    content = token.token.split('.')[1] + '=='
-    b64_decoded = base64.urlsafe_b64decode(content)
-    decoded_token = json.loads(b64_decoded) 
-    token_roles = decoded_token.get('roles')
+    try:
+        content = token.token.split('.')[1] + '=='
+        b64_decoded = base64.urlsafe_b64decode(content)
+        decoded_token = json.loads(b64_decoded) 
+        token_roles = decoded_token.get('roles', [])
+    except:
+        raise STATFailedToDecodeToken(f'Failed to decode the JWT token for {token_type}. Ensure the token is valid and properly formatted.')
 
     matched_roles = [item for item in app_roles if item in token_roles]
     if matched_roles:
         return True
     return False
-    
+
+def check_app_role2(base_module:BaseModule, token_type:str, app_roles:list):
+    """Check if the current application token has the required roles.
+    Args:
+        base_module (BaseModule): Base module containing incident information.
+        token_type (str): Type of token to check ('msgraph', 'la', 'm365', 'mde').
+        app_roles (list): List of required application roles to check against the token.
+    Returns:
+        None: If the token has at least one of the required roles.
+    Raises: 
+        STATFailedToDecodeToken: If the JWT token cannot be decoded to check for roles.
+        STATInsufficientPermissions: If the token does not have sufficient permissions.
+    """
+    token = token_cache(base_module, token_type)
+
+    try:
+        content = token.token.split('.')[1] + '=='
+        b64_decoded = base64.urlsafe_b64decode(content)
+        decoded_token = json.loads(b64_decoded) 
+        token_roles = decoded_token.get('roles', [])
+    except:
+        raise STATFailedToDecodeToken(f'Failed to decode the JWT token for {token_type}. Ensure the token is valid and properly formatted.')
+
+    matched_roles = [item for item in app_roles if item in token_roles]
+    if matched_roles:
+        return
+    else:
+        raise STATInsufficientPermissions(f'The Microsoft Sentinel Triage AssistanT identity does not have sufficient permissions to perform this operation. Please ensure to run the GrantPermissions.ps1 script against the identity used by the STAT function app.')
+   
