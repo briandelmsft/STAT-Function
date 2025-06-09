@@ -168,7 +168,7 @@ def enrich_accounts(entities):
     account_entities = list(filter(lambda x: x['kind'].lower() == 'account', entities))
     base_object.AccountsCount = len(account_entities)
 
-    attributes = 'userPrincipalName,id,onPremisesSecurityIdentifier,onPremisesDistinguishedName,onPremisesDomainName,onPremisesSamAccountName,onPremisesSyncEnabled,mail,city,state,country,department,jobTitle,officeLocation,accountEnabled&$expand=manager($select=userPrincipalName,mail,id)'
+    attributes = 'userPrincipalName,id,onPremisesSecurityIdentifier,onPremisesDistinguishedName,onPremisesDomainName,onPremisesSamAccountName,onPremisesSyncEnabled,mail,city,state,country,department,jobTitle,officeLocation,accountEnabled,createdDateTime&$expand=manager($select=userPrincipalName,mail,id)'
 
     for account in account_entities:
         aad_id = data.coalesce(account.get('properties',{}).get('aadUserId'), account.get('AadUserId'))
@@ -264,7 +264,7 @@ def get_account_by_mail(account, attributes, properties, enrich_method:str='Mail
 (IdentityInfo
 | where AccountUPN =~ '{account}'
 | summarize arg_max(TimeGenerated, *) by AccountUPN
-| project userPrincipalName=AccountUPN, id=AccountObjectId, onPremisesSecurityIdentifier=AccountSID, onPremisesDistinguishedName=OnPremisesDistinguishedName, onPremisesDomainName=AccountDomain, onPremisesSamAccountName=AccountName, mail=MailAddress, department=Department, jobTitle=JobTitle, accountEnabled=IsAccountEnabled, manager=Manager)'''
+| project userPrincipalName=AccountUPN, id=AccountObjectId, onPremisesSecurityIdentifier=AccountSID, onPremisesDistinguishedName=OnPremisesDistinguishedName, onPremisesDomainName=AccountDomain, onPremisesSamAccountName=AccountName, mail=MailAddress, department=Department, jobTitle=JobTitle, accountEnabled=IsAccountEnabled, manager=Manager, createdDateTime=AccountCreationTime)'''
     try:
         user_info = json.loads(rest.rest_call_get(base_object, api='msgraph', path=f'''/v1.0/users?$filter=(mail%20eq%20'{account}')&$select={attributes}''').content)
     except STATError:
@@ -289,7 +289,7 @@ def get_account_by_dn(account, attributes, properties, enrich_method:str='DN'):
 (IdentityInfo
 | where OnPremisesDistinguishedName =~ '{account}'
 | summarize arg_max(TimeGenerated, *) by OnPremisesDistinguishedName
-| project userPrincipalName=AccountUPN, id=AccountObjectId, onPremisesSecurityIdentifier=AccountSID, onPremisesDistinguishedName=OnPremisesDistinguishedName, onPremisesDomainName=AccountDomain, onPremisesSamAccountName=AccountName, mail=MailAddress, department=Department, jobTitle=JobTitle, accountEnabled=IsAccountEnabled, manager=Manager)'''
+| project userPrincipalName=AccountUPN, id=AccountObjectId, onPremisesSecurityIdentifier=AccountSID, onPremisesDistinguishedName=OnPremisesDistinguishedName, onPremisesDomainName=AccountDomain, onPremisesSamAccountName=AccountName, mail=MailAddress, department=Department, jobTitle=JobTitle, accountEnabled=IsAccountEnabled, manager=Manager, createdDateTime=AccountCreationTime)'''
 
     results = rest.execute_la_query(base_object, query, 14)
     if results and results[0]['id']:
@@ -308,7 +308,7 @@ def get_account_by_sid(account, attributes, properties, enrich_method:str='SID')
 (IdentityInfo
 | where AccountSID =~ '{account}'
 | summarize arg_max(TimeGenerated, *) by AccountSID
-| project userPrincipalName=AccountUPN, id=AccountObjectId, onPremisesSecurityIdentifier=AccountSID, onPremisesDistinguishedName=OnPremisesDistinguishedName, onPremisesDomainName=AccountDomain, onPremisesSamAccountName=AccountName, mail=MailAddress, department=Department, jobTitle=JobTitle, accountEnabled=IsAccountEnabled, manager=Manager)'''
+| project userPrincipalName=AccountUPN, id=AccountObjectId, onPremisesSecurityIdentifier=AccountSID, onPremisesDistinguishedName=OnPremisesDistinguishedName, onPremisesDomainName=AccountDomain, onPremisesSamAccountName=AccountName, mail=MailAddress, department=Department, jobTitle=JobTitle, accountEnabled=IsAccountEnabled, manager=Manager, createdDateTime=AccountCreationTime)'''
 
     try:
         user_info = json.loads(rest.rest_call_get(base_object, api='msgraph', path=f'''/v1.0/users?$filter=(onPremisesSecurityIdentifier%20eq%20'{account}')&$select={attributes}''').content)
@@ -332,7 +332,7 @@ def get_account_by_samaccountname(account, attributes, properties, enrich_method
 (IdentityInfo
 | where AccountName =~ '{account}'
 | summarize arg_max(TimeGenerated, *) by AccountSID, AccountObjectId
-| project userPrincipalName=AccountUPN, id=AccountObjectId, onPremisesSecurityIdentifier=AccountSID, onPremisesDistinguishedName=OnPremisesDistinguishedName, onPremisesDomainName=AccountDomain, onPremisesSamAccountName=AccountName, mail=MailAddress, department=Department, jobTitle=JobTitle, accountEnabled=IsAccountEnabled, manager=Manager)'''
+| project userPrincipalName=AccountUPN, id=AccountObjectId, onPremisesSecurityIdentifier=AccountSID, onPremisesDistinguishedName=OnPremisesDistinguishedName, onPremisesDomainName=AccountDomain, onPremisesSamAccountName=AccountName, mail=MailAddress, department=Department, jobTitle=JobTitle, accountEnabled=IsAccountEnabled, manager=Manager, createdDateTime=AccountCreationTime)'''
 
     results = rest.execute_la_query(base_object, query, 14)
     if len(results) == 1 and results[0].get('id'):

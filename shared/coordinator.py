@@ -1,4 +1,4 @@
-from modules import base, kql, watchlist, ti, relatedalerts, scoring, ueba, playbook, exchange, aadrisks, file, createincident, mdca, mde, exposure_device, exposure_user
+from modules import base, kql, watchlist, ti, relatedalerts, scoring, ueba, playbook, exchange, aadrisks, aadinsights, file, createincident, mdca, mde, exposure_device, exposure_user
 from classes import STATError
 
 def initiate_module(module_name, req_body):
@@ -25,6 +25,8 @@ def initiate_module(module_name, req_body):
             return_data = file.execute_file_module(req_body)
         case 'aadrisks':
             return_data = aadrisks.execute_aadrisks_module(req_body)
+        case 'aadinsights':
+            return_data = aadinsights.execute_aadinsights_module(req_body)
         case 'deviceexposure':
             return_data = exposure_device.execute_device_exposure_module(req_body)
         case 'userexposure':
