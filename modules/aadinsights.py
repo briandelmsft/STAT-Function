@@ -147,27 +147,27 @@ def execute_aadinsights_module (req_body):
 
     for ip in base_object.IPs:
         ipaddress = ip.get('Address')
-        current_ip = {
-                'IPAddress': f'{ipaddress}',
-                'IPPrevelanceSuccess': 0,
-                'IPPrevelanceWrongPassword': 0,
-                'IPPrevelanceFirstTimeSeenInScope': None,
-                'IPType': ip.get('IPType')
-            }
-        #Need to handle case where the IP is a private IP RFC1918
-        IPPrevelance_query = f'''
-        SigninLogs
-        | where TimeGenerated > ago({lookback}d)
-        | where IPAddress == "{ipaddress}"
-        | where ResultType in (0, 50126)
-        | summarize IPSuccess = countif(ResultType == 0), IPWrongPassword = countif(ResultType == 50126), FirstTimeSeenInScope = min(TimeGenerated)'''
-        IPPrevelance_results = rest.execute_la_query(base_object, IPPrevelance_query, lookback)
-        if IPPrevelance_results:
-            current_ip['IPPrevelanceSuccess'] = IPPrevelance_results[0]['IPSuccess']
-            current_ip['IPPrevelanceWrongPassword'] = IPPrevelance_results[0]['IPWrongPassword']
-            current_ip['IPPrevelanceFirstTimeSeenInScope'] = IPPrevelance_results[0]['FirstTimeSeenInScope']
-        
-        aadinsights_object.IPDetails.append(current_ip)
+        if ip.get('IPType') != 2: #IPType 2 is a private IP (RFC1918)
+            current_ip = {
+                    'IPAddress': f'{ipaddress}',
+                    'IPPrevelanceSuccess': 0,
+                    'IPPrevelanceWrongPassword': 0,
+                    'IPPrevelanceFirstTimeSeenInScope': None,
+                    'IPType': ip.get('IPType')
+                }
+            IPPrevelance_query = f'''
+            SigninLogs
+            | where TimeGenerated > ago({lookback}d)
+            | where IPAddress == "{ipaddress}"
+            | where ResultType in (0, 50126)
+            | summarize IPSuccess = countif(ResultType == 0), IPWrongPassword = countif(ResultType == 50126), FirstTimeSeenInScope = min(TimeGenerated)'''
+            IPPrevelance_results = rest.execute_la_query(base_object, IPPrevelance_query, lookback)
+            if IPPrevelance_results:
+                current_ip['IPPrevelanceSuccess'] = IPPrevelance_results[0]['IPSuccess']
+                current_ip['IPPrevelanceWrongPassword'] = IPPrevelance_results[0]['IPWrongPassword']
+                current_ip['IPPrevelanceFirstTimeSeenInScope'] = IPPrevelance_results[0]['FirstTimeSeenInScope']
+            
+            aadinsights_object.IPDetails.append(current_ip)
 
     for host in base_object.Hosts:
         hostaadid = host.get('RawEntity', {}).get('additionalData', {}).get('AadDeviceId')
