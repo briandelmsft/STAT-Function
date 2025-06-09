@@ -506,6 +506,29 @@ class AADModule:
         self.DetailedResults = body['DetailedResults']
         self.RiskDetectionTotalCount = body.get('RiskDetectionTotalCount')
 
+class AADInsightsModule:
+    '''An AAD Insights Module object'''
+
+    def __init__(self):
+        self.AnalyzedEntities = 0
+        self.NewUsersCount = 0
+        self.NewDevicesCount = 0
+        self.RelatedUsers = False
+        self.ModuleName = 'AADInsightsModule'
+        self.IPDetails = []
+        self.HostDetails = []
+        self.DetailedResults = []
+
+    def load_from_input(self, body):
+        self.AnalyzedEntities = body['AnalyzedEntities']
+        self.NewUsersCount = body['NewUsersCount']
+        self.NewDevicesCount = body['NewDevicesCount']
+        self.RelatedUsers = body['RelatedUsers']
+        self.ModuleName = 'AADInsightsModule'
+        self.IPDetails = body['IPDetails']
+        self.HostDetails = body['HostDetails']
+        self.DetailedResults = body['DetailedResults']
+
 class FileModule:
     '''A File Module object'''
     
