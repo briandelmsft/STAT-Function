@@ -2,9 +2,14 @@ from classes import BaseModule, Response, STATError, CreateIncident
 from shared import rest, data
 import json
 import uuid
+import logging
 
 def execute_create_incident (req_body):
     
+    # Log module invocation with parameters (excluding BaseModuleBody)
+    log_params = {k: v for k, v in req_body.items() if k != 'BaseModuleBody'}
+    logging.info(f'Create Incident Module invoked with parameters: {log_params}')
+
     #Inputs: Severity, Title, Description
 
     base_object = BaseModule()

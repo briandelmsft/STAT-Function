@@ -415,12 +415,13 @@ def check_app_role(base_module:BaseModule, token_type:str, app_roles:list):
         return True
     return False
 
-def check_app_role2(base_module:BaseModule, token_type:str, app_roles:list):
+def check_app_role2(base_module:BaseModule, token_type:str, app_roles:list, raise_on_fail_to_decode:bool=False):
     """Check if the current application token has the required roles.
     Args:
         base_module (BaseModule): Base module containing incident information.
         token_type (str): Type of token to check ('msgraph', 'la', 'm365', 'mde').
         app_roles (list): List of required application roles to check against the token.
+        raise_on_fail_to_decode (bool): Whether to raise an exception if the token cannot be decoded. Defaults to False.
     Returns:
         None: If the token has at least one of the required roles.
     Raises: 
@@ -435,7 +436,10 @@ def check_app_role2(base_module:BaseModule, token_type:str, app_roles:list):
         decoded_token = json.loads(b64_decoded) 
         token_roles = decoded_token.get('roles', [])
     except:
-        raise STATFailedToDecodeToken(f'Failed to decode the JWT token for {token_type}. Ensure the token is valid and properly formatted.')
+        if raise_on_fail_to_decode:
+            raise STATFailedToDecodeToken(f'Failed to decode the JWT token for {token_type}. Ensure the token is valid and properly formatted.')
+        else:
+            return
 
     matched_roles = [item for item in app_roles if item in token_roles]
     if matched_roles:

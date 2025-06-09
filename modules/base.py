@@ -1,4 +1,4 @@
-from classes import BaseModule, Response, STATError, STATNotFound, STATFailedToDecodeToken, STATInsufficientPermissions
+from classes import BaseModule, Response, STATError, STATNotFound
 from shared import rest, data
 import json
 import time
@@ -15,6 +15,10 @@ def execute_base_module (req_body):
     global enrich_roles
     global enrich_mde_device
     
+    # Log module invocation with parameters (excluding incident/alert body data)
+    log_params = {k: v for k, v in req_body.items() if k != 'Body'}
+    logging.info(f'Base Module invoked with parameters: {log_params}')
+
     base_object = BaseModule()
 
     try:
@@ -27,12 +31,9 @@ def execute_base_module (req_body):
     enrich_roles = req_body.get('EnrichAccountsWithRoles', True)
     enrich_mde_device = req_body.get('EnrichHostsWithMDE', True)
 
-    try:
-        #Check for Directory.Read.All or combination of other sufficient roles
-        rest.check_app_role2(base_object, 'msgraph', ['Organization.Read.All', 'Directory.Read.All', 'Organization.ReadWrite.All', 'Directory.ReadWrite.All'])
-        rest.check_app_role2(base_object, 'msgraph', ['User.Read.All', 'User.ReadWrite.All', 'Directory.Read.All', 'Directory.ReadWrite.All'])
-    except STATFailedToDecodeToken:
-        pass
+    #Check for Directory.Read.All or combination of other sufficient roles
+    rest.check_app_role2(base_object, 'msgraph', ['Organization.Read.All', 'Directory.Read.All', 'Organization.ReadWrite.All', 'Directory.ReadWrite.All'], raise_on_fail_to_decode=False)
+    rest.check_app_role2(base_object, 'msgraph', ['User.Read.All', 'User.ReadWrite.All', 'Directory.Read.All', 'Directory.ReadWrite.All'], raise_on_fail_to_decode=False)
 
     if trigger_type.lower() == 'incident':
         entities = process_incident_trigger(req_body)

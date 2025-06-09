@@ -3,8 +3,13 @@ from shared import rest, data
 import json
 import re
 from datetime import datetime, timezone
+import logging
 
 def execute_exchange_module (req_body):
+
+    # Log module invocation with parameters (excluding BaseModuleBody)
+    log_params = {k: v for k, v in req_body.items() if k != 'BaseModuleBody'}
+    logging.info(f'Exchange Module invoked with parameters: {log_params}')
 
     #Inputs AddIncidentComments, AddIncidentTask, Entities, IncidentTaskInstructions, KQLQuery, LookbackInDays, QueryDescription, RunQueryAgainst
 

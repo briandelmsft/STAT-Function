@@ -1,7 +1,12 @@
 from classes import *
 from shared import data, rest
+import logging
 
 def execute_scoring_module (req_body):
+
+    # Log module invocation with parameters (excluding BaseModuleBody, ScoringData)
+    log_params = {k: v for k, v in req_body.items() if k != 'BaseModuleBody' and k != 'ScoringData'}
+    logging.info(f'Scoring Module invoked with parameters: {log_params}')
 
     #Inputs AddIncidentComments, AddIncidentTask, BaseModuleBody, IncidentTaskInstructions, ScoringData
 
