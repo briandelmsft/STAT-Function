@@ -151,8 +151,10 @@ def execute_aadinsights_module (req_body):
                 'IPAddress': f'{ipaddress}',
                 'IPPrevelanceSuccess': 0,
                 'IPPrevelanceWrongPassword': 0,
-                'IPPrevelanceFirstTimeSeenInScope': None
+                'IPPrevelanceFirstTimeSeenInScope': None,
+                'IPType': ip.get('IPType')
             }
+        #Need to handle case where the IP is a private IP RFC1918
         IPPrevelance_query = f'''
         SigninLogs
         | where TimeGenerated > ago({lookback}d)
@@ -201,11 +203,11 @@ def execute_aadinsights_module (req_body):
     if req_body.get('AddIncidentComments', True):
         comment = f'<h3>Entra ID Insights Module - (Last {lookback} days)</h3>'
         for item in aadinsights_object.DetailedResults:
-            comment += f'<ul><li>User: {item.get("UserPrincipalName", item.get("UserId", "Unknown"))}</li>'
-            comment += f'<li>Creation Time: {item.get("UserCreationTime","Unknown")} '
+            comment += f'<h4>👤 {item.get("UserPrincipalName", item.get("UserId", "Unknown"))}</h4>'
+            comment += f'<ul><li>Creation Time: {item.get("UserCreationTime","Unknown")} '
             if item.get("IsNewUser", True):
                 comment += f' 🆕 (created within {new_threshold})'
-            comment += f'</li></ul>'
+            comment += f'</li>'
             #Common Locations
             html_table = data.list_to_html_table(item.get('CommonLocations'), index=False, columns=['Top','CommonLocation','TotalUser','TotalTenant']) if item.get('CommonLocations') else 'No location details available<br />'
             comment += f'<h4>Common Locations</h4>{html_table}'
@@ -215,16 +217,22 @@ def execute_aadinsights_module (req_body):
             #Common Devices
             html_table = data.list_to_html_table(item.get('CommonDevices'), index=False, columns=['DeviceName','DeviceOS']) if item.get('CommonDevices') else 'No IP details available<br />'
             comment += f'<h4>Common Devices</h4>{html_table}'
+            #Recent Ativities
+            html_table = data.list_to_html_table(item.get('RecentActivities'), index=False, columns=['TimeGenerated','OperationName']) if item.get('RecentActivities') else 'No activity found<br />'
+            comment += f'<h4>Recent Activities</h4>{html_table}</ul>'
 
         for item in aadinsights_object.IPDetails:
-            comment += f'<ul><li>IP Address: {item.get("IPAddress")}</li>'
-            comment += f'<li>Number of successes in the tenant: {item.get("IPPrevelanceSuccess")} </li>'
-            comment += f'<li>Number of failed password attempts in the tenant: {item.get("IPPrevelanceWrongPassword")} </li>' 
-            comment += f'<li>Last time we saw this IP: {item.get("IPPrevelanceWrongPassword")} (within the last {lookback} days)</li></ul>' 
+            comment += f'<h4>🌐 {item.get("IPAddress")}</h4>'
+            if item.get('IPType') != 2:
+                comment += f'<ul><li>Number of successes in the tenant: {item.get("IPPrevelanceSuccess")} </li>'
+                comment += f'<li>Number of failed password attempts in the tenant: {item.get("IPPrevelanceWrongPassword")} </li>' 
+                comment += f'<li>Last time we saw this IP: {item.get("IPPrevelanceWrongPassword")} (within the last {lookback} days)</li></ul>' 
+            else:
+                comment += f'<ul><li>IP type: Private IP (RFC1918)</li></ul>'
 
         for item in aadinsights_object.HostDetails:
-            comment += f'<ul><li>Device: {item.get("HostName")}</li>'
-            comment += f'<li>Creation Time: {item.get("HostCreationTime","Unknown")} '
+            comment += f'<h4>💻 {item.get("HostName")}</h4>'
+            comment += f'<ul><li>Creation Time: {item.get("HostCreationTime","Unknown")} '
             if item.get("IsNewHost", True):
                 comment += f' 🆕 (created within {new_threshold})'
             comment += f'</li></ul>'
