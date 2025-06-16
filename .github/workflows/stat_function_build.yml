@@ -37,7 +37,7 @@ jobs:
       run: |
         pushd './${{ env.AZURE_FUNCTIONAPP_PACKAGE_PATH }}'
         python -m pip install --upgrade pip
-        pip install -r requirements.txt --target=".python_packages/lib/site-packages"
+        pip install -r requirements.txt --platform manylinux_2_17_x86_64 --only-binary=:all: --target=".python_packages/lib/site-packages"
         popd
         
     - name: 'ZIP Function App'

@@ -1,8 +1,13 @@
 from classes import BaseModule, Response, FileModule, STATError, STATNotFound
 from shared import rest, data
 import json
+import logging
 
 def execute_file_module (req_body):
+
+    # Log module invocation with parameters (excluding BaseModuleBody)
+    log_params = {k: v for k, v in req_body.items() if k != 'BaseModuleBody'}
+    logging.info(f'File Module invoked with parameters: {log_params}')
 
     #Inputs AddIncidentComments, AddIncidentTask, BaseModuleBody, IncidentTaskInstructions
 
