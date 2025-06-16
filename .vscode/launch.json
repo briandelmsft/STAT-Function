@@ -9,7 +9,8 @@
                 "host": "localhost",
                 "port": 9091,
             },
-            "preLaunchTask": "func: host start"
+            "preLaunchTask": "func: host start",
+            "postDebugTask": "Release Blocked Port"
         }
     ]
 }

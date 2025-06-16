@@ -566,8 +566,10 @@ def get_mail_comment():
                 'EnrichmentMethod': f"<b>Enrichment Method</b>: {msg.get('EnrichmentMethod')}",
             })
         else:
+            msg_time = msg.get('loggedDateTime')
+            explorer_link = f"https://security.microsoft.com/emailentity?f=summary&startTime={msg_time}&endTime={msg_time}&id={msg.get('networkMessageId')}&recipient={msg.get('recipientEmailAddress')}&tid={base_object.TenantId}"
             mail_list.append({
-                'MessageDetails': f"<b>Recipient</b>: {msg.get('recipientEmailAddress')}<br><b>Sender</b>: {msg.get('senderDetail', {}).get('fromAddress')}<br><b>SenderFromAddress</b>: {msg.get('senderDetail', {}).get('mailFromAddress')}<br><b>Subject</b>: {msg.get('subject')}<br><b>AttachmentCount:</b> {len(msg.get('attachments', []))}<br><b>URLCount:</b> {len(msg.get('urls', []))}",
+                'MessageDetails': f"<b>Recipient</b>: {msg.get('recipientEmailAddress')}<br><b>Sender</b>: {msg.get('senderDetail', {}).get('fromAddress')}<br><b>SenderFromAddress</b>: {msg.get('senderDetail', {}).get('mailFromAddress')}<br><b>Subject</b>: {msg.get('subject')}<br><b>AttachmentCount:</b> {len(msg.get('attachments', []))}<br><b>URLCount:</b> {len(msg.get('urls', []))}<br>(<a href=\"{explorer_link}\" target=\"_blank\">Open Entity Page</a>)",
                 'Delivery': f"<b>Original Delivery</b>: {msg.get('originalDelivery', {}).get('location')}<br><b>Latest Delivery</b>: {msg.get('latestDelivery', {}).get('location')}",
                 'Authentication': f"<b>SPF</b>: {msg.get('authenticationDetails', {}).get('senderPolicyFramework')}<br><b>DKIM</b>: {msg.get('authenticationDetails', {}).get('dkim')}<br><b>DMARC</b>: {msg.get('authenticationDetails', {}).get('dmarc')}",
                 'ThreatInfo': f"<b>ThreatTypes</b>: {', '.join(msg.get('threatTypes', []))}<br><b>DetectionMethods</b>: {', '.join(msg.get('detectionMethods', []))}"
