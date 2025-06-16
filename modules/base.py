@@ -244,11 +244,15 @@ def enrich_mail_message(entities):
         receive_date = data.coalesce(mail.get('properties',{}).get('receiveDate'), mail.get('ReceivedDate'))
 
         if receive_date:
-            start_time = (dt.datetime.strptime(receive_date, "%Y-%m-%dT%H:%M:%SZ") + dt.timedelta(days=-14)).strftime("%Y-%m-%dT%H:%M:%SZ")
-            end_time = (dt.datetime.strptime(receive_date, "%Y-%m-%dT%H:%M:%SZ") + dt.timedelta(days=14)).strftime("%Y-%m-%dT%H:%M:%SZ")
+            try:
+                start_time = (dt.datetime.strptime(receive_date, "%Y-%m-%dT%H:%M:%S.%fZ") + dt.timedelta(days=-14)).strftime("%Y-%m-%dT%H:%M:%SZ")
+                end_time = (dt.datetime.strptime(receive_date, "%Y-%m-%dT%H:%M:%S.%fZ") + dt.timedelta(days=14)).strftime("%Y-%m-%dT%H:%M:%SZ")
+            except ValueError:
+                start_time = (dt.datetime.strptime(base_object.CreatedTime, "%Y-%m-%dT%H:%M:%S.%fZ") + dt.timedelta(days=-14)).strftime("%Y-%m-%dT%H:%M:%SZ")
+                end_time = (dt.datetime.strptime(base_object.CreatedTime, "%Y-%m-%dT%H:%M:%S.%fZ") + dt.timedelta(days=14)).strftime("%Y-%m-%dT%H:%M:%SZ")
         else:
-            start_time = (dt.datetime.strptime(base_object.CreatedTime, "%Y-%m-%dT%H:%M:%SZ") + dt.timedelta(days=-14)).strftime("%Y-%m-%dT%H:%M:%SZ")
-            end_time = (dt.datetime.strptime(base_object.CreatedTime, "%Y-%m-%dT%H:%M:%SZ") + dt.timedelta(days=14)).strftime("%Y-%m-%dT%H:%M:%SZ")
+            start_time = (dt.datetime.strptime(base_object.CreatedTime, "%Y-%m-%dT%H:%M:%S.%fZ") + dt.timedelta(days=-14)).strftime("%Y-%m-%dT%H:%M:%SZ")
+            end_time = (dt.datetime.strptime(base_object.CreatedTime, "%Y-%m-%dT%H:%M:%S.%fZ") + dt.timedelta(days=14)).strftime("%Y-%m-%dT%H:%M:%SZ")
 
         raw_entity = data.coalesce(mail.get('properties'), mail)
 
