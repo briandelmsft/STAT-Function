@@ -236,11 +236,11 @@ def enrich_mail_message(entities):
         receive_date = data.coalesce(mail.get('properties',{}).get('receiveDate'), mail.get('ReceivedDate'))
 
         if receive_date:
-            start_time = (dt.datetime.fromisoformat(receive_date) + dt.timedelta(days=-14)).strftime("%Y-%m-%dT%H:%M:%SZ")
-            end_time = (dt.datetime.fromisoformat(receive_date) + dt.timedelta(days=14)).strftime("%Y-%m-%dT%H:%M:%SZ")
+            start_time = (dt.datetime.fromisoformat(receive_date.rstrip("Z")) + dt.timedelta(days=-14)).strftime("%Y-%m-%dT%H:%M:%SZ")
+            end_time = (dt.datetime.fromisoformat(receive_date.rstrip("Z")) + dt.timedelta(days=14)).strftime("%Y-%m-%dT%H:%M:%SZ")
         else:
-            start_time = (dt.datetime.fromisoformat(base_object.CreatedTime) + dt.timedelta(days=-14)).strftime("%Y-%m-%dT%H:%M:%SZ")
-            end_time = (dt.datetime.fromisoformat(base_object.CreatedTime) + dt.timedelta(days=14)).strftime("%Y-%m-%dT%H:%M:%SZ")
+            start_time = (dt.datetime.fromisoformat(base_object.CreatedTime.rstrip("Z")) + dt.timedelta(days=-14)).strftime("%Y-%m-%dT%H:%M:%SZ")
+            end_time = (dt.datetime.fromisoformat(base_object.CreatedTime.rstrip("Z")) + dt.timedelta(days=14)).strftime("%Y-%m-%dT%H:%M:%SZ")
 
         raw_entity = data.coalesce(mail.get('properties'), mail)
 
