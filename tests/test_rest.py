@@ -1,5 +1,5 @@
 from shared import rest
-from classes import BaseModule, STATError, STATNotFound, STATTooManyRequests
+from classes import BaseModule, STATError, STATNotFound, STATTooManyRequests, STATInsufficientPermissions, STATFailedToDecodeToken
 import json, os
 import requests
 import pytest
@@ -48,6 +48,24 @@ def test_rest_response():
         rest.check_rest_response(response_401, 'test', 'test')
 
     assert None is rest.check_rest_response(response_200, 'test', 'test')
+
+def test_check_app_role():
+    base = BaseModule()
+    assert rest.check_app_role(base, 'msgraph', ['User.ReadWrite.All', 'Directory.Read.All']) == True
+    assert rest.check_app_role(base, 'msgraph', ['User.Read.All']) == False
+
+
+def test_check_app_role2():
+    base = BaseModule()
+    assert rest.check_app_role2(base, 'msgraph', ['User.ReadWrite.All', 'Directory.Read.All'], raise_on_fail_to_decode=True) == True
+    
+    with pytest.raises(STATInsufficientPermissions):
+        rest.check_app_role2(base, 'msgraph', ['Directory.ReadWrite.All', 'Mail.Send'], raise_on_fail_to_decode=True)
+
+    assert rest.check_app_role2(base, 'msgraph', ['User.Read.All'], raise_on_fail_to_decode=False, token='abc') == True
+
+    with pytest.raises(STATFailedToDecodeToken):
+        rest.check_app_role2(base, 'msgraph', ['User.Read.All'], raise_on_fail_to_decode=True, token='abc')
 
 
 def get_base_module_object():

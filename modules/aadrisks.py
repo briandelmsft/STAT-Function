@@ -1,11 +1,15 @@
 from classes import BaseModule, Response, AADModule, STATError, STATNotFound
 from shared import rest, data
 import json, datetime
+import logging
 
 def execute_aadrisks_module (req_body):
 
     #Inputs AddIncidentComments, AddIncidentTask, Entities, IncidentTaskInstructions, LookbackInDays, MFAFailureLookup, MFAFraudLookup, SuspiciousActivityReportLookup
-
+    # Log module invocation with parameters (excluding BaseModuleBody)
+    log_params = {k: v for k, v in req_body.items() if k != 'BaseModuleBody'}
+    logging.info(f'AAD Risks Module invoked with parameters: {log_params}')
+    
     base_object = BaseModule()
     base_object.load_from_input(req_body['BaseModuleBody'])
 

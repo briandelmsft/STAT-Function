@@ -1,8 +1,13 @@
 from classes import BaseModule, Response, DeviceExposureModule
 from shared import rest, data
 import json
+import logging
 
 def execute_device_exposure_module (req_body):
+
+    # Log module invocation with parameters (excluding BaseModuleBody)
+    log_params = {k: v for k, v in req_body.items() if k != 'BaseModuleBody'}
+    logging.info(f'Device Exposure Module invoked with parameters: {log_params}')
 
     #Inputs AddIncidentComments, AddIncidentTask, BaseModuleBody, IncidentTaskInstructions, AddIncidentTags
 

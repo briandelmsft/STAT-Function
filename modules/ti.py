@@ -1,7 +1,12 @@
 from classes import BaseModule, Response, TIModule, STATError
 from shared import rest, data
+import logging
 
 def execute_ti_module (req_body):
+    
+    # Log module invocation with parameters (excluding BaseModuleBody)
+    log_params = {k: v for k, v in req_body.items() if k != 'BaseModuleBody'}
+    logging.info(f'Threat Intelligence Module invoked with parameters: {log_params}')
 
     #Inputs AddIncidentComments, AddIncidentTask, BaseModuleBody, IncidentTaskInstructions, CheckDomains, CheckFileHashes, CheckIPs, CheckURLs
 
