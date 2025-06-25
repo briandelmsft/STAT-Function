@@ -37,6 +37,7 @@ def execute_aadinsights_module (req_body):
             try:
                 people_list = json.loads(rest.rest_call_get(base_object, api='msgraph', path=path).content)
                 current_account['People'] = [item["id"] for item in people_list["value"]]
+                current_account['People'].remove(userid)
             except STATNotFound:
                 pass
             # to do - handle permission error?
