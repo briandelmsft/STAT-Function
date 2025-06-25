@@ -203,6 +203,8 @@ def execute_aadinsights_module (req_body):
     
     if req_body.get('AddIncidentComments', True):
         comment = f'<h3>Entra ID Insights Module - (Last {lookback} days)</h3>'
+        if aadinsights_object.RelatedUsers:
+            comment += f'<p>Users in this incidents are related (they actively collaborate on Microsoft 365)</p>'
         for item in aadinsights_object.DetailedResults:
             comment += f'<h4>👤 {item.get("UserPrincipalName", item.get("UserId", "Unknown"))}</h4>'
             comment += f'<ul><li>Creation Time: {item.get("UserCreationTime","Unknown")} '
