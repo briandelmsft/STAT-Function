@@ -245,8 +245,8 @@ def enrich_mail_message(entities):
 
         if receive_date:
             try:
-                start_time = (dt.datetime.strptime(receive_date, "%Y-%m-%dT%H:%M:%S.%fZ") + dt.timedelta(days=-14)).strftime("%Y-%m-%dT%H:%M:%SZ")
-                end_time = (dt.datetime.strptime(receive_date, "%Y-%m-%dT%H:%M:%S.%fZ") + dt.timedelta(days=14)).strftime("%Y-%m-%dT%H:%M:%SZ")
+                start_time = (dt.datetime.strptime(receive_date, "%Y-%m-%dT%H:%M:%S.%f") + dt.timedelta(days=-14)).strftime("%Y-%m-%dT%H:%M:%SZ")
+                end_time = (dt.datetime.strptime(receive_date, "%Y-%m-%dT%H:%M:%S.%f") + dt.timedelta(days=14)).strftime("%Y-%m-%dT%H:%M:%SZ")
             except ValueError:
                 start_time = (dt.datetime.strptime(base_object.CreatedTime, "%Y-%m-%dT%H:%M:%S.%fZ") + dt.timedelta(days=-14)).strftime("%Y-%m-%dT%H:%M:%SZ")
                 end_time = (dt.datetime.strptime(base_object.CreatedTime, "%Y-%m-%dT%H:%M:%S.%fZ") + dt.timedelta(days=14)).strftime("%Y-%m-%dT%H:%M:%SZ")
