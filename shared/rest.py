@@ -200,21 +200,21 @@ def execute_rest_call(base_module:BaseModule, method:str, api:str, path:str, bod
                 retry_after = 10
             wait_time += retry_after
             if wait_time > 60:
-                logging.warning(f'The API call to {api} with path {path} failed with status {e.status_code}. Maximum retry time exceeded.')
+                logging.warning(f'The API call to {api} with path {path} failed with {e.source_error}. Maximum retry time exceeded.')
                 raise STATTooManyRequests(error=e.error, source_error=e.source_error, status_code=e.status_code, retry_after=e.retry_after)
-            logging.info(f'The API call to {api} with path {path} failed with status {e.status_code}. Retrying.')
+            logging.info(f'The API call to {api} with path {path} failed with status {e.source_error}. Retrying.')
             time.sleep(retry_after)
         except STATServerError as e:
             wait_time += 15
             if wait_time > 60:
-                logging.warning(f'The API call to {api} with path {path} failed with status {e.status_code}. Maximum retry time exceeded.')
+                logging.warning(f'The API call to {api} with path {path} failed with {e.source_error}. Maximum retry time exceeded.')
                 raise STATServerError(error=f'Server error returned by {url}', source_error=e.source_error, status_code=500)
-            logging.info(f'The API call to {api} with path {path} failed with status {e.status_code}. Retrying.')
+            logging.info(f'The API call to {api} with path {path} failed with status {e.source_error}. Retrying.')
             time.sleep(15)
         except ConnectionError as e:
             wait_time += 20
             if wait_time > 60:
-                logging.warning(f'The API call to {api} with path {path} failed with status {e.status_code}. Maximum retry time exceeded.')
+                logging.warning(f'The API call to {api} with path {path} failed with status {e}. Maximum retry time exceeded.')
                 raise STATError(error=f'Failed to establish a new connection to {url}', source_error=e, status_code=500)
             logging.info(f'The API call to {api} with path {path} failed with status Connection Error. Retrying.')
             time.sleep(20)
@@ -228,12 +228,12 @@ def check_rest_response(response:Response, api, path):
     if response.status_code == 404:
         logging.info(f'The API call to {api} with path {path} returned a 404 Not Found error, in some cases this is expected.')
         raise STATNotFound(f'The API call to {api} with path {path} failed with status {response.status_code}', source_error={'status_code': int(response.status_code), 'reason': str(response.reason)})
-    elif response.status_code == 429 or response.status_code == 408:
+    elif response.status_code in (429, 408):
         raise STATTooManyRequests(f'The API call to {api} with path {path} failed with status {response.status_code}', source_error={'status_code': int(response.status_code), 'reason': str(response.reason)}, retry_after=response.headers.get('Retry-After', 10), status_code=int(response.status_code))
     elif response.status_code >= 500:
         raise STATServerError(f'The API call to {api} with path {path} failed with status {response.status_code}', source_error={'status_code': int(response.status_code), 'reason': str(response.reason)}, status_code=int(response.status_code))
     elif response.status_code >= 300:
-        logging.warning(f'The API call to {api} with path {path} failed with status {response.status_code}. No Retries will be attempted.')
+        logging.warning(f'The API call to {api} with path {path} failed with status {response.status_code} and reason {str(response.reason)}. No Retries will be attempted.')
         raise STATError(f'The API call to {api} with path {path} failed with status {response.status_code}', source_error={'status_code': int(response.status_code), 'reason': str(response.reason)})
     return
 
@@ -348,7 +348,6 @@ def add_incident_comment(base_module:BaseModule, comment:str, raise_on_error:boo
     try:
         response = rest_call_put(base_module, 'arm', path, {'properties': {'message': comment[:30000]}})
     except STATError as e:
-        logging.warning(f'Failed to add comment to incident {base_module.IncidentARMId}: {e.source_error}')
         if raise_on_error:
             raise
         else:
