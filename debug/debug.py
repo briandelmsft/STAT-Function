@@ -145,6 +145,10 @@ def comment_debug(debug_out:DebugModule):
     base_module.MultiTenantConfig = debug_out.Params.get('MultiTenantConfig', {})
     base_module.IncidentARMId = debug_out.Params['IncidentARMId']
     base_module.IncidentAvailable = True
-    response = rest.add_incident_comment(base_module, comment)
-    debug_out.CommentStatus = response.status_code
-    debug_out.CommentResponse = response.json()
+    try: 
+        response = rest.add_incident_comment(base_module, comment, raise_on_error=True)
+        debug_out.CommentStatus = response.status_code
+        debug_out.CommentResponse = response.json()
+    except STATError as e:
+        debug_out.CommentStatus = 'Comment failed'
+        debug_out.CommentSourceError = e.source_error

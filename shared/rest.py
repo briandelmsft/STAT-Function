@@ -329,7 +329,7 @@ def get_endpoint(api:str):
                         'Ensure that all API endpoint enrivonrment variables are correctly set in the STAT Function App '
                         '(ARM_ENDPOINT, GRAPH_ENDPOINT, LOGANALYTICS_ENDPOINT, M365_ENDPOINT, and MDE_ENDPOINT).')
     
-def add_incident_comment(base_module:BaseModule, comment:str):
+def add_incident_comment(base_module:BaseModule, comment:str, raise_on_error:bool=False):
     """Add a comment to a Microsoft Sentinel incident.
     
     Creates a new comment on the specified incident using the Azure REST API.
@@ -338,6 +338,7 @@ def add_incident_comment(base_module:BaseModule, comment:str):
     Args:
         base_module (BaseModule): Base module containing incident information.
         comment (str): Comment text to add to the incident.
+        raise_on_error (bool): Whether to raise an exception on error. Defaults to False.
     
     Returns:
         Response or str: API response object on success, or 'Comment failed' on error.
@@ -346,6 +347,12 @@ def add_incident_comment(base_module:BaseModule, comment:str):
     path = base_module.IncidentARMId + '/comments/' + str(uuid.uuid4()) + '?api-version=2023-02-01'
     try:
         response = rest_call_put(base_module, 'arm', path, {'properties': {'message': comment[:30000]}})
+    except STATError as e:
+        logging.warning(f'Failed to add comment to incident {base_module.IncidentARMId}: {e.source_error}')
+        if raise_on_error:
+            raise
+        else:
+            response = 'Comment failed'
     except:
         response = 'Comment failed'
     return response
