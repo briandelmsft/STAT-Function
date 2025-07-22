@@ -95,7 +95,7 @@ def append_enabled(exch:ExchangeModule, upn, internal, external):
     replace_nbsp = re.compile('&nbsp;|\\n')
     int_msg = re.sub(replace_nbsp, ' ', re.sub(clean_html, '', internal))
     ext_msg = re.sub(replace_nbsp, ' ', re.sub(clean_html, '', external))
-    exch.OOF.append({'ExternalMessage': ext_msg, 'InternalMessage': int_msg, 'OOFStatus': 'enabled', 'UPN': upn})
+    exch.OOF.append({'ExternalMessage': ext_msg.strip(), 'InternalMessage': int_msg.strip(), 'OOFStatus': 'enabled', 'UPN': upn})
 
 def audit_check(base_object:BaseModule, exch:ExchangeModule, module_lookback:int):
     #Retrieve OfficeActivity Audits
@@ -118,14 +118,23 @@ def oof_check(base_object:BaseModule, exch:ExchangeModule, upn):
             raise STATError(e.error, e.source_error, e.status_code)
     else:
         current_time = datetime.now(timezone.utc)
+        try:
+            oof_start = datetime.strptime(results['scheduledStartDateTime']['dateTime'][:-3], "%Y-%m-%dT%H:%M:%S.%f").replace(tzinfo=timezone.utc)  
+            oof_end = datetime.strptime(results['scheduledEndDateTime']['dateTime'][:-3], "%Y-%m-%dT%H:%M:%S.%f").replace(tzinfo=timezone.utc)
+        except:
+            oof_start = None
+            oof_end = None
+
         if results['status'].lower() == 'disabled':
             exch.UsersInOffice += 1
             append_disabled(exch, upn)
         elif results['status'].lower() == 'enabled' or results['status'].lower() == 'alwaysenabled':
             exch.UsersOutOfOffice += 1
             append_enabled(exch, upn, results['internalReplyMessage'], results['externalReplyMessage'])
-        elif results['status'].lower() == 'scheduled' and current_time >= results['scheduledStartDateTime']['dateTime'] \
-                and current_time <= results['scheduledEndDateTime']['dateTime']:
+        elif not(oof_start):
+            exch.UsersInOffice += 1
+            append_disabled(exch, upn)
+        elif results['status'].lower() == 'scheduled' and current_time >= oof_start and current_time <= oof_end:
             exch.UsersOutOfOffice += 1
             append_enabled(exch, upn, results['internalReplyMessage'], results['externalReplyMessage'])
         else:
@@ -143,10 +152,6 @@ def rule_check(base_object:BaseModule, exch:ExchangeModule, account):
     except STATNotFound:
         exch.UsersUnknown += 1
         return   
-
-    privileged_roles = data.load_json_from_file('privileged-roles.json')
-    if set(account_roles).intersection(privileged_roles):
-        exch.PrivilegedUsersWithMailbox += 1
 
     for rule in results.get('value'):
         rule_out = {
