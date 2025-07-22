@@ -152,6 +152,10 @@ def rule_check(base_object:BaseModule, exch:ExchangeModule, account):
     except STATNotFound:
         exch.UsersUnknown += 1
         return   
+    
+    privileged_roles = data.load_json_from_file('privileged-roles.json')
+    if set(account_roles).intersection(privileged_roles):
+        exch.PrivilegedUsersWithMailbox += 1
 
     for rule in results.get('value'):
         rule_out = {
