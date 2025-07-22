@@ -348,6 +348,7 @@ def add_incident_comment(base_module:BaseModule, comment:str, raise_on_error:boo
     try:
         response = rest_call_put(base_module, 'arm', path, {'properties': {'message': comment[:30000]}})
     except STATError as e:
+        logging.warning(f'Failed to add comment to incident {base_module.IncidentARMId} with error: {e.source_error}, status code: {e.status_code}')
         if raise_on_error:
             raise
         else:
@@ -356,22 +357,34 @@ def add_incident_comment(base_module:BaseModule, comment:str, raise_on_error:boo
         response = 'Comment failed'
     return response
 
-def add_incident_task(base_module:BaseModule, title:str, description:str, status:str='New'):
+def add_incident_task(base_module:BaseModule, title:str, description:str, status:str='New', raise_on_error:bool=False):
     path = base_module.IncidentARMId + '/tasks/' + str(uuid.uuid4()) + '?api-version=2024-03-01'
 
     if description is None or description == '':
         try:
             response = rest_call_put(base_module, 'arm', path, {'properties': {'title': title, 'status': status}})
+        except STATError as e:
+            logging.warning(f'Failed to add task to incident {base_module.IncidentARMId} with error: {e.source_error}, status code: {e.status_code}')
+            if raise_on_error:
+                raise
+            else:
+                response = 'Task addition failed'
         except:
             response = 'Task addition failed'
     else:
         try:
             response = rest_call_put(base_module, 'arm', path, {'properties': {'title': title, 'description': description[:3000], 'status': status}})
+        except STATError as e:
+            logging.warning(f'Failed to add task to incident {base_module.IncidentARMId} with error: {e.source_error}, status code: {e.status_code}')
+            if raise_on_error:
+                raise
+            else:
+                response = 'Task addition failed'
         except:
             response = 'Task addition failed'
     return response
 
-def add_incident_tags(base_module:BaseModule, tags:list):
+def add_incident_tags(base_module:BaseModule, tags:list, raise_on_error:bool=False):
     if tags:
         path = base_module.IncidentARMId + '?api-version=2025-03-01'
         tags_to_add = False
@@ -400,6 +413,12 @@ def add_incident_tags(base_module:BaseModule, tags:list):
                 response_put = rest_call_put(base_module, 'arm', path, body=body)
             else:
                 response_put = 'No new tags to add'
+        except STATError as e:
+            logging.warning(f'Failed to add tag to incident {base_module.IncidentARMId} with error: {e.source_error}, status code: {e.status_code}')
+            if raise_on_error:
+                raise
+            else:
+                response_put = 'Tag addition failed'
         except:
             response_put = 'Tag addition failed'
         return response_put
