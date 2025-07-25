@@ -1,4 +1,5 @@
 from shared import data
+from datetime import datetime
 import pytest
 
 def test_return_highest_value():
@@ -201,6 +202,23 @@ def test_load_json_from_file():
     assert "Exchange Administrator" in content
     assert "Global Administrator" in content
     assert "Security Administrator" in content
+
+def test_datetime_conversion():
+    """Test convert_from_iso_format with various date strings"""
+    converted_date = data.convert_from_iso_format("2025-07-25T15:00:00.123456Z")
+    converted_date2 = data.convert_from_iso_format("2025-07-25T15:00:00.1234567Z")
+    converted_date3 = data.convert_from_iso_format("2025-07-25T15:00:00.123456789+00:00")
+    converted_date4 = data.convert_from_iso_format("2025-07-25T15:00:00.123456789")
+    converted_date5 = data.convert_from_iso_format("2025-07-25T15:00:00Z")
+    converted_date6 = data.convert_from_iso_format("2025-07-25T15:00:00.000000Z")
+    converted_date7 = data.convert_from_iso_format("2025-07-25T16:00:00.000000+01:00")
+
+    assert isinstance(converted_date, datetime)
+    assert converted_date == converted_date2
+    assert converted_date == converted_date3
+    assert converted_date == converted_date4
+    assert converted_date5 == converted_date6
+    assert converted_date5 == converted_date7
 
 def list_data():
     test_data = [
