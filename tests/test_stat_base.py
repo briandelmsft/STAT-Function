@@ -7,6 +7,7 @@ def test_base_module_incident():
 
     assert base_response.statuscode == 200
     assert base_response.body.AccountsCount == 2
+    assert base_response.body.MailMessagesCount == 1
     assert len(base_response.body.Accounts) == base_response.body.AccountsCount
     assert len(base_response.body.Domains) == base_response.body.DomainsCount
     assert len(base_response.body.FileHashes) == base_response.body.FileHashesCount
@@ -15,6 +16,7 @@ def test_base_module_incident():
     assert len(base_response.body.IPs) == base_response.body.IPsCount
     assert len(base_response.body.URLs) == base_response.body.URLsCount
     assert len(base_response.body.OtherEntities) == base_response.body.OtherEntitiesCount
+    assert len(base_response.body.MailMessages) == base_response.body.MailMessagesCount
 
 
 def test_base_module_alert():
@@ -29,6 +31,7 @@ def test_base_module_alert():
     assert len(base_response.body.IPs) == base_response.body.IPsCount
     assert len(base_response.body.URLs) == base_response.body.URLsCount
     assert len(base_response.body.OtherEntities) == base_response.body.OtherEntitiesCount
+    assert len(base_response.body.MailMessages) == base_response.body.MailMessagesCount
 
 def get_incident_trigger_data():
     trigger_data = json.loads(requests.get(url=os.getenv('INCIDENTDATA')).content)
