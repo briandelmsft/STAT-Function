@@ -293,7 +293,20 @@ def enrich_files(entities):
 
     for file in file_entities:
         raw_entity = data.coalesce(file.get('properties'), file)
-        base_object.Files.append({'FileName': data.coalesce(file.get('properties',{}).get('friendlyName'), file.get('Name')),'RawEntity': raw_entity})
+        file_field = data.coalesce(file.get('properties',{}).get('friendlyName'), file.get('Name'))
+        file_name = file_field.split('/')[-1].split('\\')[-1]
+        file_name_path_f = file_field.rsplit('/', 1)
+        file_name_path_b = file_field.rsplit('\\', 1)
+
+        if len(file_name_path_f) > 1:
+            file_name_path = file_name_path_f[0] + '/'
+        elif len(file_name_path_b) > 1:
+            file_name_path = file_name_path_b[0] + '\\'
+        else:
+            file_name_path = None
+
+        file_directory = data.coalesce(file.get('properties',{}).get('directory'), file.get('Directory'), file_name_path, '')
+        base_object.Files.append({'FileName': file_name, 'FilePath': f'{file_directory}{file_name}', 'RawEntity': raw_entity})
 
 def enrich_filehashes(entities):
     filehash_entities = list(filter(lambda x: x['kind'].lower() == 'filehash', entities))
