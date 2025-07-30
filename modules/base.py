@@ -258,6 +258,7 @@ def enrich_mail_message(entities):
 
         if not message_role:
             base_object.MailMessages.append({'networkMessageId': network_message_id, 'recipientEmailAddress': recipient, 'EnrichmentMethod': 'MailMessage - No App Role', 'RawEntity': raw_entity})
+            logging.warning(f"mailMessage appended without enrichment - Missing app role SecurityAnalyzedMessage.Read.All")
             continue
 
         if recipient and network_message_id:
