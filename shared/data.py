@@ -4,7 +4,6 @@ import pathlib
 import json
 import os
 from datetime import datetime, timezone
-import re
 
 date_format = os.getenv('DATE_FORMAT')
 tz_info = os.getenv('TIME_ZONE')
