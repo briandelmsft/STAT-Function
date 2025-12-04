@@ -63,7 +63,7 @@ class STATNotFound(STATError):
     pass
 
 class STATFailedToDecodeToken(STATError):
-    """STAT exception raised when an the JWT can't be decoded to check for app roles."""
+    """STAT exception raised when the JWT can't be decoded to check for app roles."""
     pass
 
 class STATInsufficientPermissions(STATError):
