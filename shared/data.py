@@ -416,7 +416,7 @@ def parse_kv_string(kv:str, item_delimitter:str=';', value_delimitter:str='='):
     return result
 
 def convert_from_iso_format(date_string):
-    """Convert an ISO 8601 date string to a datetime object and assume UTC if not time zone is provided.
+    """Convert an ISO 8601 date string to a datetime object and assume UTC if no time zone is provided.
 
     Args:
         date_string (str): The ISO 8601 date string to convert.
