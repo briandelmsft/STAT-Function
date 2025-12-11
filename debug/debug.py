@@ -26,6 +26,12 @@ def debug_module (req_body):
         case 'comment':
             default_debug(debug_out)
             comment_debug(debug_out)
+        case 'tag':
+            default_debug(debug_out)
+            tag_debug(debug_out)
+        case 'task':
+            default_debug(debug_out)
+            task_debug(debug_out)
         case 'exception':
             exception_debug(debug_out)
         case _:
@@ -145,6 +151,42 @@ def comment_debug(debug_out:DebugModule):
     base_module.MultiTenantConfig = debug_out.Params.get('MultiTenantConfig', {})
     base_module.IncidentARMId = debug_out.Params['IncidentARMId']
     base_module.IncidentAvailable = True
-    response = rest.add_incident_comment(base_module, comment)
-    debug_out.CommentStatus = response.status_code
-    debug_out.CommentResponse = response.json()
+    try: 
+        response = rest.add_incident_comment(base_module, comment, raise_on_error=True)
+        debug_out.CommentStatus = response.status_code
+        debug_out.CommentResponse = response.json()
+    except STATError as e:
+        debug_out.CommentStatus = 'Comment failed'
+        debug_out.CommentSourceError = e.source_error
+        debug_out.CommentStatusCode = e.status_code
+
+def task_debug(debug_out:DebugModule):
+    title = debug_out.Params.get('TaskTitle')
+    description = debug_out.Params.get('TaskDescription', '')
+    base_module = BaseModule()
+    base_module.MultiTenantConfig = debug_out.Params.get('MultiTenantConfig', {})
+    base_module.IncidentARMId = debug_out.Params['IncidentARMId']
+    base_module.IncidentAvailable = True
+    try: 
+        response = rest.add_incident_task(base_module, title, description, raise_on_error=True)
+        debug_out.TaskStatus = response.status_code
+        debug_out.TaskResponse = response.json()
+    except STATError as e:
+        debug_out.TaskStatus = 'Task failed'
+        debug_out.TaskSourceError = e.source_error
+        debug_out.TaskStatusCode = e.status_code
+
+def tag_debug(debug_out:DebugModule):
+    tag = [debug_out.Params.get('Tag')]
+    base_module = BaseModule()
+    base_module.MultiTenantConfig = debug_out.Params.get('MultiTenantConfig', {})
+    base_module.IncidentARMId = debug_out.Params['IncidentARMId']
+    base_module.IncidentAvailable = True
+    try: 
+        response = rest.add_incident_tags(base_module, tag, raise_on_error=True)
+        debug_out.TagStatus = response.status_code
+        debug_out.TagResponse = response.json()
+    except STATError as e:
+        debug_out.TagStatus = 'Tag failed'
+        debug_out.TagSourceError = e.source_error
+        debug_out.TagStatusCode = e.status_code

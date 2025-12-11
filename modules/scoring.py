@@ -1,7 +1,13 @@
 from classes import *
 from shared import data, rest
+import logging
+import json
 
 def execute_scoring_module (req_body):
+
+    # Log module invocation with parameters (excluding BaseModuleBody, ScoringData)
+    log_params = {k: v for k, v in req_body.items() if k != 'BaseModuleBody' and k != 'ScoringData'}
+    logging.info(f'Scoring Module invoked with parameters: {log_params}')
 
     #Inputs AddIncidentComments, AddIncidentTask, BaseModuleBody, IncidentTaskInstructions, ScoringData
 
@@ -14,6 +20,14 @@ def execute_scoring_module (req_body):
 
     for input_module in req_body['ScoringData']:
         module_body = input_module['ModuleBody']
+        
+        # Convert ModuleBody from string if submitted as a JSON string
+        if isinstance(module_body, str):
+            try:
+                module_body = json.loads(module_body)
+            except json.JSONDecodeError as e:
+                raise STATError(f'Failed to parse ModuleBody of scoring data for item with label {input_module.get("ScoreLabel","Unknown")}, invalid JSON string', {'Error': str(e)})
+
         module = module_body.get('ModuleName')
         label = input_module.get('ScoreLabel', module)
         multiplier = float(input_module.get('ScoreMultiplier', 1))

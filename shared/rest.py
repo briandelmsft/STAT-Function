@@ -8,7 +8,8 @@ import os
 import uuid
 import time
 import base64
-from classes import STATError, STATNotFound, BaseModule, STATTooManyRequests
+import logging
+from classes import STATError, STATNotFound, BaseModule, STATTooManyRequests, STATServerError, STATFailedToDecodeToken, STATInsufficientPermissions
 
 stat_token = {}
 graph_endpoint = os.getenv('GRAPH_ENDPOINT')
@@ -199,12 +200,23 @@ def execute_rest_call(base_module:BaseModule, method:str, api:str, path:str, bod
                 retry_after = 10
             wait_time += retry_after
             if wait_time > 60:
+                logging.warning(f'The API call to {api} with path {path} failed with {e.source_error}. Maximum retry time exceeded.')
                 raise STATTooManyRequests(error=e.error, source_error=e.source_error, status_code=e.status_code, retry_after=e.retry_after)
+            logging.info(f'The API call to {api} with path {path} failed with status {e.source_error}. Retrying.')
             time.sleep(retry_after)
+        except STATServerError as e:
+            wait_time += 15
+            if wait_time > 60:
+                logging.warning(f'The API call to {api} with path {path} failed with {e.source_error}. Maximum retry time exceeded.')
+                raise STATServerError(error=f'Server error returned by {url}', source_error=e.source_error, status_code=500)
+            logging.info(f'The API call to {api} with path {path} failed with status {e.source_error}. Retrying.')
+            time.sleep(15)
         except ConnectionError as e:
             wait_time += 20
-            if wait_time >= 60:
+            if wait_time > 60:
+                logging.warning(f'The API call to {api} with path {path} failed with status {e}. Maximum retry time exceeded.')
                 raise STATError(error=f'Failed to establish a new connection to {url}', source_error=e, status_code=500)
+            logging.info(f'The API call to {api} with path {path} failed with status Connection Error. Retrying.')
             time.sleep(20)
         else:
             retry_call = False
@@ -214,10 +226,14 @@ def execute_rest_call(base_module:BaseModule, method:str, api:str, path:str, bod
 
 def check_rest_response(response:Response, api, path):
     if response.status_code == 404:
+        logging.info(f'The API call to {api} with path {path} returned a 404 Not Found error, in some cases this is expected.')
         raise STATNotFound(f'The API call to {api} with path {path} failed with status {response.status_code}', source_error={'status_code': int(response.status_code), 'reason': str(response.reason)})
-    elif response.status_code == 429 or response.status_code == 408:
+    elif response.status_code in (429, 408):
         raise STATTooManyRequests(f'The API call to {api} with path {path} failed with status {response.status_code}', source_error={'status_code': int(response.status_code), 'reason': str(response.reason)}, retry_after=response.headers.get('Retry-After', 10), status_code=int(response.status_code))
+    elif response.status_code >= 500:
+        raise STATServerError(f'The API call to {api} with path {path} failed with status {response.status_code}', source_error={'status_code': int(response.status_code), 'reason': str(response.reason)}, status_code=int(response.status_code))
     elif response.status_code >= 300:
+        logging.warning(f'The API call to {api} with path {path} failed with status {response.status_code} and reason {str(response.reason)}. No Retries will be attempted.')
         raise STATError(f'The API call to {api} with path {path} failed with status {response.status_code}', source_error={'status_code': int(response.status_code), 'reason': str(response.reason)})
     return
 
@@ -313,7 +329,7 @@ def get_endpoint(api:str):
                         'Ensure that all API endpoint enrivonrment variables are correctly set in the STAT Function App '
                         '(ARM_ENDPOINT, GRAPH_ENDPOINT, LOGANALYTICS_ENDPOINT, M365_ENDPOINT, and MDE_ENDPOINT).')
     
-def add_incident_comment(base_module:BaseModule, comment:str):
+def add_incident_comment(base_module:BaseModule, comment:str, raise_on_error:bool=False):
     """Add a comment to a Microsoft Sentinel incident.
     
     Creates a new comment on the specified incident using the Azure REST API.
@@ -322,6 +338,7 @@ def add_incident_comment(base_module:BaseModule, comment:str):
     Args:
         base_module (BaseModule): Base module containing incident information.
         comment (str): Comment text to add to the incident.
+        raise_on_error (bool): Whether to raise an exception on error. Defaults to False.
     
     Returns:
         Response or str: API response object on success, or 'Comment failed' on error.
@@ -330,26 +347,44 @@ def add_incident_comment(base_module:BaseModule, comment:str):
     path = base_module.IncidentARMId + '/comments/' + str(uuid.uuid4()) + '?api-version=2023-02-01'
     try:
         response = rest_call_put(base_module, 'arm', path, {'properties': {'message': comment[:30000]}})
+    except STATError as e:
+        logging.warning(f'Failed to add comment to incident {base_module.IncidentARMId} with error: {e.source_error}, status code: {e.status_code}')
+        if raise_on_error:
+            raise
+        else:
+            response = 'Comment failed'
     except:
         response = 'Comment failed'
     return response
 
-def add_incident_task(base_module:BaseModule, title:str, description:str, status:str='New'):
+def add_incident_task(base_module:BaseModule, title:str, description:str, status:str='New', raise_on_error:bool=False):
     path = base_module.IncidentARMId + '/tasks/' + str(uuid.uuid4()) + '?api-version=2024-03-01'
 
     if description is None or description == '':
         try:
             response = rest_call_put(base_module, 'arm', path, {'properties': {'title': title, 'status': status}})
+        except STATError as e:
+            logging.warning(f'Failed to add task to incident {base_module.IncidentARMId} with error: {e.source_error}, status code: {e.status_code}')
+            if raise_on_error:
+                raise
+            else:
+                response = 'Task addition failed'
         except:
             response = 'Task addition failed'
     else:
         try:
             response = rest_call_put(base_module, 'arm', path, {'properties': {'title': title, 'description': description[:3000], 'status': status}})
+        except STATError as e:
+            logging.warning(f'Failed to add task to incident {base_module.IncidentARMId} with error: {e.source_error}, status code: {e.status_code}')
+            if raise_on_error:
+                raise
+            else:
+                response = 'Task addition failed'
         except:
             response = 'Task addition failed'
     return response
 
-def add_incident_tags(base_module:BaseModule, tags:list):
+def add_incident_tags(base_module:BaseModule, tags:list, raise_on_error:bool=False):
     if tags:
         path = base_module.IncidentARMId + '?api-version=2025-03-01'
         tags_to_add = False
@@ -378,20 +413,76 @@ def add_incident_tags(base_module:BaseModule, tags:list):
                 response_put = rest_call_put(base_module, 'arm', path, body=body)
             else:
                 response_put = 'No new tags to add'
+        except STATError as e:
+            logging.warning(f'Failed to add tag to incident {base_module.IncidentARMId} with error: {e.source_error}, status code: {e.status_code}')
+            if raise_on_error:
+                raise
+            else:
+                response_put = 'Tag addition failed'
         except:
             response_put = 'Tag addition failed'
         return response_put
 
 def check_app_role(base_module:BaseModule, token_type:str, app_roles:list):
+    """Check if the current application token has at least one of the required roles.
+    Args:
+        base_module (BaseModule): Base module containing incident information.
+        token_type (str): Type of token to check ('msgraph', 'la', 'm365', 'mde').
+        app_roles (list): List of required application roles to check against the token.
+    Returns:
+        bool: True if the token has at least one of the required roles, False otherwise.    
+    Raises:
+        STATFailedToDecodeToken: If the JWT token cannot be decoded to check for roles.
+    """
     token = token_cache(base_module, token_type)
 
-    content = token.token.split('.')[1] + '=='
-    b64_decoded = base64.urlsafe_b64decode(content)
-    decoded_token = json.loads(b64_decoded) 
-    token_roles = decoded_token.get('roles')
+    try:
+        content = token.token.split('.')[1] + '=='
+        b64_decoded = base64.urlsafe_b64decode(content)
+        decoded_token = json.loads(b64_decoded) 
+        token_roles = decoded_token.get('roles', [])
+    except:
+        logging.warning(f'Failed to decode the JWT token for {token_type}.')
+        raise STATFailedToDecodeToken(f'Failed to decode the JWT token for {token_type}. Ensure the token is valid and properly formatted.')
 
     matched_roles = [item for item in app_roles if item in token_roles]
     if matched_roles:
         return True
     return False
-    
+
+def check_app_role2(base_module:BaseModule, token_type:str, app_roles:list, raise_on_fail_to_decode:bool=False, token:str=None):
+    """Check if the current application token has at least one of the required roles.
+    Args:
+        base_module (BaseModule): Base module containing incident information.
+        token_type (str): Type of token to check ('msgraph', 'la', 'm365', 'mde').
+        app_roles (list): List of required application roles to check against the token.
+        raise_on_fail_to_decode (bool): Whether to raise an exception if the token cannot be decoded. Defaults to False.
+        token (str, optional): JWT token to check. If not provided, it will be fetched from the cache.
+    Returns:
+        None: If the token has at least one of the required roles.
+    Raises:
+        STATFailedToDecodeToken: If the JWT token cannot be decoded to check for roles.
+        STATInsufficientPermissions: If the token does not have sufficient permissions.
+    """
+    if not token:
+        token = token_cache(base_module, token_type)
+
+    try:
+        content = token.token.split('.')[1] + '=='
+        b64_decoded = base64.urlsafe_b64decode(content)
+        decoded_token = json.loads(b64_decoded) 
+        token_roles = decoded_token.get('roles', [])
+    except:
+        if raise_on_fail_to_decode:
+            logging.warning(f'Failed to decode the JWT token for {token_type}, raising exception.')
+            raise STATFailedToDecodeToken(f'Failed to decode the JWT token for {token_type}. Ensure the token is valid and properly formatted.')
+        else:
+            logging.warning(f'Failed to decode the JWT token for {token_type}, returning without exception.')
+            return True
+
+    matched_roles = [item for item in app_roles if item in token_roles]
+    if matched_roles:
+        return True
+    else:
+        raise STATInsufficientPermissions(f'The Microsoft Sentinel Triage AssistanT identity does not have sufficient permissions to perform this operation. Please ensure to run the GrantPermissions.ps1 script against the identity used by the STAT function app.')
+   

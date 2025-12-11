@@ -3,6 +3,7 @@ import copy
 import pathlib
 import json
 import os
+from datetime import datetime, timezone
 
 date_format = os.getenv('DATE_FORMAT')
 tz_info = os.getenv('TIME_ZONE')
@@ -413,3 +414,20 @@ def parse_kv_string(kv:str, item_delimitter:str=';', value_delimitter:str='='):
         else:
             result[pair.strip()] = None
     return result
+
+def convert_from_iso_format(date_string):
+    """Convert an ISO 8601 date string to a datetime object and assume UTC if no time zone is provided.
+
+    Args:
+        date_string (str): The ISO 8601 date string to convert.
+        
+    Returns:
+        datetime: A datetime object representing the date and time with time zone information.
+    """
+
+    ts = datetime.fromisoformat(date_string)
+
+    if ts.tzinfo is not None and ts.tzinfo.utcoffset(ts) is not None:
+        return ts
+    else:
+        return ts.replace(tzinfo=timezone.utc)   

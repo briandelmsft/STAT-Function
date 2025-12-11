@@ -1,9 +1,14 @@
 from classes import BaseModule, Response, KQLModule
 from shared import rest, data
+import logging
 
 def execute_kql_module (req_body):
 
     #Inputs AddIncidentComments, AddIncidentTask, Entities, IncidentTaskInstructions, KQLQuery, LookbackInDays, QueryDescription, RunQueryAgainst
+
+    # Log module invocation with parameters (excluding BaseModuleBody)
+    log_params = {k: v for k, v in req_body.items() if k != 'BaseModuleBody'}
+    logging.info(f'KQL Module invoked with parameters: {log_params}')
 
     base_object = BaseModule()
     base_object.load_from_input(req_body['BaseModuleBody'])
@@ -15,8 +20,12 @@ def execute_kql_module (req_body):
     ip_entities = base_object.get_ip_kql_table()
     account_entities = base_object.get_account_kql_table(include_unsynced=True)
     host_entities = base_object.get_host_kql_table()
+    mail_entities = base_object.get_mail_kql_table()
 
-    query = arm_id + ip_entities + account_entities + host_entities + req_body['KQLQuery']
+    query = arm_id + ip_entities + account_entities + host_entities + mail_entities + req_body['KQLQuery']
+
+    # Log the executed KQL query for troubleshooting
+    logging.info(f'Executing KQL query: {query}')
 
     if req_body.get('RunQueryAgainst') == 'M365':
         results = rest.execute_m365d_query(base_object, query)
