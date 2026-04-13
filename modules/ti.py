@@ -31,7 +31,7 @@ def execute_ti_module (req_body):
 | summarize LatestIndicatorTime = arg_max(TimeGenerated, *) by Id, ObservableValue
 | where IsActive and (ValidUntil > now() or isempty(ValidUntil))
 | extend DomainName = tolower(ObservableValue)) on DomainName
-| project TIType="Domain", TIData=DomainName, SourceSystem, Description=tostring(Data.description), ThreatType=tostring(array_strcat(Data.indicator_types, ', ')), ConfidenceScore=Confidence, IndicatorId=Id'''
+| project TIType="Domain", TIData=DomainName, TITags=Tags, SourceSystem, Description=tostring(Data.description), ThreatType=tostring(array_strcat(Data.indicator_types, ', ')), ConfidenceScore=Confidence, IndicatorId=Id'''
         results = rest.execute_la_query(base_object, query, 14)
         ti_object.DetailedResults = ti_object.DetailedResults + results
         ti_object.DomainEntitiesCount = len(base_object.get_domain_list())
@@ -46,7 +46,7 @@ def execute_ti_module (req_body):
 | summarize LatestIndicatorTime = arg_max(TimeGenerated, *) by Id, ObservableValue
 | where IsActive and (ValidUntil > now() or isempty(ValidUntil))
 | extend FileHash = tolower(ObservableValue)) on FileHash
-| project TIType="FileHash", TIData=FileHash, SourceSystem, Description=tostring(Data.description), ThreatType=tostring(array_strcat(Data.indicator_types, ', ')), ConfidenceScore=Confidence, IndicatorId=Id'''
+| project TIType="FileHash", TIData=FileHash, TITags=Tags, SourceSystem, Description=tostring(Data.description), ThreatType=tostring(array_strcat(Data.indicator_types, ', ')), ConfidenceScore=Confidence, IndicatorId=Id'''
         results = rest.execute_la_query(base_object, query, 14)
         ti_object.DetailedResults = ti_object.DetailedResults + results
         ti_object.FileHashEntitiesCount = len(base_object.get_filehash_list())
@@ -61,7 +61,7 @@ def execute_ti_module (req_body):
 | where IsActive and (ValidUntil > now() or isempty(ValidUntil))
 | extend IPAddress = tolower(ObservableValue)
 ) on IPAddress
-| project TIType="IP", TIData=IPAddress, SourceSystem, Description=tostring(Data.description), ThreatType=tostring(array_strcat(Data.indicator_types, ', ')), ConfidenceScore=Confidence, IndicatorId=Id'''
+| project TIType="IP", TIData=IPAddress, TITags=Tags, SourceSystem, Description=tostring(Data.description), ThreatType=tostring(array_strcat(Data.indicator_types, ', ')), ConfidenceScore=Confidence, IndicatorId=Id'''
         results = rest.execute_la_query(base_object, query, 14)
         ti_object.DetailedResults = ti_object.DetailedResults + results
         ti_object.IPEntitiesCount = len(base_object.get_ip_list())
@@ -81,14 +81,14 @@ union isfuzzy=true
 | where IsActive and (ValidUntil > now() or isempty(ValidUntil))
 | extend Url = tolower(ObservableValue)) on Url
 | extend Url = strcat('[', tostring(split(Url, '//')[0]), ']//', tostring(split(Url, '//')[1]))
-| project TIType="URL", TIData=Url, SourceSystem, Description=tostring(Data.description), ThreatType=tostring(array_strcat(Data.indicator_types, ', ')), ConfidenceScore=Confidence, IndicatorId=Id),
+| project TIType="URL", TIData=Url, TITags=Tags, SourceSystem, Description=tostring(Data.description), ThreatType=tostring(array_strcat(Data.indicator_types, ', ')), ConfidenceScore=Confidence, IndicatorId=Id),
 (entities
 | join kind=inner (ThreatIntelIndicators
 | where ObservableKey =~ "domain-name:value"
 | summarize LatestIndicatorTime = arg_max(TimeGenerated, *) by Id, ObservableValue
 | where IsActive and (ValidUntil > now() or isempty(ValidUntil))
 | extend DomainName = tolower(ObservableValue)) on DomainName
-| project TIType="Domain", TIData=DomainName, SourceSystem, Description=tostring(Data.description), ThreatType=tostring(array_strcat(Data.indicator_types, ', ')), ConfidenceScore=Confidence, IndicatorId=Id)'''
+| project TIType="Domain", TIData=DomainName, TITags=Tags, SourceSystem, Description=tostring(Data.description), ThreatType=tostring(array_strcat(Data.indicator_types, ', ')), ConfidenceScore=Confidence, IndicatorId=Id)'''
         results = rest.execute_la_query(base_object, query, 14)
         ti_object.DetailedResults = ti_object.DetailedResults + results
         ti_object.URLEntitiesCount = len(base_object.get_url_list())

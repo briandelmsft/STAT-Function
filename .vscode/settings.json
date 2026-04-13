@@ -9,5 +9,12 @@
         "tests"
     ],
     "python.testing.unittestEnabled": false,
-    "python.testing.pytestEnabled": true
+    "python.testing.pytestEnabled": true,
+    "python.analysis.extraPaths": [
+        "c:\\Users\\briandel\\.vscode\\extensions\\ms-security.ms-sentinel-0.1.0\\python",
+        "c:\\Users\\briandel\\.vscode\\extensions\\ms-security.ms-sentinel-1.0.0\\python",
+        "c:\\Users\\briandel\\.vscode\\extensions\\ms-security.ms-sentinel-1.1.1\\python",
+        "c:\\Users\\briandel\\.vscode\\extensions\\ms-security.ms-sentinel-1.1.6\\python",
+        "c:\\Users\\briandel\\.vscode\\extensions\\ms-security.ms-sentinel-2.0.2\\python"
+    ]
 }
