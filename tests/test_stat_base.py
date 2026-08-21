@@ -1,6 +1,20 @@
 from modules import base
-from classes import Response
+from classes import BaseModule, Response
 import json, os, requests
+
+def test_enrich_files():
+    base.base_object = BaseModule()
+    entities = [
+        {'kind': 'File', 'properties': {'friendlyName': 'C:\\temp\\test.exe'}},
+        {'kind': 'File', 'properties': {}},
+        {'kind': 'File', 'properties': {'friendlyName': None, 'directory': 'C:\\temp'}}
+    ]
+    base.enrich_files(entities)
+
+    assert base.base_object.FilesCount == 1
+    assert len(base.base_object.Files) == base.base_object.FilesCount
+    assert base.base_object.Files[0]['FileName'] == 'test.exe'
+    assert base.base_object.Files[0]['FilePath'] == 'C:\\temp\\test.exe'
 
 def test_base_module_incident():
     base_response:Response = base.execute_base_module(get_incident_trigger_data())
