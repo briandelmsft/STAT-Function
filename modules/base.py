@@ -290,11 +290,15 @@ def enrich_mail_message(entities):
 
 def enrich_files(entities):
     file_entities = list(filter(lambda x: x['kind'].lower() == 'file', entities))
-    base_object.FilesCount = len(file_entities)
 
     for file in file_entities:
         raw_entity = data.coalesce(file.get('properties'), file)
         file_field = data.coalesce(file.get('properties',{}).get('friendlyName'), file.get('Name'))
+
+        if not file_field:
+            #Skip any file entities that have no file name
+            continue
+
         file_name = file_field.split('/')[-1].split('\\')[-1]
         file_name_path_f = file_field.rsplit('/', 1)
         file_name_path_b = file_field.rsplit('\\', 1)
@@ -308,6 +312,8 @@ def enrich_files(entities):
 
         file_directory = data.coalesce(file.get('properties',{}).get('directory'), file.get('Directory'), file_name_path, '')
         base_object.Files.append({'FileName': file_name, 'FilePath': f'{file_directory}{file_name}', 'RawEntity': raw_entity})
+
+    base_object.FilesCount = len(base_object.Files)
 
 def enrich_filehashes(entities):
     filehash_entities = list(filter(lambda x: x['kind'].lower() == 'filehash', entities))
