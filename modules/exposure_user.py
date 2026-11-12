@@ -39,10 +39,10 @@ def execute_user_exposure_module (req_body):
 
 def add_comment_to_incident (base_object, exp_object):
     crit_level = {
-        0: 'Very High<br />🟥🟥🟥🟥',
-        1: 'High<br />🟥🟥🟥⬜ ',
-        2: 'Medium<br />🟥🟥⬜⬜',
-        3: 'Low<br />🟥⬜⬜⬜'
+        0: 'Very High 🟥🟥🟥🟥',
+        1: 'High 🟥🟥🟥⬜ ',
+        2: 'Medium 🟥🟥⬜⬜',
+        3: 'Low 🟥⬜⬜⬜'
     }
 
     out = []
@@ -50,15 +50,15 @@ def add_comment_to_incident (base_object, exp_object):
     for x in exp_object.Paths:
         out.append({
             'User': get_user_link(x),
-            'User Details': f"{crit_level[x['UserCriticality']]}<br /><p><b>Asset Rules:</b> {data.list_to_string(x['UserCriticalityRules'])}<br /><p><b>User Tags:</b> {data.list_to_string(x['UserTags'])}",
-            'ElevatedRightsOn (Top 5)': f"{data.list_to_string(x['ElevatedRightsOn'])}<p><b>Elevated Rights to Computers:</b> {x['ElevatedRightsOnCount']}<br /><b>Local Admin to Computers:</b> {x['LocalAdminCount']}",
-            "HighestComputerCriticality": f"{crit_level[x['HighestComputerCriticality']]}<br /><p><b>Combined Asset Rules:</b> {data.list_to_string(x['ComputerCriticalityRules'])}"
+            'User Details': f"{crit_level[x['UserCriticality']]}<p><b>Asset Rules:</b> {data.list_to_string(x['UserCriticalityRules'])}<p><b>User Tags:</b> {data.list_to_string(x['UserTags'])}",
+            'ElevatedRightsOn (Top 5)': f"{data.list_to_string(x['ElevatedRightsOn'])}<p><b>Elevated Rights to Computers:</b> {x['ElevatedRightsOnCount']}<b>Local Admin to Computers:</b> {x['LocalAdminCount']}",
+            "HighestComputerCriticality": f"{crit_level[x['HighestComputerCriticality']]}<p><b>Combined Asset Rules:</b> {data.list_to_string(x['ComputerCriticalityRules'])}"
         })
 
     for x in exp_object.nodes_without_paths():
         out.append({
             'User': get_user_link(x),
-            'User Details': f"{crit_level[x['UserCriticality']]}<br /><p><b>Asset Rules:</b> {data.list_to_string(x['UserCriticalityRules'])}<br /><p><b>User Tags:</b> {data.list_to_string(x['UserTags'])}",
+            'User Details': f"{crit_level[x['UserCriticality']]}<p><b>Asset Rules:</b> {data.list_to_string(x['UserCriticalityRules'])}<p><b>User Tags:</b> {data.list_to_string(x['UserTags'])}",
             'ElevatedRightsOn (Top 5)': "None Detected"
         })
 
@@ -93,8 +93,8 @@ def get_user_link(x):
             aadid = data.parse_kv_string(acct_id['id']).get('objectid')
 
     if aadid:
-        return f"<a href=\"https://security.microsoft.com/user?aad={aadid}&tab=overview\" target=\"_blank\">{x['User']}</a><br />(<a href=\"https://security.microsoft.com/security-graph?id={aadid}&assetType=AadObjectId\">Exposure Map</a>)"
+        return f"<a href=\"https://security.microsoft.com/user?aad={aadid}&tab=overview\" target=\"_blank\">{x['User']}</a><p>(<a href=\"https://security.microsoft.com/security-graph?id={aadid}&assetType=AadObjectId\">Exposure Map</a>)"
     elif sid:
-        return f"<a href=\"https://security.microsoft.com/user?sid={sid}&tab=overview\" target=\"_blank\">{x['User']}</a><br />(<a href=\"https://security.microsoft.com/security-graph?id={sid}&assetType=SecurityIdentifier\">Exposure Map</a>)"
+        return f"<a href=\"https://security.microsoft.com/user?sid={sid}&tab=overview\" target=\"_blank\">{x['User']}</a><p>(<a href=\"https://security.microsoft.com/security-graph?id={sid}&assetType=SecurityIdentifier\">Exposure Map</a>)"
     else:
         return x['User']

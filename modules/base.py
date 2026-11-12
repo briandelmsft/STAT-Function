@@ -91,9 +91,9 @@ def execute_base_module (req_body):
     if (req_body.get('AddAccountComments', True) and base_object.AccountsCount > 0) or (req_body.get('AddIPComments', True) and base_object.check_global_and_local_ips()) or (req_body.get('AddMailComments', True) and base_object.MailMessages):
         comment = ''
         if account_comment:
-            comment += account_comment + '<br><p>'
+            comment += account_comment + '<p>'
         if ip_comment:
-            comment += ip_comment + '<br><p>'
+            comment += ip_comment + '<p>'
         if mail_comment:
             comment += mail_comment
         
@@ -536,27 +536,27 @@ def get_account_comment():
         account_upn = account.get('userPrincipalName')
         account_mail = account.get('mail')
         if account_id:    
-            upn_data = f'<a href="https://portal.azure.com/#view/Microsoft_AAD_UsersAndTenants/UserProfileMenuBlade/~/overview/userId/{account_id}" target="_blank">{account_upn}</a><br>(<a href="mailto:{account_mail}">Contact User</a>)'
+            upn_data = f'<a href="https://portal.azure.com/#view/Microsoft_AAD_UsersAndTenants/UserProfileMenuBlade/~/overview/userId/{account_id}" target="_blank">{account_upn}</a><p>(<a href="mailto:{account_mail}">Contact User</a>)'
         else:
             upn_data = account_upn
 
         if upn_data:
             account_list.append({
-                'User': f"{upn_data}<br><b>JobTitle</b>: {account.get('jobTitle')}", 
-                'Location': f"<b>Department</b>: {account.get('department')}<br><b>Office</b>: {account.get('officeLocation')}<br><b>City</b>: {account.get('city')}<br><b>Country</b>: {account.get('country')}",
-                'OtherDetails': f"<b>AADRoles:</b> {', '.join(account.get('AssignedRoles', []))}<br><b>Manager</b>: {account.get('manager', {}).get('userPrincipalName')}<br><b>MFA Registered</b>: {account.get('isMfaRegistered')}<br><b>SSPR Enabled</b>: {account.get('isSSPREnabled')}<br><b>SSPR Registered</b>: {account.get('isSSPRRegistered')}<br><b>OnPremSynced</b>: {account.get('onPremisesSyncEnabled')}"
+                'User': f"{upn_data}<p><b>JobTitle</b>: {account.get('jobTitle')}", 
+                'Location': f"<b>Department</b>: {account.get('department')}<p><b>Office</b>: {account.get('officeLocation')}<p><b>City</b>: {account.get('city')}<p><b>Country</b>: {account.get('country')}",
+                'OtherDetails': f"<b>AADRoles:</b> {', '.join(account.get('AssignedRoles', []))}<p><b>Manager</b>: {account.get('manager', {}).get('userPrincipalName')}<p><b>MFA Registered</b>: {account.get('isMfaRegistered')}<p><b>SSPR Enabled</b>: {account.get('isSSPREnabled')}<p><b>SSPR Registered</b>: {account.get('isSSPRRegistered')}<p><b>OnPremSynced</b>: {account.get('onPremisesSyncEnabled')}"
             })
         else:
             account_list.append({
                 'User': "Unknown User",
-                'OtherDetails': f"Failed to lookup account details for 1 account entity<br><b>Enrichment Method</b>: {account.get('EnrichmentMethod')}",
+                'OtherDetails': f"Failed to lookup account details for 1 account entity<p><b>Enrichment Method</b>: {account.get('EnrichmentMethod')}",
             })
        
     for onprem_acct in base_object.AccountsOnPrem:
         account_list.append({
-                'User': f"{data.coalesce(onprem_acct.get('userPrincipalName'),onprem_acct.get('onPremisesSamAccountName'))}<br><b>JobTitle</b>: {onprem_acct.get('jobTitle')}", 
+                'User': f"{data.coalesce(onprem_acct.get('userPrincipalName'),onprem_acct.get('onPremisesSamAccountName'))}<p><b>JobTitle</b>: {onprem_acct.get('jobTitle')}", 
                 'Location': f"<b>Department</b>: {onprem_acct.get('department')}",
-                'OtherDetails': f"<b>Manager</b>: {onprem_acct.get('manager')}<br><b>OnPremSynced</b>: On-Prem Only"
+                'OtherDetails': f"<b>Manager</b>: {onprem_acct.get('manager')}<p><b>OnPremSynced</b>: On-Prem Only"
             })
         
     return data.list_to_html_table(account_list, 20, 20, escape_html=False)
@@ -571,8 +571,8 @@ def get_ip_comment():
 
             ip_list.append({
                 'IP': ip.get('Address'),
-                'Location': f"<b>City</b>: {geo.get('city', 'Unknown')}<br><b>State</b>: {geo.get('state', 'Unknown')}<br><b>Country</b>: {geo.get('country', 'Unknown')}",
-                'OtherDetails': f"<b>Organization</b>: {geo.get('organization', 'Unknown')}<br><b>OrganizationType</b>: {geo.get('organizationType', 'Unknown')}<br><b>ASN</b>: {geo.get('asn', 'Unknown')}",
+                'Location': f"<b>City</b>: {geo.get('city', 'Unknown')}<p><b>State</b>: {geo.get('state', 'Unknown')}<p><b>Country</b>: {geo.get('country', 'Unknown')}",
+                'OtherDetails': f"<b>Organization</b>: {geo.get('organization', 'Unknown')}<p><b>OrganizationType</b>: {geo.get('organizationType', 'Unknown')}<p><b>ASN</b>: {geo.get('asn', 'Unknown')}",
                 'IPType': ip.get('IPType')
             })
             
@@ -586,17 +586,17 @@ def get_mail_comment():
     for msg in base_object.MailMessages:
         if msg.get('EnrichmentMethod'):
             mail_list.append({
-                'MessageDetails': f"<b>NetworkMessageId</b>: {msg.get('networkMessageId')}<br><b>Recipient</b>: {msg.get('recipientEmailAddress', 'Unknown')}",
+                'MessageDetails': f"<b>NetworkMessageId</b>: {msg.get('networkMessageId')}<p><b>Recipient</b>: {msg.get('recipientEmailAddress', 'Unknown')}",
                 'EnrichmentMethod': f"<b>Enrichment Method</b>: {msg.get('EnrichmentMethod')}",
             })
         else:
             msg_time = msg.get('loggedDateTime')
             explorer_link = f"https://security.microsoft.com/emailentity?f=summary&startTime={msg_time}&endTime={msg_time}&id={msg.get('networkMessageId')}&recipient={msg.get('recipientEmailAddress')}&tid={base_object.TenantId}"
             mail_list.append({
-                'MessageDetails': f"<b>Recipient</b>: {msg.get('recipientEmailAddress')}<br><b>Sender</b>: {msg.get('senderDetail', {}).get('fromAddress')}<br><b>SenderFromAddress</b>: {msg.get('senderDetail', {}).get('mailFromAddress')}<br><b>Subject</b>: {msg.get('subject')}<br><b>AttachmentCount:</b> {len(msg.get('attachments', []))}<br><b>URLCount:</b> {len(msg.get('urls', []))}<br>(<a href=\"{explorer_link}\" target=\"_blank\">Open Entity Page</a>)",
-                'Delivery': f"<b>Original Delivery</b>: {msg.get('originalDelivery', {}).get('location')}<br><b>Latest Delivery</b>: {msg.get('latestDelivery', {}).get('location')}",
-                'Authentication': f"<b>SPF</b>: {msg.get('authenticationDetails', {}).get('senderPolicyFramework')}<br><b>DKIM</b>: {msg.get('authenticationDetails', {}).get('dkim')}<br><b>DMARC</b>: {msg.get('authenticationDetails', {}).get('dmarc')}",
-                'ThreatInfo': f"<b>ThreatTypes</b>: {', '.join(msg.get('threatTypes', []))}<br><b>DetectionMethods</b>: {', '.join(msg.get('detectionMethods', []))}"
+                'MessageDetails': f"<b>Recipient</b>: {msg.get('recipientEmailAddress')}<p><b>Sender</b>: {msg.get('senderDetail', {}).get('fromAddress')}<p><b>SenderFromAddress</b>: {msg.get('senderDetail', {}).get('mailFromAddress')}<p><b>Subject</b>: {msg.get('subject')}<p><b>AttachmentCount:</b> {len(msg.get('attachments', []))}<p><b>URLCount:</b> {len(msg.get('urls', []))}<p>(<a href=\"{explorer_link}\" target=\"_blank\">Open Entity Page</a>)",
+                'Delivery': f"<b>Original Delivery</b>: {msg.get('originalDelivery', {}).get('location')}<p><b>Latest Delivery</b>: {msg.get('latestDelivery', {}).get('location')}",
+                'Authentication': f"<b>SPF</b>: {msg.get('authenticationDetails', {}).get('senderPolicyFramework')}<p><b>DKIM</b>: {msg.get('authenticationDetails', {}).get('dkim')}<p><b>DMARC</b>: {msg.get('authenticationDetails', {}).get('dmarc')}",
+                'ThreatInfo': f"<b>ThreatTypes</b>: {', '.join(msg.get('threatTypes', []))}<p><b>DetectionMethods</b>: {', '.join(msg.get('detectionMethods', []))}"
             })
         
     return data.list_to_html_table(mail_list, escape_html=False)

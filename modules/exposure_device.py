@@ -47,10 +47,10 @@ def add_tags_to_incident (base_object, exp_object):
 
 def add_comment_to_incident (base_object, exp_object):
     crit_level = {
-        0: 'Very High<br />🟥🟥🟥🟥',
-        1: 'High<br />🟥🟥🟥⬜ ',
-        2: 'Medium<br />🟥🟥⬜⬜',
-        3: 'Low<br />🟥⬜⬜⬜'
+        0: 'Very High 🟥🟥🟥🟥',
+        1: 'High 🟥🟥🟥⬜ ',
+        2: 'Medium 🟥🟥⬜⬜',
+        3: 'Low 🟥⬜⬜⬜'
     }
 
     out = []
@@ -78,19 +78,19 @@ def add_comment_to_incident (base_object, exp_object):
             user_on_device = x['UsersOnDevice']
 
         if x['UserNodeLabel'] == 'managedidentity':
-            user_on_device += f"<br />(Managed Identity)"
+            user_on_device += f"<p>(Managed Identity)"
 
         out.append({
             'Computer': get_device_link(x),
-            'Computer Details': f"<b>Criticality:</b><br /> {crit_level[x['ComputerCrit']]}<br /><p><b>Asset Rules:</b> {data.list_to_string(x['ComputerCriticalityRules'])}<br /><b>Computer Tags:</b> {data.list_to_string(x['ComputerTags'])}<p><b>Risk Level:</b> {x['ComputerRiskScore']}<br /><b>Exposure Level:</b> {x['ComputerExposureScore']}<br /><b>Max CVSS Score:</b> {x['ComputerMaxCVSSScore']}<br /><b>Onboarding:</b> {x['ComputerOnboarding']}<br /><b>Sensor:</b> {x['ComputerSensorHealth']}",
+            'Computer Details': f"<b>Criticality:</b><p> {crit_level[x['ComputerCrit']]}<p><b>Asset Rules:</b> {data.list_to_string(x['ComputerCriticalityRules'])}<p><b>Computer Tags:</b> {data.list_to_string(x['ComputerTags'])}<p><b>Risk Level:</b> {x['ComputerRiskScore']}<p><b>Exposure Level:</b> {x['ComputerExposureScore']}<p><b>Max CVSS Score:</b> {x['ComputerMaxCVSSScore']}<p><b>Onboarding:</b> {x['ComputerOnboarding']}<p><b>Sensor:</b> {x['ComputerSensorHealth']}",
             'UsersOnDevice': user_on_device,
-            'UserCriticality': f"{crit_level[x['UserCrit']]}<br /><p><b>Asset Rules:</b> {data.list_to_string(x['UserCriticalityRules'])}<br /><b>User Tags:</b> {data.list_to_string(x['UserTags'])}"
+            'UserCriticality': f"{crit_level[x['UserCrit']]}<p><b>Asset Rules:</b> {data.list_to_string(x['UserCriticalityRules'])}<p><b>User Tags:</b> {data.list_to_string(x['UserTags'])}"
         })
 
     for x in exp_object.nodes_without_paths():
         out.append({
             'Computer': get_device_link(x),
-            'Computer Details': f"<b>Criticality:</b><br /> {crit_level[x['ComputerCrit']]}<br /><p><b>Asset Rules:</b> {data.list_to_string(x['ComputerCriticalityRules'])}<br /><b>Computer Tags:</b> {data.list_to_string(x['ComputerTags'])}<p><b>Risk Level:</b> {x['ComputerRiskScore']}<br /><b>Exposure Level:</b> {x['ComputerExposureScore']}<br /><b>Max CVSS Score:</b> {x['ComputerMaxCVSSScore']}<br /><b>Onboarding:</b> {x['ComputerOnboarding']}<br /><b>Sensor:</b> {x['ComputerSensorHealth']}",
+            'Computer Details': f"<b>Criticality:</b><p> {crit_level[x['ComputerCrit']]}<p><b>Asset Rules:</b> {data.list_to_string(x['ComputerCriticalityRules'])}<p><b>Computer Tags:</b> {data.list_to_string(x['ComputerTags'])}<p><b>Risk Level:</b> {x['ComputerRiskScore']}<p><b>Exposure Level:</b> {x['ComputerExposureScore']}<p><b>Max CVSS Score:</b> {x['ComputerMaxCVSSScore']}<p><b>Onboarding:</b> {x['ComputerOnboarding']}<p><b>Sensor:</b> {x['ComputerSensorHealth']}",
             'UsersOnDevice': "None Detected"
         })
 
@@ -111,6 +111,6 @@ def get_device_link(x):
             break
 
     if device_id:
-        return f"<a href=\"https://security.microsoft.com/machines/v2/{device_id}/overview\" target=\"_blank\">{x['Computer']}</a><br />(<a href=\"https://security.microsoft.com/security-graph?id={device_id}&assetType=DeviceInventoryId\">Exposure Map</a>)"
+        return f"<a href=\"https://security.microsoft.com/machines/v2/{device_id}/overview\" target=\"_blank\">{x['Computer']}</a><p>(<a href=\"https://security.microsoft.com/security-graph?id={device_id}&assetType=DeviceInventoryId\">Exposure Map</a>)"
     else:
         return x['Computer']

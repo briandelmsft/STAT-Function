@@ -8,7 +8,7 @@ from datetime import datetime, timezone
 date_format = os.getenv('DATE_FORMAT')
 tz_info = os.getenv('TIME_ZONE')
 
-def list_to_html_table(input_list:list, max_rows:int=20, max_cols:int=10, nan_str:str='N/A', escape_html:bool=True, columns:list=None, index:bool=False, justify:str='left', drop_empty_cols:bool=False):
+def list_to_html_table(input_list:list, max_rows:int=20, max_cols:int=10, nan_str:str='N/A', escape_html:bool=True, columns:list=None, col_widths:list=None, default_col_width:int=250, index:bool=False, justify:str='left', drop_empty_cols:bool=False):
     """Convert a list of dictionaries into an HTML table.
     
     This function takes a list of dictionaries and converts it to an HTML table format,
@@ -21,6 +21,7 @@ def list_to_html_table(input_list:list, max_rows:int=20, max_cols:int=10, nan_st
         nan_str (str, optional): String to replace NaN values. Defaults to 'N/A'.
         escape_html (bool, optional): Whether to escape HTML characters. Defaults to True.
         columns (list, optional): Specific columns to include. Defaults to None.
+        col_widths (list, optional): List of column widths in px. Defaults to None.
         index (bool, optional): Whether to include row index. Defaults to False.
         justify (str, optional): Text alignment for table. Defaults to 'left'.
         drop_empty_cols (bool, optional): Whether to drop empty columns. Defaults to False.
@@ -65,6 +66,22 @@ def list_to_html_table(input_list:list, max_rows:int=20, max_cols:int=10, nan_st
             html_table = df_time.to_html(max_rows=max_rows, max_cols=max_cols, na_rep=nan_str, escape=escape_html, columns=columns, index=index, justify=justify).replace('\n', '')
     else:
         html_table = df.to_html(max_rows=max_rows, max_cols=max_cols, na_rep=nan_str, escape=escape_html, columns=columns, index=index, justify=justify).replace('\n', '')
+
+    colgroup = '<colgroup>'
+    if col_widths:
+        for i in range(min(len(df.columns), max_cols)):
+            try:
+                colgroup += f'<col style="width: {col_widths[i]}px">'
+            except:
+                colgroup += f'<col style="width: {default_col_width}px">'
+        colgroup += '</colgroup>'
+
+    else:
+        colgroup += f'<col style="width: {default_col_width}px">' * (min(len(df.columns), max_cols))
+        
+    colgroup += '</colgroup>'
+
+    html_table = html_table.replace(">", f">{colgroup}", 1)
 
     return html_table
 
